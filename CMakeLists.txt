@@ -30,6 +30,8 @@ add_executable(
         logenium
 
         src/main.cxx
+
+        src/application.cxx
 )
 
 target_compile_features(

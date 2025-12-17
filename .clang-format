@@ -13,6 +13,9 @@ WrapNamespaceBodyWithEmptyLines: Always
 
 IncludeBlocks: Regroup
 IncludeCategories:
+  # Project headers
+  - Regex: '^(<|")logenium/'
+    Priority: 3
   # Std headers
   - Regex: '<[[:alnum:]_.]+>'
     Priority: 2
