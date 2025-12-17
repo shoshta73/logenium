@@ -1,9 +1,15 @@
 cmake_minimum_required(VERSION 4.0)
 
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+
+include(logging)
+
 if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
         set(LOGENIUM_IS_TOPLEVEL_PROJECT ON)
+        log_info("Building logenium as top-level project")
 else()
         set(LOGENIUM_IS_TOPLEVEL_PROJECT OFF)
+        log_info("Building logenium as subproject")
 endif()
 
 if(LOGENIUM_IS_TOPLEVEL_PROJECT)
@@ -16,6 +22,9 @@ project(
         DESCRIPTION "Element of logic"
         LANGUAGES CXX C
 )
+
+log_info("Project ${PROJECT_NAME} version ${PROJECT_VERSION}")
+log_info("Building in ${CMAKE_BUILD_TYPE} mode")
 
 add_executable(
         logenium
