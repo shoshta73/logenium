@@ -15,6 +15,9 @@ IncludeBlocks: Regroup
 IncludeCategories:
   # Project headers
   - Regex: '^(<|")logenium/'
+    Priority: 4
+  # System headers
+  - Regex: '^(<|")Windows\.h'
     Priority: 3
   # Std headers
   - Regex: '<[[:alnum:]_.]+>'
