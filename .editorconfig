@@ -22,6 +22,6 @@ tab_width = 8
 indent_size = 8
 tab_width = 8
 
-[*.{cxx,hxx}]
+[*.{c,cxx,h,hxx}]
 indent_size = 4
 tab_width = 4

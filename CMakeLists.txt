@@ -23,6 +23,8 @@ project(
         LANGUAGES CXX C
 )
 
+add_subdirectory(libs)
+
 log_info("Project ${PROJECT_NAME} version ${PROJECT_VERSION}")
 log_info("Building in ${CMAKE_BUILD_TYPE} mode")
 
@@ -48,4 +50,10 @@ target_include_directories(
         PRIVATE
         src
         include
+)
+
+target_link_libraries(
+        logenium
+        PRIVATE
+        xheader
 )
