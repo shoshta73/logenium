@@ -6,6 +6,8 @@
 
 #include <xheader/windows.h>
 
+#include "logenium/window.hxx"
+
 namespace logenium {
 
 class Application {
@@ -33,6 +35,10 @@ class Application {
 
   protected:
     NativeHandle native_handle{nullptr};
+    std::shared_ptr<Window> window;
+
+    virtual void RegisterWindowClass() = 0;
+    virtual void UnregisterWindowClass() = 0;
 
   private:
     static Application *instance;

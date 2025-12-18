@@ -34,8 +34,10 @@ add_executable(
         src/main.cxx
 
         src/application.cxx
+        src/window.cxx
 
         src/platform/windows/application.cxx
+        src/platform/windows/window.cxx
 )
 
 target_compile_features(
