@@ -11,8 +11,23 @@ log_info("Building in ${CMAKE_BUILD_TYPE} mode")
 add_library(
         xheader
 
+        src/windows/create_window_ex_a.c
+        src/windows/create_window_ex_w.c
+        src/windows/def_window_proc_a.c
+        src/windows/def_window_proc_w.c
+        src/windows/destroy_window.c
         src/windows/get_module_handle_w.c
         src/windows/get_module_handle_a.c
+        src/windows/load_cursor_a.c
+        src/windows/load_cursor_w.c
+        src/windows/load_icon_a.c
+        src/windows/load_icon_w.c
+        src/windows/register_class_ex_a.c
+        src/windows/register_class_ex_w.c
+        src/windows/show_window.c
+        src/windows/unregister_class_a.c
+        src/windows/unregister_class_w.c
+        src/windows/update_window.c
 )
 
 add_library(
