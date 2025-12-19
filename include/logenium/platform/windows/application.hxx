@@ -10,6 +10,8 @@ class WindowsApplication : public Application {
     WindowsApplication();
     ~WindowsApplication();
 
+    void Run() override;
+
   private:
     void RegisterWindowClass() override;
     void UnregisterWindowClass() override;

@@ -25,9 +25,15 @@ class Application {
         void *handle;
     };
 
+    struct State {
+        bool is_running{false};
+    };
+
     Application();
     virtual ~Application();
 
+    virtual void Run() = 0;
+    State &GetState();
     NativeHandle &GetNativeHandle();
 
     static Application &GetInstance();
@@ -35,6 +41,7 @@ class Application {
 
   protected:
     NativeHandle native_handle{nullptr};
+    State state{};
     std::shared_ptr<Window> window;
 
     virtual void RegisterWindowClass() = 0;

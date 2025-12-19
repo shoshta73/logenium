@@ -18,12 +18,36 @@ WindowsApplication::WindowsApplication() {
     RegisterWindowClass();
 
     window = std::make_shared<WindowsWindow>();
+
+    state.is_running = true;
 }
 
 WindowsApplication::~WindowsApplication() {
+    if (state.is_running) {
+        state.is_running = false;
+    }
+
     window.reset();
     UnregisterWindowClass();
     native_handle = nullptr;
+}
+
+void WindowsApplication::Run() {
+    while (state.is_running) {
+        MSG msg;
+        switch (GetMessage(&msg, nullptr, 0, 0)) {
+            case -1:
+                [[fallthrough]];
+            case 0: {
+                state.is_running = false;
+                break;
+            }
+            default: {
+                TranslateMessage(&msg);
+                DispatchMessage(&msg);
+            }
+        }
+    }
 }
 
 void WindowsApplication::RegisterWindowClass() {

@@ -19,6 +19,8 @@ Application::~Application() { instance = nullptr; }
 
 Application::NativeHandle &Application::GetNativeHandle() { return native_handle; }
 
+Application::State &Application::GetState() { return state; }
+
 Application &Application::GetInstance() {
     Assert(instance, "Application is not initialized");
     return *instance;
