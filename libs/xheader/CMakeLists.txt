@@ -1,12 +1,17 @@
+# CXX is used for compiling tests
 project(
         xheader
         VERSION 0.0.1
         DESCRIPTION "Cross-platform platform specific headers"
-        LANGUAGES C
+        LANGUAGES CXX C
 )
 
 log_info("Project ${PROJECT_NAME} version ${PROJECT_VERSION}")
 log_info("Building in ${CMAKE_BUILD_TYPE} mode")
+
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/dependencies.cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/options.cmake")
 
 add_library(
         xheader
@@ -57,3 +62,8 @@ target_compile_features(
         PRIVATE
         c_std_23
 )
+
+if(LOGENIUM_XHEADER_BUILD_TESTS AND LOGENIUM_BUILD_TESTS)
+        log_info("Building xheader tests")
+        add_subdirectory(tests)
+endif()

@@ -23,6 +23,16 @@ project(
         LANGUAGES CXX C
 )
 
+include(options)
+include(dependencies)
+
+if(LOGENIUM_BUILD_TESTS)
+        log_info("enabling testing")
+        enable_testing()
+        include(CTest)
+        include(GoogleTest)
+endif()
+
 add_subdirectory(libs)
 
 log_info("Project ${PROJECT_NAME} version ${PROJECT_VERSION}")
@@ -66,3 +76,35 @@ target_compile_definitions(
         PRIVATE
         __LOGENIUM_SOURCE__
 )
+
+if(LOGENIUM_BUILD_TESTS)
+        if(TARGET xheader_tests)
+                get_target_property(XHEADER_TESTS_SRCS xheader_tests SOURCES)
+        endif()
+
+        add_executable(
+                all_logenium_tests
+                ${XHEADER_TESTS_SRCS}
+        )
+
+        target_link_libraries(
+                all_logenium_tests
+                PRIVATE
+                xheader
+                gtest
+                gmock
+                gtest_main
+                gmock_main
+        )
+
+        target_compile_features(
+                all_logenium_tests
+                PRIVATE
+                cxx_std_23
+                c_std_23
+        )
+
+        gtest_discover_tests(
+                all_logenium_tests
+        )
+endif()

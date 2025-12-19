@@ -1,0 +1,1 @@
+option(LOGENIUM_XHEADER_BUILD_TESTS "Build tests" ON)

@@ -15,12 +15,16 @@ IncludeBlocks: Regroup
 IncludeCategories:
   # Project headers
   - Regex: '^(<|")logenium/'
-    Priority: 6
+    Priority: 7
 
   # Project libraries
   - Regex: '^(<|")debug/'
-    Priority: 5
+    Priority: 6
   - Regex: '^(<|")xheader/'
+    Priority: 5
+
+  # 3rd party headers
+  - Regex: '^(<|")(gtest|gmock)/'
     Priority: 4
 
   # System headers
