@@ -5,7 +5,6 @@ charset = utf-8
 indent_size = 2
 tab_width = 2
 indent_style = space
-charset = utf-8
 end_of_line = lf
 insert_final_newline = true
 trim_trailing_whitespace = true
@@ -22,6 +21,19 @@ tab_width = 8
 indent_size = 8
 tab_width = 8
 
-[*.{c,cxx,h,hxx}]
+[*.c]
+[*.cxx]
+[*.h]
+[*.hxx]
 indent_size = 4
 tab_width = 4
+
+[*.toml]
+indent_size = 4
+tab_width = 4
+
+[.clangd]
+[.clang-tidy]
+[.clang-format]
+indent_size = 2
+tab_width = 2
