@@ -1,9 +1,9 @@
-
-#include <cassert>
+#include <debug/assert.hxx>
 
 #include "logenium/application.hxx"
 
 int main() {
+    using namespace logenium;
     auto app = logenium::Application::Create();
-    assert(app && "Application is not created");
+    Assert(app != nullptr, "Application is not created");
 }

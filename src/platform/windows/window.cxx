@@ -1,8 +1,8 @@
 #include "logenium/platform/windows/window.hxx"
 
-#include <cassert>
-
 #include <xheader/windows.h>
+
+#include <debug/assert.hxx>
 
 #include "logenium/application.hxx"
 
@@ -19,7 +19,7 @@ WindowsWindow::WindowsWindow() {
     auto handle = CreateWindowEx(WS_EX_OVERLAPPEDWINDOW, GetWindowClassName(), kWindowName, WS_OVERLAPPEDWINDOW, 0, 0,
                                  CW_USEDEFAULT, CW_USEDEFAULT, nullptr, nullptr,
                                  Application::GetInstance().GetNativeHandle(), nullptr);
-    assert(handle != nullptr && "Failed to create window");
+    Assert(handle, "Failed to create window");
     native_handle = handle;
     ShowWindow(native_handle, SW_SHOW);
     UpdateWindow(native_handle);

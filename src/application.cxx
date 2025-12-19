@@ -1,7 +1,8 @@
 #include "logenium/application.hxx"
 
-#include <cassert>
 #include <memory>
+
+#include <debug/assert.hxx>
 
 #include "logenium/platform/windows/application.hxx"
 
@@ -10,7 +11,7 @@ namespace logenium {
 class Application *Application::instance = nullptr;
 
 Application::Application() {
-    assert(instance == nullptr && "Application is already initialized");
+    Assert(instance == nullptr, "Application is already initialized");
     instance = this;
 }
 
@@ -19,7 +20,7 @@ Application::~Application() { instance = nullptr; }
 Application::NativeHandle &Application::GetNativeHandle() { return native_handle; }
 
 Application &Application::GetInstance() {
-    assert(instance && "Application is not initialized");
+    Assert(instance, "Application is not initialized");
     return *instance;
 }
 

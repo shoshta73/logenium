@@ -15,16 +15,22 @@ IncludeBlocks: Regroup
 IncludeCategories:
   # Project headers
   - Regex: '^(<|")logenium/'
-    Priority: 5
+    Priority: 6
+
   # Project libraries
+  - Regex: '^(<|")debug/'
+    Priority: 5
   - Regex: '^(<|")xheader/'
     Priority: 4
+
   # System headers
   - Regex: '^(<|")Windows\.h'
     Priority: 3
+
   # Std headers
   - Regex: '<[[:alnum:]_.]+>'
     Priority: 2
+
   # Other headers
   - Regex: '.*'
     Priority: 1

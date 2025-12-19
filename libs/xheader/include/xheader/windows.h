@@ -11,6 +11,7 @@ extern "C" {
 #include <Windows.h> // IWYU pragma: export
 // clang-format on
 
+#include <debugapi.h>      // IWYU pragma: export
 #include <libloaderapi.h>  // IWYU pragma: export
 #include <minwindef.h>     // IWYU pragma: export
 #include <windef.h>        // IWYU pragma: export
@@ -21,6 +22,7 @@ extern "C" {
 #include <stdint.h>
 #include <wchar.h>
 
+typedef void VOID;
 typedef unsigned int UINT;
 typedef long LONG;
 typedef unsigned long DWORD;
@@ -41,6 +43,10 @@ typedef intptr_t LONG_PTR;
 typedef UINT_PTR WPARAM;
 typedef LONG_PTR LPARAM;
 typedef WORD ATOM;
+
+#ifndef NULL
+#define NULL ((void *)0)
+#endif
 
 #define TRUE 1
 #define FALSE 0
@@ -126,6 +132,8 @@ HWND CreateWindowExW(DWORD /* dwExStyle */, LPCWSTR /* lpClassName */, LPCWSTR /
 BOOL DestroyWindow(HWND /* hWnd */);
 BOOL ShowWindow(HWND /* hWnd */, int /* nCmdShow */);
 BOOL UpdateWindow(HWND /* hWnd */);
+VOID DebugBreak();
+BOOL IsDebuggerPresent();
 
 constexpr UINT CS_VREDRAW = 0x0001;
 constexpr UINT CS_HREDRAW = 0x0002;

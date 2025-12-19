@@ -58,4 +58,11 @@ target_link_libraries(
         logenium
         PRIVATE
         xheader
+        logenium::debug
+)
+
+target_compile_definitions(
+        logenium
+        PRIVATE
+        __LOGENIUM_SOURCE__
 )
