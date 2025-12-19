@@ -11,6 +11,7 @@ extern "C" {
 #include <Windows.h> // IWYU pragma: export
 // clang-format on
 
+#include <basetsd.h>       // IWYU pragma: export
 #include <debugapi.h>      // IWYU pragma: export
 #include <libloaderapi.h>  // IWYU pragma: export
 #include <minwindef.h>     // IWYU pragma: export
@@ -50,6 +51,8 @@ typedef WORD ATOM;
 
 #define TRUE 1
 #define FALSE 0
+
+#define CALLBACK
 
 struct HINSTANCE__ {
     int dummy;
@@ -111,6 +114,55 @@ typedef struct tagWNDCLASSEXW {
     HICON hIconSm;
 } WNDCLASSEXW;
 
+typedef struct tagCREATESTRUCTA {
+    LPVOID lpCreateParams;
+    HINSTANCE hInstance;
+    HMENU hMenu;
+    HWND hwndParent;
+    int cy;
+    int cx;
+    int y;
+    int x;
+    LONG style;
+    LPCSTR lpszName;
+    LPCSTR lpszClass;
+    DWORD dwExStyle;
+} CREATESTRUCTA;
+
+typedef struct tagCREATESTRUCTW {
+    LPVOID lpCreateParams;
+    HINSTANCE hInstance;
+    HMENU hMenu;
+    HWND hwndParent;
+    int cy;
+    int cx;
+    int y;
+    int x;
+    LONG style;
+    LPCWSTR lpszName;
+    LPCWSTR lpszClass;
+    DWORD dwExStyle;
+} CREATESTRUCTW;
+
+typedef struct tagPOINT {
+    LONG x;
+    LONG y;
+} POINT;
+
+typedef struct tagMSG {
+    HWND hwnd;
+    UINT message;
+    WPARAM wParam;
+    LPARAM lParam;
+    DWORD time;
+    POINT pt;
+#ifdef _MAC
+    DWORD lPrivate;
+#endif
+} MSG;
+
+typedef MSG *LPMSG;
+
 HMODULE GetModuleHandleA(LPCSTR /* lpModuleName */);
 HMODULE GetModuleHandleW(LPCWSTR /* lpModuleName */);
 HICON LoadIconA(HINSTANCE /* hInstance */, LPCSTR /* lpIconName */);
@@ -134,6 +186,16 @@ BOOL ShowWindow(HWND /* hWnd */, int /* nCmdShow */);
 BOOL UpdateWindow(HWND /* hWnd */);
 VOID DebugBreak();
 BOOL IsDebuggerPresent();
+LONG_PTR SetWindowLongPtrA(HWND /* hWnd */, int /* nIndex */, LONG_PTR /* dwNewLong */);
+LONG_PTR SetWindowLongPtrW(HWND /* hWnd */, int /* nIndex */, LONG_PTR /* dwNewLong */);
+LONG_PTR GetWindowLongPtrA(HWND /* hWnd */, int /* nIndex */);
+LONG_PTR GetWindowLongPtrW(HWND /* hWnd */, int /* nIndex */);
+BOOL GetMessageA(LPMSG /* lpMsg */, HWND /* hWnd */, UINT /* wMsgFilterMin */, UINT /* wMsgFilterMax */);
+BOOL GetMessageW(LPMSG /* lpMsg */, HWND /* hWnd */, UINT /* wMsgFilterMin */, UINT /* wMsgFilterMax */);
+BOOL TranslateMessage(const MSG * /* lpMsg */);
+LRESULT DispatchMessageA(const MSG * /* lpMsg */);
+LRESULT DispatchMessageW(const MSG * /* lpMsg */);
+VOID PostQuitMessage(int /* nExitCode */);
 
 constexpr UINT CS_VREDRAW = 0x0001;
 constexpr UINT CS_HREDRAW = 0x0002;
@@ -172,6 +234,12 @@ constexpr int SW_RESTORE = 9;
 
 constexpr int CW_USEDEFAULT = (int)0x80000000;
 
+constexpr int GWLP_USERDATA = -21;
+
+constexpr UINT WM_DESTROY = 0x0002;
+constexpr UINT WM_CLOSE = 0x0010;
+constexpr UINT WM_NCCREATE = 0x0081;
+
 #ifdef UNICODE
 
 #define GetModuleHandle GetModuleHandleW
@@ -181,8 +249,13 @@ constexpr int CW_USEDEFAULT = (int)0x80000000;
 #define RegisterClassEx RegisterClassExW
 #define UnregisterClass UnregisterClassW
 #define CreateWindowEx CreateWindowExW
+#define SetWindowLongPtr SetWindowLongPtrW
+#define GetWindowLongPtr GetWindowLongPtrW
+#define GetMessage GetMessageW
+#define DispatchMessage DispatchMessageW
 
 typedef WNDCLASSEXW WNDCLASSEX;
+typedef CREATESTRUCTW CREATESTRUCT;
 
 #else
 
@@ -193,8 +266,13 @@ typedef WNDCLASSEXW WNDCLASSEX;
 #define RegisterClassEx RegisterClassExA
 #define UnregisterClass UnregisterClassA
 #define CreateWindowEx CreateWindowExA
+#define SetWindowLongPtr SetWindowLongPtrA
+#define GetWindowLongPtr GetWindowLongPtrA
+#define GetMessage GetMessageA
+#define DispatchMessage DispatchMessageA
 
 typedef WNDCLASSEXA WNDCLASSEX;
+typedef CREATESTRUCTA CREATESTRUCT;
 
 #endif
 
