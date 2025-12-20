@@ -13,18 +13,21 @@ class _Directories:
     libs: Path = _LIBS_DIR
 
     logenium_source: Path = _ROOT_DIR / "src"
-    logenium_include: Path = _ROOT_DIR / "src" / "include"
+    logenium_include: Path = _ROOT_DIR / "include"
     logenium_cmake: Path = _ROOT_DIR / "cmake"
 
     xheader_root: Path = _LIBS_DIR / "xheader"
     xheader_source: Path = _LIBS_DIR / "xheader" / "src"
     xheader_include: Path = _LIBS_DIR / "xheader" / "include"
     xheader_cmake: Path = _LIBS_DIR / "xheader" / "cmake"
+    xheader_tests: Path = _LIBS_DIR / "xheader" / "tests"
 
     debug_root: Path = _LIBS_DIR / "debug"
     debug_source: Path = _LIBS_DIR / "debug" / "src"
     debug_include: Path = _LIBS_DIR / "debug" / "include"
-    debug_cmake: Path = _LIBS_DIR / "debug" / "cmake"
+
+    devutils_root: Path = _ROOT_DIR / "devutils"
+    devutils_source: Path = _ROOT_DIR / "devutils" / "src"
 
 
 @dataclass(frozen=True)
