@@ -1,0 +1,5 @@
+-e devutils
+typer>=0.20.1
+ruff>=0.14.10
+mypy>=1.19.1
+setuptools>=61.0
