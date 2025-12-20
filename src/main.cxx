@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2025 Logenium Authors and Contributors
+// SPDX-License-Identifier: BSD-3-Clause
+
 #include <debug/assert.hxx>
 
 #include "logenium/application.hxx"

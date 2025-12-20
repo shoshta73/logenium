@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2025 Logenium Authors and Contributors
+# SPDX-License-Identifier: BSD-3-Clause
+
 try {
     $null = Get-Command uv -ErrorAction Stop
     Write-Host "Found uv" -ForegroundColor Green

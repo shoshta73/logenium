@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2025 Logenium Authors and Contributors
+# SPDX-License-Identifier: BSD-3-Clause
+
 function(_log LEVEL MESSAGE)
     if(PROJECT_NAME)
         set(_tag "${PROJECT_NAME}")

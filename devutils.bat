@@ -1,3 +1,6 @@
+@REM SPDX-FileCopyrightText: 2025 Logenium Authors and Contributors
+@REM SPDX-License-Identifier: BSD-3-Clause
+
 @echo off
 
 uv --version >nul 2>&1
