@@ -135,12 +135,18 @@ Usage: `uv run devutils configure`
 Runs Ninja build with custom output handling:
 - **Verbose mode**: `-v/--verbose` flag for detailed build output
 - **Parallel jobs**: `-j/--jobs N` flag (0 = auto, capped to CPU count)
+- **Enhanced status**: Custom `NINJA_STATUS` with human-readable elapsed time (format: `<d>d <h>h <m>m <s>s <ms>ms`)
+- **No override mode**: `--no-ninja-override` flag to preserve existing `NINJA_STATUS` environment variable
 - **Output normalization**: Converts Ninja's `\r` line updates to `\r\n` for continuous logs
 - **Error handling**: Exits with Ninja's exit code on failure
 
+**Default Ninja Status Format**: `[finished/total : percentage - elapsed_time]`
+
+Example output: `[42/238 : 17% - 0d 0h 0m 5s 234ms]`
+
 Requires prior configuration via `devutils configure` or manual CMake setup.
 
-Usage: `uv run devutils build [-v] [-j N]`
+Usage: `uv run devutils build [-v] [-j N] [--no-ninja-override]`
 
 #### clean
 Removes the build directory and all its contents. Equivalent to `rm -rf build` but with proper handling of read-only files.
