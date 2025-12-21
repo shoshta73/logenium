@@ -9,3 +9,7 @@ def find_files_by_extensions(path: pathlib.Path, extensions: list[str]) -> list[
     for extension in extensions:
         files.extend(path.rglob(f"*{extension}"))
     return sorted(files)
+
+
+def get_files_recursively(path: pathlib.Path) -> list[pathlib.Path]:
+    return sorted(path.rglob("*"))

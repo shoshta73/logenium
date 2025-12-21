@@ -47,6 +47,7 @@ Use the provided wrapper scripts which handle all setup automatically:
 # Run from repository root - automatically installs uv if needed
 devutils.bat configure
 devutils.bat build
+devutils.bat clean
 devutils.bat --version
 ```
 
@@ -55,6 +56,7 @@ devutils.bat --version
 # Run from repository root - automatically installs uv if needed
 .\devutils.ps1 configure
 .\devutils.ps1 build
+.\devutils.ps1 clean
 .\devutils.ps1 --version
 ```
 
@@ -75,6 +77,9 @@ uv run devutils configure
 
 uv run devutils build
 # Options: -v/--verbose for verbose output, -j/--jobs for parallel jobs
+
+uv run devutils clean
+# Remove the build directory and all its contents
 
 uv run devutils check-license-headers check  # or: cls check
 # Check all files for correct SPDX license headers
@@ -100,6 +105,7 @@ devutils/
 │   │   ├── __init__.py        # Command exports
 │   │   ├── configure.py       # Interactive CMake configuration
 │   │   ├── build.py           # Ninja build with progress output
+│   │   ├── clean.py           # Build directory cleanup
 │   │   └── check_license_headers.py  # License header validation and fixing
 │   ├── constants/
 │   │   ├── __init__.py        # Constant exports
@@ -135,6 +141,21 @@ Runs Ninja build with custom output handling:
 Requires prior configuration via `devutils configure` or manual CMake setup.
 
 Usage: `uv run devutils build [-v] [-j N]`
+
+#### clean
+Removes the build directory and all its contents. Equivalent to `rm -rf build` but with proper handling of read-only files.
+
+**Features**:
+- Checks if build directory exists before attempting removal
+- Handles read-only files (common in git objects from CMake FetchContent)
+- Uses `shutil.rmtree()` with error handler for Windows compatibility
+- Graceful handling when build directory doesn't exist
+
+**Implementation Details**:
+- Uses `handle_remove_readonly()` callback to make read-only files writable before deletion
+- Essential for cleaning FetchContent dependencies with git objects on Windows
+
+Usage: `uv run devutils clean`
 
 #### check-license-headers (alias: cls)
 Validates and fixes SPDX license headers across project files. Supports C, C++, Python, CMake, PowerShell, and Batch files.
@@ -243,6 +264,11 @@ All templates follow the format:
   - Recursively searches `path` for files matching any extension in `extensions`
   - Uses `Path.rglob()` for each extension pattern
   - Returns sorted list of matching file paths
+
+- `get_files_recursively(path: Path) -> list[Path]`:
+  - Recursively searches `path` for all files and directories
+  - Uses `Path.rglob("*")` to match everything
+  - Returns sorted list of all paths (files and directories)
 
 ### Development
 

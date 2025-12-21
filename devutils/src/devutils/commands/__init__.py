@@ -3,6 +3,12 @@
 
 from .build import build
 from .check_license_headers import check_license_headers
+from .clean import clean
 from .configure import configure
 
-__all__ = ["configure", "build", "check_license_headers"]
+__all__ = [
+    "build",
+    "check_license_headers",
+    "clean",
+    "configure",
+]
