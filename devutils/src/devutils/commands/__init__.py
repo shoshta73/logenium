@@ -6,6 +6,7 @@ from .check_license_headers import check_license_headers
 from .clean import clean
 from .configure import configure
 from .format import format
+from .lint import lint
 
 __all__ = [
     "build",
@@ -13,4 +14,5 @@ __all__ = [
     "clean",
     "configure",
     "format",
+    "lint",
 ]

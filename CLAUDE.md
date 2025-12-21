@@ -107,7 +107,8 @@ devutils/
 │   │   ├── build.py           # Ninja build with progress output
 │   │   ├── clean.py           # Build directory cleanup
 │   │   ├── check_license_headers.py  # License header validation and fixing
-│   │   └── format.py          # Code formatting with clang-format and ruff
+│   │   ├── format.py          # Code formatting with clang-format and ruff
+│   │   └── lint.py            # Code linting with clang-tidy, mypy, and ruff
 │   ├── constants/
 │   │   ├── __init__.py        # Constant exports
 │   │   ├── paths.py           # Project path definitions
@@ -262,6 +263,70 @@ The format and check-license-headers commands share common code in `devutils/uti
 - **print_status()**: Standardized file status output formatting
 - **format_file_path()**: Converts absolute paths to repository-relative paths
 
+#### lint
+Checks and fixes linting issues across the project using language-specific linters. Supports C/C++ (via clang-tidy) and Python (via mypy + ruff two-step process).
+
+**Subcommands**:
+- **check**: Verify all files pass linting checks without modifying them
+- **fix**: Automatically fix linting issues where possible
+
+**File Coverage**:
+- C/C++ files (`.c`, `.h`, `.cxx`, `.hxx`) in `src/`, `include/`, `libs/xheader/`, `libs/debug/`
+- Python files (`.py`, `.pyi`) in `devutils/src/`
+
+**Linting Tools**:
+- **clang-tidy**: Used for C/C++ files
+  - Check mode: `clang-tidy <file>`
+  - Fix mode: `clang-tidy --fix <file>`
+  - Must be installed and available in PATH
+- **mypy** (Python step 1): Type checking
+  - Check mode: `uv run mypy <file>`
+  - Provided by virtual environment
+  - Cannot auto-fix (type checking only)
+- **ruff** (Python step 2): Linting
+  - Check mode: `uv run ruff check <file>`
+  - Fix mode: `uv run ruff check --fix <file>`
+  - Provided by virtual environment
+
+**Python Two-Step Process**:
+Python files undergo sequential linting:
+1. **Type checking** with mypy - Validates type annotations and type correctness
+2. **Linting** with ruff - Checks code style, best practices, and common issues
+
+In fix mode, mypy runs for type checking (no fixes), then ruff attempts to fix linting issues. Files are marked as:
+- **[FIXED]**: All fixable issues resolved
+- **[PARTIAL]**: Some issues fixed, but type errors or unfixable linting issues remain
+- **[SKIP]**: No issues found
+
+**Exit Codes**:
+- `0`: Success (all files passed linting or successfully fixed)
+- `1`: Failure (files with linting issues in check mode, tool not available, or errors in fix mode)
+
+Usage:
+```bash
+uv run devutils lint check  # Check all files (CI-friendly)
+uv run devutils lint fix    # Fix linting issues where possible
+```
+
+**Architecture**:
+Extended version of the format command architecture with multi-step support:
+- **LintStep**: Dataclass defining a single linting step (tool name, args, fix capability)
+- **LanguageConfig**: Contains list of lint steps for sequential execution
+- **Multi-step processing**: Each file is checked/fixed by all lint steps in order
+- **Tool availability check**: Verifies all required linting tools are installed before processing
+- Shared utilities with format and check-license-headers in `devutils.utils.file_checking` module
+
+**Adding New Linting Steps**:
+To add a new linting step for a language, modify the `lint_steps` list in `get_language_configs()`:
+```python
+LintStep(
+    tool_name="tool-name",
+    check_args=["arg1", "arg2"],
+    fix_args=["arg1", "--fix"],
+    can_fix=True,  # Set to False for check-only tools like mypy
+)
+```
+
 ### Path Constants
 
 The `devutils.constants` module provides frozen dataclass instances with project paths:
@@ -324,7 +389,7 @@ All templates follow the format:
   - Returns sorted list of all paths (files and directories)
 
 **file_checking** (via `devutils.utils.file_checking`):
-Shared utilities for file checking commands (format, check-license-headers):
+Shared utilities for file checking commands (format, lint, check-license-headers):
 - `FileResult`: Dataclass for file processing results
   - `path: pathlib.Path` - The file path
   - `status: Enum` - The status enum value (specific to each command)
@@ -344,7 +409,7 @@ Shared utilities for file checking commands (format, check-license-headers):
 - `print_status(status_label: str, color: str, file_path: Path, message: str = "") -> None`:
   - Standardized file status output with color formatting
   - Displays status label, file path, and optional message
-  - Used by both format and check-license-headers commands
+  - Used by format, lint, and check-license-headers commands
 
 ### Development
 
