@@ -7,14 +7,10 @@ from .commands import build, check_license_headers, configure
 
 app = typer.Typer()
 
-app.add_typer(configure, name="configure", help="Configure the project")
 app.add_typer(build, name="build", help="Build the project")
-app.add_typer(
-    check_license_headers,
-    name="check-license-headers",
-    help="Check license headers",
-)
+app.add_typer(check_license_headers, name="check-license-headers", help="Check license headers")
 app.add_typer(check_license_headers, name="cls", help="Alias for check-license-headers")
+app.add_typer(configure, name="configure", help="Configure the project")
 
 
 def version_callback(value: bool) -> None:
