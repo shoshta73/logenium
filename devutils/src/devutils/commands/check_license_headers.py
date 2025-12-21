@@ -236,8 +236,6 @@ def fix_files(files: list[pathlib.Path], header_lines: list[str], stats: Statist
                 stats.record_fix(False)
 
 
-
-
 @check_license_headers.command()
 def show_headers() -> None:
     for config in get_language_configs():
@@ -248,12 +246,13 @@ def show_headers() -> None:
 @check_license_headers.command()
 def check() -> None:
     stats = Statistics()
-    stats.print_summary("check")
 
     for config in get_language_configs():
         files = config.collect_files()
         if files:
             check_files(files, config.license_header, stats)
+
+    stats.print_summary("check")
 
     if stats.has_failures():
         typer.echo(
@@ -273,12 +272,13 @@ def check() -> None:
 @check_license_headers.command()
 def fix() -> None:
     stats = Statistics()
-    stats.print_summary("fix")
 
     for config in get_language_configs():
         files = config.collect_files()
         if files:
             fix_files(files, config.license_header, stats)
+
+    stats.print_summary("fix")
 
     if stats.errors > 0:
         typer.echo(typer.style("\nSome files could not be fixed due to errors.", fg="yellow", bold=True))
