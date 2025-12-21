@@ -14,6 +14,74 @@ from devutils.utils import fs
 check_license_headers = typer.Typer()
 
 
+@dataclass
+class LanguageConfig:
+    name: str
+    extensions: list[str]
+    search_dirs: list[pathlib.Path]
+    specific_files: list[pathlib.Path]
+    license_header: list[str]
+
+    def collect_files(self) -> list[pathlib.Path]:
+        files: list[pathlib.Path] = []
+
+        for search_dir in self.search_dirs:
+            if search_dir.exists():
+                files.extend(fs.find_files_by_extensions(search_dir, self.extensions))
+
+        for specific_file in self.specific_files:
+            if specific_file.exists():
+                files.append(specific_file)
+
+        return files
+
+
+def get_language_configs() -> list[LanguageConfig]:
+    return [
+        LanguageConfig(
+            name="C/C++",
+            extensions=Extensions.c_source + Extensions.cpp_source,
+            search_dirs=[Directories.logenium_source],
+            specific_files=[],
+            license_header=LicenseHeaders.cpp,
+        ),
+        LanguageConfig(
+            name="CMake",
+            extensions=Extensions.cmake_source,
+            search_dirs=[Directories.logenium_cmake, Directories.xheader_cmake],
+            specific_files=[
+                Directories.root / "CMakeLists.txt",
+                Directories.libs / "CMakeLists.txt",
+                Directories.xheader_root / "CMakeLists.txt",
+                Directories.xheader_tests / "CMakeLists.txt",
+                Directories.debug_root / "CMakeLists.txt",
+            ],
+            license_header=LicenseHeaders.cmake,
+        ),
+        LanguageConfig(
+            name="Python",
+            extensions=Extensions.python_source,
+            search_dirs=[Directories.devutils_source],
+            specific_files=[],
+            license_header=LicenseHeaders.python,
+        ),
+        LanguageConfig(
+            name="Batch",
+            extensions=Extensions.bat_source,
+            search_dirs=[],
+            specific_files=[Directories.root / "devutils.bat"],
+            license_header=LicenseHeaders.bat,
+        ),
+        LanguageConfig(
+            name="PowerShell",
+            extensions=Extensions.powershell_source,
+            search_dirs=[],
+            specific_files=[Directories.root / "devutils.ps1"],
+            license_header=LicenseHeaders.powershell,
+        ),
+    ]
+
+
 class FileStatus(Enum):
     OK = "ok"
     MISSING = "missing"
@@ -168,74 +236,13 @@ def fix_files(files: list[pathlib.Path], header_lines: list[str], stats: Statist
                 stats.record_fix(False)
 
 
-def c_cxx_files() -> list[pathlib.Path]:
-    files: list[pathlib.Path] = []
-    extensions: list[str] = []
-    extensions.extend(Extensions.c_source)
-    extensions.extend(Extensions.cpp_source)
-
-    files.extend(fs.find_files_by_extensions(Directories.logenium_source, extensions))
-
-    return files
-
-
-def cmake_files() -> list[pathlib.Path]:
-    files: list[pathlib.Path] = []
-
-    files.append(Directories.root / "CMakeLists.txt")
-    files.append(Directories.libs / "CMakeLists.txt")
-    files.append(Directories.xheader_root / "CMakeLists.txt")
-    files.append(Directories.xheader_tests / "CMakeLists.txt")
-    files.append(Directories.debug_root / "CMakeLists.txt")
-    files.extend(fs.find_files_by_extensions(Directories.logenium_cmake, Extensions.cmake_source))
-    files.extend(fs.find_files_by_extensions(Directories.xheader_cmake, Extensions.cmake_source))
-
-    return files
-
-
-def python_files() -> list[pathlib.Path]:
-    files: list[pathlib.Path] = []
-
-    files.extend(fs.find_files_by_extensions(Directories.devutils_source, Extensions.python_source))
-
-    return files
-
-
-def bat_files() -> list[pathlib.Path]:
-    files: list[pathlib.Path] = []
-
-    files.append(Directories.root / "devutils.bat")
-
-    return files
-
-
-def powershell_files() -> list[pathlib.Path]:
-    files: list[pathlib.Path] = []
-
-    files.append(Directories.root / "devutils.ps1")
-
-    return files
 
 
 @check_license_headers.command()
 def show_headers() -> None:
-    typer.echo("C License Header:")
-    typer.echo("\n".join(LicenseHeaders.c[:2]) + "\n")
-
-    typer.echo("C++ License Header:")
-    typer.echo("\n".join(LicenseHeaders.cpp[:2]) + "\n")
-
-    typer.echo("Python License Header:")
-    typer.echo("\n".join(LicenseHeaders.python[:2]) + "\n")
-
-    typer.echo("CMake License Header:")
-    typer.echo("\n".join(LicenseHeaders.cmake[:2]) + "\n")
-
-    typer.echo("PowerShell License Header:")
-    typer.echo("\n".join(LicenseHeaders.powershell[:2]) + "\n")
-
-    typer.echo("Batch License Header:")
-    typer.echo("\n".join(LicenseHeaders.bat[:2]) + "\n")
+    for config in get_language_configs():
+        typer.echo(f"{config.name} License Header:")
+        typer.echo("".join(config.license_header[:2]) + "\n")
 
 
 @check_license_headers.command()
@@ -243,11 +250,10 @@ def check() -> None:
     stats = Statistics()
     stats.print_summary("check")
 
-    check_files(c_cxx_files(), LicenseHeaders.cpp, stats)
-    check_files(cmake_files(), LicenseHeaders.cmake, stats)
-    check_files(python_files(), LicenseHeaders.python, stats)
-    check_files(bat_files(), LicenseHeaders.bat, stats)
-    check_files(powershell_files(), LicenseHeaders.powershell, stats)
+    for config in get_language_configs():
+        files = config.collect_files()
+        if files:
+            check_files(files, config.license_header, stats)
 
     if stats.has_failures():
         typer.echo(
@@ -269,11 +275,10 @@ def fix() -> None:
     stats = Statistics()
     stats.print_summary("fix")
 
-    fix_files(c_cxx_files(), LicenseHeaders.cpp, stats)
-    fix_files(cmake_files(), LicenseHeaders.cmake, stats)
-    fix_files(python_files(), LicenseHeaders.python, stats)
-    fix_files(bat_files(), LicenseHeaders.bat, stats)
-    fix_files(powershell_files(), LicenseHeaders.powershell, stats)
+    for config in get_language_configs():
+        files = config.collect_files()
+        if files:
+            fix_files(files, config.license_header, stats)
 
     if stats.errors > 0:
         typer.echo(typer.style("\nSome files could not be fixed due to errors.", fg="yellow", bold=True))

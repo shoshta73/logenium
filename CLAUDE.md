@@ -168,6 +168,26 @@ uv run devutils cls check                           # Check all files (CI-friend
 uv run devutils cls fix                             # Fix all files
 ```
 
+**Architecture**:
+The command uses a configuration-driven architecture via the `LanguageConfig` dataclass:
+- **LanguageConfig**: Encapsulates language name, extensions, search directories, specific files, and license header template
+- **get_language_configs()**: Returns list of all language configurations
+- **collect_files()**: Method on LanguageConfig that gathers files from search directories and specific file paths
+- All commands (`show-headers`, `check`, `fix`) iterate over the language configs
+
+**Adding New Language Support**:
+To add a new language, add an entry to `get_language_configs()` in `check_license_headers.py`:
+```python
+LanguageConfig(
+    name="Language Name",
+    extensions=Extensions.language_source,  # from constants/extensions.py
+    search_dirs=[Directories.target_dir],   # from constants/paths.py
+    specific_files=[Directories.root / "specific_file.ext"],
+    license_header=LicenseHeaders.language, # from constants/license_header.py
+)
+```
+Also update the corresponding constants files (`extensions.py`, `license_header.py`, optionally `comments.py`).
+
 ### Path Constants
 
 The `devutils.constants` module provides frozen dataclass instances with project paths:
