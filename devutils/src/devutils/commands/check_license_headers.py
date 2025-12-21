@@ -9,7 +9,7 @@ from enum import Enum
 import typer
 
 from devutils.constants import Directories, Extensions, LicenseHeaders
-from devutils.utils import fs
+from devutils.utils import file_checking
 
 check_license_headers = typer.Typer()
 
@@ -23,17 +23,7 @@ class LanguageConfig:
     license_header: list[str]
 
     def collect_files(self) -> list[pathlib.Path]:
-        files: list[pathlib.Path] = []
-
-        for search_dir in self.search_dirs:
-            if search_dir.exists():
-                files.extend(fs.find_files_by_extensions(search_dir, self.extensions))
-
-        for specific_file in self.specific_files:
-            if specific_file.exists():
-                files.append(specific_file)
-
-        return files
+        return file_checking.collect_files(self.extensions, self.search_dirs, self.specific_files)
 
 
 def get_language_configs() -> list[LanguageConfig]:
@@ -90,11 +80,7 @@ class FileStatus(Enum):
     UNKNOWN = "unknown"
 
 
-@dataclass
-class FileResult:
-    path: pathlib.Path
-    status: FileStatus
-    error: str | None = None
+FileResult = file_checking.FileResult
 
 
 @dataclass
@@ -200,15 +186,13 @@ def check_files(files: list[pathlib.Path], header_lines: list[str], stats: Stati
         stats.record_result(result)
 
         if result.status == FileStatus.OK:
-            typer.echo(f"{typer.style('[OK]', fg='green')}        {file_path.relative_to(Directories.root)}")
+            file_checking.print_status("[OK]", "green", file_path)
         elif result.status == FileStatus.MISSING:
-            typer.echo(f"{typer.style('[MISSING]', fg='red')}   {file_path.relative_to(Directories.root)}")
+            file_checking.print_status("[MISSING]", "red", file_path)
         elif result.status == FileStatus.INCORRECT:
-            typer.echo(f"{typer.style('[INCORRECT]', fg='red')} {file_path.relative_to(Directories.root)}")
+            file_checking.print_status("[INCORRECT]", "red", file_path)
         elif result.status == FileStatus.ERROR:
-            typer.echo(
-                f"{typer.style('[ERROR]', fg='yellow')}     {file_path.relative_to(Directories.root)}: {result.error}"
-            )
+            file_checking.print_status("[ERROR]", "yellow", file_path, result.error or "")
 
 
 def fix_files(files: list[pathlib.Path], header_lines: list[str], stats: Statistics) -> None:
@@ -217,22 +201,20 @@ def fix_files(files: list[pathlib.Path], header_lines: list[str], stats: Statist
         stats.total += 1
 
         if result.status == FileStatus.ERROR:
-            typer.echo(
-                f"{typer.style('[ERROR]', fg='yellow')}   {file_path.relative_to(Directories.root)}: {result.error}"
-            )
+            file_checking.print_status("[ERROR]", "yellow", file_path, result.error or "")
             stats.errors += 1
             continue
 
         if result.status == FileStatus.OK:
-            typer.echo(f"{typer.style('[SKIP]', fg='cyan')}    {file_path.relative_to(Directories.root)}")
+            file_checking.print_status("[SKIP]", "cyan", file_path)
             stats.record_fix(False)
         else:
             fixed = fix_header(file_path, header_lines)
             if fixed:
-                typer.echo(f"{typer.style('[FIXED]', fg='green')}   {file_path.relative_to(Directories.root)}")
+                file_checking.print_status("[FIXED]", "green", file_path)
                 stats.record_fix(True)
             else:
-                typer.echo(f"{typer.style('[SKIP]', fg='cyan')}    {file_path.relative_to(Directories.root)}")
+                file_checking.print_status("[SKIP]", "cyan", file_path)
                 stats.record_fix(False)
 
 

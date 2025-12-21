@@ -5,10 +5,12 @@ from .build import build
 from .check_license_headers import check_license_headers
 from .clean import clean
 from .configure import configure
+from .format import format
 
 __all__ = [
     "build",
     "check_license_headers",
     "clean",
     "configure",
+    "format",
 ]

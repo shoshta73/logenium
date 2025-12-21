@@ -106,7 +106,8 @@ devutils/
 │   │   ├── configure.py       # Interactive CMake configuration
 │   │   ├── build.py           # Ninja build with progress output
 │   │   ├── clean.py           # Build directory cleanup
-│   │   └── check_license_headers.py  # License header validation and fixing
+│   │   ├── check_license_headers.py  # License header validation and fixing
+│   │   └── format.py          # Code formatting with clang-format and ruff
 │   ├── constants/
 │   │   ├── __init__.py        # Constant exports
 │   │   ├── paths.py           # Project path definitions
@@ -115,7 +116,8 @@ devutils/
 │   │   └── license_header.py  # License header templates
 │   └── utils/
 │       ├── __init__.py        # Utility exports
-│       └── filesystem.py      # File system utilities
+│       ├── filesystem.py      # File system utilities
+│       └── file_checking.py   # Shared file checking utilities
 ```
 
 ### Commands
@@ -215,6 +217,51 @@ LanguageConfig(
 ```
 Also update the corresponding constants files (`extensions.py`, `license_header.py`, optionally `comments.py`).
 
+#### format
+Checks and fixes code formatting across the project using language-specific formatters. Supports C/C++ (via clang-format) and Python (via ruff).
+
+**Subcommands**:
+- **check**: Verify all files are formatted correctly without modifying them
+- **fix**: Automatically format all files that need formatting
+
+**File Coverage**:
+- C/C++ files (`.c`, `.h`, `.cxx`, `.hxx`) in `src/`, `include/`, `libs/xheader/`, `libs/debug/`
+- Python files (`.py`, `.pyi`) in `devutils/src/`
+
+**Formatter Tools**:
+- **clang-format**: Used for C/C++ files
+  - Check mode: `clang-format --dry-run -Werror <file>`
+  - Fix mode: `clang-format -i <file>`
+  - Must be installed and available in PATH
+- **ruff**: Used for Python files
+  - Check mode: `uv run ruff format --check <file>`
+  - Fix mode: `uv run ruff format <file>`
+  - Provided by virtual environment (no separate installation needed)
+
+**Exit Codes**:
+- `0`: Success (all files formatted correctly or successfully formatted)
+- `1`: Failure (unformatted files in check mode, tool not available, or errors in fix mode)
+
+Usage:
+```bash
+uv run devutils format check  # Check all files (CI-friendly)
+uv run devutils format fix    # Format all files
+```
+
+**Architecture**:
+Similar to `check-license-headers`, the command uses a configuration-driven architecture:
+- **LanguageConfig**: Encapsulates language name, extensions, search directories, formatter tool, and tool arguments
+- **get_language_configs()**: Returns list of language configurations with formatter settings
+- **Tool availability check**: Verifies required formatter tools are installed before processing files
+- Shared utilities with `check-license-headers` in `devutils.utils.file_checking` module
+
+**Shared Utilities**:
+The format and check-license-headers commands share common code in `devutils/utils/file_checking.py`:
+- **collect_files()**: Gathers files from search directories and specific file paths
+- **FileResult**: Dataclass for file processing results
+- **print_status()**: Standardized file status output formatting
+- **format_file_path()**: Converts absolute paths to repository-relative paths
+
 ### Path Constants
 
 The `devutils.constants` module provides frozen dataclass instances with project paths:
@@ -275,6 +322,29 @@ All templates follow the format:
   - Recursively searches `path` for all files and directories
   - Uses `Path.rglob("*")` to match everything
   - Returns sorted list of all paths (files and directories)
+
+**file_checking** (via `devutils.utils.file_checking`):
+Shared utilities for file checking commands (format, check-license-headers):
+- `FileResult`: Dataclass for file processing results
+  - `path: pathlib.Path` - The file path
+  - `status: Enum` - The status enum value (specific to each command)
+  - `error: str | None` - Optional error message
+
+- `collect_files(extensions: list[str], search_dirs: list[Path], specific_files: list[Path]) -> list[Path]`:
+  - Gathers files from search directories and specific file paths
+  - Recursively searches each search directory for files with matching extensions
+  - Includes specified files if they exist
+  - Returns sorted list of collected file paths
+
+- `format_file_path(file_path: Path) -> str`:
+  - Converts absolute file path to repository-relative path
+  - Used for consistent output formatting
+  - Returns string representation relative to repository root
+
+- `print_status(status_label: str, color: str, file_path: Path, message: str = "") -> None`:
+  - Standardized file status output with color formatting
+  - Displays status label, file path, and optional message
+  - Used by both format and check-license-headers commands
 
 ### Development
 

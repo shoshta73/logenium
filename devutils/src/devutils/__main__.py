@@ -3,7 +3,7 @@
 
 import typer
 
-from .commands import build, check_license_headers, clean, configure
+from .commands import build, check_license_headers, clean, configure, format
 
 app = typer.Typer()
 
@@ -12,6 +12,7 @@ app.add_typer(check_license_headers, name="check-license-headers", help="Check l
 app.add_typer(check_license_headers, name="cls", help="Alias for check-license-headers")
 app.add_typer(clean, name="clean", help="Clean the project")
 app.add_typer(configure, name="configure", help="Configure the project")
+app.add_typer(format, name="format", help="Format the project")
 
 
 def version_callback(value: bool) -> None:
