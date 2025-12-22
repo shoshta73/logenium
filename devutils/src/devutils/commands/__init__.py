@@ -7,6 +7,7 @@ from .clean import clean
 from .configure import configure
 from .format import format
 from .lint import lint
+from .python import python
 
 __all__ = [
     "build",
@@ -15,4 +16,5 @@ __all__ = [
     "configure",
     "format",
     "lint",
+    "python",
 ]

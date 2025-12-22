@@ -1,0 +1,9 @@
+import typer
+from _typeshed import Incomplete
+from devutils.constants import Directories as Directories, Files as Files
+
+build: Incomplete
+
+def format_elapsed_time(seconds: float) -> str: ...
+def run(verbose: bool = ..., jobs: int = ..., no_ninja_override: bool = ...) -> None: ...
+def main(ctx: typer.Context, verbose: bool = ..., jobs: int = ..., no_ninja_override: bool = ...) -> None: ...

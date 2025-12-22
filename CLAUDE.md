@@ -84,6 +84,12 @@ uv run devutils clean
 uv run devutils check-license-headers check  # or: cls check
 # Check all files for correct SPDX license headers
 
+uv run devutils python stubgen generate
+# Generate Python stub files (.pyi) inline with source code
+
+uv run devutils python stubgen check
+# Check if Python stub files are up to date
+
 uv run devutils --version
 ```
 
@@ -108,7 +114,10 @@ devutils/
 │   │   ├── clean.py           # Build directory cleanup
 │   │   ├── check_license_headers.py  # License header validation and fixing
 │   │   ├── format.py          # Code formatting with clang-format and ruff
-│   │   └── lint.py            # Code linting with clang-tidy, mypy, and ruff
+│   │   ├── lint.py            # Code linting with clang-tidy, mypy, and ruff
+│   │   └── python/            # Python-specific commands
+│   │       ├── __init__.py    # Python command group
+│   │       └── stubgen.py     # Stub file generation with mypy stubgen
 │   ├── constants/
 │   │   ├── __init__.py        # Constant exports
 │   │   ├── paths.py           # Project path definitions
@@ -328,6 +337,63 @@ LintStep(
     can_fix=True,  # Set to False for check-only tools like mypy
 )
 ```
+
+#### python stubgen
+Generates and checks Python stub files (`.pyi`) inline with source code using mypy's stubgen tool. Stub files provide type hints for type checkers and IDEs.
+
+**Subcommands**:
+- **generate**: Generate stub files inline with source code
+- **check**: Verify stub files exist and are up to date
+
+**File Generation**:
+- Generates `.pyi` files directly alongside `.py` source files
+- Example: `lint.py` → `lint.pyi` (same directory)
+- Covers all Python modules in `devutils/src/devutils/`
+- Total: 23 stub files generated for the devutils package
+
+**Tool Requirements**:
+- **stubgen**: Part of mypy package
+- Automatically run via `uv run stubgen`
+- Provided by virtual environment (no separate installation needed if mypy is in requirements.txt)
+
+**Generation Process**:
+1. Generate stubs to temporary directory using `stubgen -p devutils`
+2. Copy `.pyi` files from temp directory to source locations
+3. Each `.py` file gets a corresponding `.pyi` file in the same directory
+
+**Check Process**:
+1. Verify `.pyi` files exist in source directory
+2. Generate fresh stubs to temporary directory
+3. Compare existing stubs with fresh stubs
+4. Report missing, extra, or out-of-date stub files
+
+**Exit Codes**:
+- `0`: Success (stubs generated or all up to date)
+- `1`: Failure (generation failed, stubs missing, or out of date)
+
+Usage:
+```bash
+uv run devutils python stubgen generate    # Generate inline stubs
+uv run devutils python stubgen generate -v # Generate with verbose output
+uv run devutils python stubgen check       # Check if stubs are up to date
+uv run devutils python stubgen check -v    # Check with verbose output
+```
+
+**Output Tags**:
+- **[SUCCESS]** (green): Operation completed successfully
+- **[FAIL]** (red): Operation failed or stubs are out of date
+
+**When to Regenerate Stubs**:
+- After adding new functions, classes, or methods
+- After changing function signatures or type annotations
+- After adding new Python modules to the package
+- When `check` command reports out-of-date stubs
+
+**Benefits**:
+- Type checkers (mypy, pyright) can find stubs automatically
+- IDEs get better autocomplete and type hints
+- Stubs co-located with source for easy maintenance
+- Simple workflow with minimal configuration
 
 ### Path Constants
 
