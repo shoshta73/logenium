@@ -9,33 +9,32 @@ from enum import Enum
 import typer
 
 from devutils.constants import Directories, Extensions, LicenseHeaders
-from devutils.utils import file_checking
+from devutils.utils.file_checking import (
+    FileResult,
+    FileStatus,
+    LanguageConfig,
+    Statistics,
+    print_status,
+)
 
 check_license_headers = typer.Typer()
 
 
 @dataclass
-class LanguageConfig:
-    name: str
-    extensions: list[str]
-    search_dirs: list[pathlib.Path]
-    specific_files: list[pathlib.Path]
+class LicenseLanguageConfig(LanguageConfig):
     license_header: list[str]
 
-    def collect_files(self) -> list[pathlib.Path]:
-        return file_checking.collect_files(self.extensions, self.search_dirs, self.specific_files)
 
-
-def get_language_configs() -> list[LanguageConfig]:
+def get_language_configs() -> list[LicenseLanguageConfig]:
     return [
-        LanguageConfig(
+        LicenseLanguageConfig(
             name="C/C++",
             extensions=Extensions.c_source + Extensions.cpp_source,
             search_dirs=[Directories.logenium_source],
             specific_files=[],
             license_header=LicenseHeaders.cpp,
         ),
-        LanguageConfig(
+        LicenseLanguageConfig(
             name="CMake",
             extensions=Extensions.cmake_source,
             search_dirs=[Directories.logenium_cmake, Directories.xheader_cmake],
@@ -48,21 +47,21 @@ def get_language_configs() -> list[LanguageConfig]:
             ],
             license_header=LicenseHeaders.cmake,
         ),
-        LanguageConfig(
+        LicenseLanguageConfig(
             name="Python",
             extensions=Extensions.python_source,
             search_dirs=[Directories.devutils_source],
             specific_files=[],
             license_header=LicenseHeaders.python,
         ),
-        LanguageConfig(
+        LicenseLanguageConfig(
             name="Batch",
             extensions=Extensions.bat_source,
             search_dirs=[],
             specific_files=[Directories.root / "devutils.bat"],
             license_header=LicenseHeaders.bat,
         ),
-        LanguageConfig(
+        LicenseLanguageConfig(
             name="PowerShell",
             extensions=Extensions.powershell_source,
             search_dirs=[],
@@ -72,43 +71,29 @@ def get_language_configs() -> list[LanguageConfig]:
     ]
 
 
-class FileStatus(Enum):
-    OK = "ok"
+class IssueType(Enum):
     MISSING = "missing"
     INCORRECT = "incorrect"
-    ERROR = "error"
-    UNKNOWN = "unknown"
 
 
-FileResult = file_checking.FileResult
+class LicenseHeaderStatistics(Statistics):
+    def __init__(self) -> None:
+        super().__init__()
+        self.missing: int = 0
+        self.incorrect: int = 0
 
-
-@dataclass
-class Statistics:
-    total: int = 0
-    ok: int = 0
-    missing: int = 0
-    incorrect: int = 0
-    errors: int = 0
-    fixed: int = 0
-    skipped: int = 0
-
-    def record_result(self, result: FileResult) -> None:
+    def record_result(self, result: FileResult, issue_type: IssueType | None = None) -> None:
         self.total += 1
         if result.status == FileStatus.OK:
             self.ok += 1
-        elif result.status == FileStatus.MISSING:
-            self.missing += 1
-        elif result.status == FileStatus.INCORRECT:
-            self.incorrect += 1
+        elif result.status == FileStatus.ISSUE:
+            self.issues += 1
+            if issue_type == IssueType.MISSING:
+                self.missing += 1
+            elif issue_type == IssueType.INCORRECT:
+                self.incorrect += 1
         elif result.status == FileStatus.ERROR:
             self.errors += 1
-
-    def record_fix(self, fixed: bool) -> None:
-        if fixed:
-            self.fixed += 1
-        else:
-            self.skipped += 1
 
     def print_summary(self, mode: str) -> None:
         typer.echo("")
@@ -137,26 +122,32 @@ class Statistics:
         return self.missing > 0 or self.incorrect > 0 or self.errors > 0
 
 
-def has_correct_license_header(file_path: pathlib.Path, expected_header: list[str]) -> FileResult:
+@dataclass
+class HeaderCheckResult:
+    result: FileResult
+    issue_type: IssueType | None = None
+
+
+def has_correct_license_header(file_path: pathlib.Path, expected_header: list[str]) -> HeaderCheckResult:
     try:
         with open(file_path, encoding="utf-8") as f:
             lines = f.readlines()
 
         if len(lines) < len(expected_header):
-            return FileResult(file_path, FileStatus.MISSING)
+            return HeaderCheckResult(FileResult(file_path, FileStatus.ISSUE), IssueType.MISSING)
 
         for i, expected_line in enumerate(expected_header):
             if lines[i] != expected_line:
-                return FileResult(file_path, FileStatus.INCORRECT)
+                return HeaderCheckResult(FileResult(file_path, FileStatus.ISSUE), IssueType.INCORRECT)
 
-        return FileResult(file_path, FileStatus.OK)
+        return HeaderCheckResult(FileResult(file_path, FileStatus.OK))
 
     except PermissionError:
-        return FileResult(file_path, FileStatus.ERROR, "Permission denied")
+        return HeaderCheckResult(FileResult(file_path, FileStatus.ERROR, "Permission denied"))
     except UnicodeDecodeError:
-        return FileResult(file_path, FileStatus.ERROR, "Unicode decode error")
+        return HeaderCheckResult(FileResult(file_path, FileStatus.ERROR, "Unicode decode error"))
     except Exception as e:
-        return FileResult(file_path, FileStatus.ERROR, str(e))
+        return HeaderCheckResult(FileResult(file_path, FileStatus.ERROR, str(e)))
 
 
 def fix_header(file_path: pathlib.Path, expected_header: list[str]) -> bool:
@@ -180,41 +171,42 @@ def fix_header(file_path: pathlib.Path, expected_header: list[str]) -> bool:
         return False
 
 
-def check_files(files: list[pathlib.Path], header_lines: list[str], stats: Statistics) -> None:
+def check_files(files: list[pathlib.Path], header_lines: list[str], stats: LicenseHeaderStatistics) -> None:
     for file_path in files:
-        result = has_correct_license_header(file_path, header_lines)
-        stats.record_result(result)
+        check_result = has_correct_license_header(file_path, header_lines)
+        stats.record_result(check_result.result, check_result.issue_type)
 
-        if result.status == FileStatus.OK:
-            file_checking.print_status("[OK]", "green", file_path)
-        elif result.status == FileStatus.MISSING:
-            file_checking.print_status("[MISSING]", "red", file_path)
-        elif result.status == FileStatus.INCORRECT:
-            file_checking.print_status("[INCORRECT]", "red", file_path)
-        elif result.status == FileStatus.ERROR:
-            file_checking.print_status("[ERROR]", "yellow", file_path, result.error or "")
+        if check_result.result.status == FileStatus.OK:
+            print_status("[OK]", "green", file_path)
+        elif check_result.result.status == FileStatus.ISSUE:
+            if check_result.issue_type == IssueType.MISSING:
+                print_status("[MISSING]", "red", file_path)
+            elif check_result.issue_type == IssueType.INCORRECT:
+                print_status("[INCORRECT]", "red", file_path)
+        elif check_result.result.status == FileStatus.ERROR:
+            print_status("[ERROR]", "yellow", file_path, check_result.result.error or "")
 
 
-def fix_files(files: list[pathlib.Path], header_lines: list[str], stats: Statistics) -> None:
+def fix_files(files: list[pathlib.Path], header_lines: list[str], stats: LicenseHeaderStatistics) -> None:
     for file_path in files:
-        result = has_correct_license_header(file_path, header_lines)
+        check_result = has_correct_license_header(file_path, header_lines)
         stats.total += 1
 
-        if result.status == FileStatus.ERROR:
-            file_checking.print_status("[ERROR]", "yellow", file_path, result.error or "")
+        if check_result.result.status == FileStatus.ERROR:
+            print_status("[ERROR]", "yellow", file_path, check_result.result.error or "")
             stats.errors += 1
             continue
 
-        if result.status == FileStatus.OK:
-            file_checking.print_status("[SKIP]", "cyan", file_path)
+        if check_result.result.status == FileStatus.OK:
+            print_status("[SKIP]", "cyan", file_path)
             stats.record_fix(False)
         else:
             fixed = fix_header(file_path, header_lines)
             if fixed:
-                file_checking.print_status("[FIXED]", "green", file_path)
+                print_status("[FIXED]", "green", file_path)
                 stats.record_fix(True)
             else:
-                file_checking.print_status("[SKIP]", "cyan", file_path)
+                print_status("[SKIP]", "cyan", file_path)
                 stats.record_fix(False)
 
 
@@ -227,7 +219,7 @@ def show_headers() -> None:
 
 @check_license_headers.command()
 def check() -> None:
-    stats = Statistics()
+    stats = LicenseHeaderStatistics()
 
     for config in get_language_configs():
         files = config.collect_files()
@@ -253,7 +245,7 @@ def check() -> None:
 
 @check_license_headers.command()
 def fix() -> None:
-    stats = Statistics()
+    stats = LicenseHeaderStatistics()
 
     for config in get_language_configs():
         files = config.collect_files()

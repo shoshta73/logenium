@@ -2,20 +2,11 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import pathlib
-from dataclasses import dataclass
-from enum import Enum
 
 import typer
 
 from devutils.constants import Directories
 from devutils.utils.filesystem import find_files_by_extensions
-
-
-@dataclass
-class FileResult:
-    path: pathlib.Path
-    status: Enum
-    error: str | None = None
 
 
 def collect_files(

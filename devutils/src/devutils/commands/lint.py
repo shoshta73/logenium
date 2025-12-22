@@ -5,12 +5,17 @@ import pathlib
 import subprocess
 import sys
 from dataclasses import dataclass
-from enum import Enum
 
 import typer
 
 from devutils.constants import Directories, Extensions
-from devutils.utils import file_checking
+from devutils.utils.file_checking import (
+    FileResult,
+    FileStatus,
+    LanguageConfig,
+    Statistics,
+    print_status,
+)
 
 lint = typer.Typer()
 
@@ -24,20 +29,13 @@ class LintStep:
 
 
 @dataclass
-class LanguageConfig:
-    name: str
-    extensions: list[str]
-    search_dirs: list[pathlib.Path]
-    specific_files: list[pathlib.Path]
+class LintLanguageConfig(LanguageConfig):
     lint_steps: list[LintStep]
 
-    def collect_files(self) -> list[pathlib.Path]:
-        return file_checking.collect_files(self.extensions, self.search_dirs, self.specific_files)
 
-
-def get_language_configs() -> list[LanguageConfig]:
+def get_language_configs() -> list[LintLanguageConfig]:
     return [
-        LanguageConfig(
+        LintLanguageConfig(
             name="C/C++",
             extensions=Extensions.c_source + Extensions.cpp_source,
             search_dirs=[
@@ -53,13 +51,13 @@ def get_language_configs() -> list[LanguageConfig]:
             lint_steps=[
                 LintStep(
                     tool_name="clang-tidy",
-                    check_args=[],
-                    fix_args=["--fix"],
+                    check_args=["-p", str(Directories.build)],
+                    fix_args=["-p", str(Directories.build), "--fix"],
                     can_fix=True,
                 )
             ],
         ),
-        LanguageConfig(
+        LintLanguageConfig(
             name="Python",
             extensions=Extensions.python_source,
             search_dirs=[Directories.devutils_source],
@@ -80,65 +78,6 @@ def get_language_configs() -> list[LanguageConfig]:
             ],
         ),
     ]
-
-
-class FileStatus(Enum):
-    OK = "ok"
-    HAS_ISSUES = "has_issues"
-    ERROR = "error"
-    UNKNOWN = "unknown"
-
-
-FileResult = file_checking.FileResult
-
-
-@dataclass
-class Statistics:
-    total: int = 0
-    ok: int = 0
-    has_issues: int = 0
-    errors: int = 0
-    fixed: int = 0
-    skipped: int = 0
-
-    def record_result(self, result: FileResult) -> None:
-        self.total += 1
-        if result.status == FileStatus.OK:
-            self.ok += 1
-        elif result.status == FileStatus.HAS_ISSUES:
-            self.has_issues += 1
-        elif result.status == FileStatus.ERROR:
-            self.errors += 1
-
-    def record_fix(self, fixed: bool) -> None:
-        if fixed:
-            self.fixed += 1
-        else:
-            self.skipped += 1
-
-    def print_summary(self, mode: str) -> None:
-        typer.echo("")
-        typer.echo(typer.style("=" * 60, fg="cyan"))
-        typer.echo(typer.style(f"Summary ({mode} mode)", fg="cyan", bold=True))
-        typer.echo(typer.style("=" * 60, fg="cyan"))
-        typer.echo(f"Total files checked: {self.total}")
-
-        if mode == "check":
-            typer.echo(f"  {typer.style('[OK]', fg='green')}          {self.ok}")
-            if self.has_issues > 0:
-                typer.echo(f"  {typer.style('[HAS_ISSUES]', fg='red')} {self.has_issues}")
-            if self.errors > 0:
-                typer.echo(f"  {typer.style('[ERROR]', fg='yellow')}      {self.errors}")
-        elif mode == "fix":
-            typer.echo(f"  {typer.style('[FIXED]', fg='green')}    {self.fixed}")
-            typer.echo(f"  {typer.style('[SKIPPED]', fg='cyan')}  {self.skipped}")
-            if self.errors > 0:
-                typer.echo(f"  {typer.style('[ERROR]', fg='yellow')}    {self.errors}")
-
-        typer.echo(typer.style("=" * 60, fg="cyan"))
-
-    def has_failures(self) -> bool:
-        return self.has_issues > 0 or self.errors > 0
 
 
 def check_tool_available(tool_name: str) -> bool:
@@ -179,7 +118,8 @@ def check_file_lint(file_path: pathlib.Path, lint_step: LintStep) -> FileResult:
         if result.returncode == 0:
             return FileResult(file_path, FileStatus.OK)
         else:
-            return FileResult(file_path, FileStatus.HAS_ISSUES)
+            error_output = result.stdout + result.stderr
+            return FileResult(file_path, FileStatus.ISSUE, error_output.strip())
 
     except Exception as e:
         return FileResult(file_path, FileStatus.ERROR, str(e))
@@ -208,73 +148,97 @@ def fix_file_lint(file_path: pathlib.Path, lint_step: LintStep) -> bool:
         return False
 
 
-def check_files(files: list[pathlib.Path], config: LanguageConfig, stats: Statistics) -> None:
+def check_files(files: list[pathlib.Path], config: LintLanguageConfig, stats: Statistics) -> None:
     for file_path in files:
         file_has_issues = False
         file_has_errors = False
+        error_messages = []
 
         for lint_step in config.lint_steps:
             result = check_file_lint(file_path, lint_step)
 
-            if result.status == FileStatus.HAS_ISSUES:
+            if result.status == FileStatus.ISSUE:
                 file_has_issues = True
+                if result.error:
+                    error_messages.append(f"[{lint_step.tool_name}]\n{result.error}")
             elif result.status == FileStatus.ERROR:
                 file_has_errors = True
+                if result.error:
+                    error_messages.append(f"[{lint_step.tool_name}]\n{result.error}")
 
         if file_has_errors:
             stats.total += 1
             stats.errors += 1
-            file_checking.print_status("[ERROR]", "yellow", file_path)
+            print_status("[ERROR]", "yellow", file_path)
+            if error_messages:
+                typer.echo("\n".join(error_messages))
+                typer.echo()
         elif file_has_issues:
             stats.total += 1
-            stats.has_issues += 1
-            file_checking.print_status("[HAS_ISSUES]", "red", file_path)
+            stats.issues += 1
+            print_status("[HAS_ISSUES]", "red", file_path)
+            if error_messages:
+                typer.echo("\n".join(error_messages))
+                typer.echo()
         else:
             stats.total += 1
             stats.ok += 1
-            file_checking.print_status("[OK]", "green", file_path)
+            print_status("[OK]", "green", file_path)
 
 
-def fix_files(files: list[pathlib.Path], config: LanguageConfig, stats: Statistics) -> None:
+def fix_files(files: list[pathlib.Path], config: LintLanguageConfig, stats: Statistics) -> None:
     for file_path in files:
         file_had_issues = False
         all_fixed = True
         file_has_errors = False
+        error_messages = []
 
         for lint_step in config.lint_steps:
             result = check_file_lint(file_path, lint_step)
 
             if result.status == FileStatus.ERROR:
                 file_has_errors = True
+                if result.error:
+                    error_messages.append(f"[{lint_step.tool_name}]\n{result.error}")
                 break
-            elif result.status == FileStatus.HAS_ISSUES:
+            elif result.status == FileStatus.ISSUE:
                 file_had_issues = True
                 if lint_step.can_fix:
                     fixed = fix_file_lint(file_path, lint_step)
                     if not fixed:
                         all_fixed = False
+                        if result.error:
+                            error_messages.append(f"[{lint_step.tool_name}]\n{result.error}")
                 else:
                     all_fixed = False
+                    if result.error:
+                        error_messages.append(f"[{lint_step.tool_name}]\n{result.error}")
 
         stats.total += 1
 
         if file_has_errors:
-            file_checking.print_status("[ERROR]", "yellow", file_path)
+            print_status("[ERROR]", "yellow", file_path)
             stats.errors += 1
+            if error_messages:
+                typer.echo("\n".join(error_messages))
+                typer.echo()
         elif not file_had_issues:
-            file_checking.print_status("[SKIP]", "cyan", file_path)
+            print_status("[SKIP]", "cyan", file_path)
             stats.record_fix(False)
         elif all_fixed:
-            file_checking.print_status("[FIXED]", "green", file_path)
+            print_status("[FIXED]", "green", file_path)
             stats.record_fix(True)
         else:
-            file_checking.print_status("[PARTIAL]", "yellow", file_path)
+            print_status("[PARTIAL]", "yellow", file_path)
             stats.record_fix(False)
+            if error_messages:
+                typer.echo("\n".join(error_messages))
+                typer.echo()
 
 
 @lint.command()
 def check() -> None:
-    stats = Statistics()
+    stats = Statistics(issue_label="[HAS_ISSUES]")
     configs = get_language_configs()
 
     for config in configs:
@@ -314,7 +278,7 @@ def check() -> None:
 
 @lint.command()
 def fix() -> None:
-    stats = Statistics()
+    stats = Statistics(issue_label="[HAS_ISSUES]")
     configs = get_language_configs()
 
     for config in configs:
