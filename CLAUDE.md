@@ -73,7 +73,7 @@ Both scripts automatically:
 ```bash
 # Run devutils commands (uv auto-manages Python 3.14+)
 uv run devutils configure
-# Prompts for: testing options, xheader testing, build mode (Debug/Release/RelWithDebInfo/MinSizeRel)
+# Prompts for: testing options, library-specific testing, build mode
 
 uv run devutils build
 # Options: -v/--verbose for verbose output, -j/--jobs for parallel jobs
@@ -135,512 +135,100 @@ devutils/
 #### configure
 Interactive CMake project configuration with prompts for build options:
 - **Testing**: Enable/disable project-wide tests (`LOGENIUM_BUILD_TESTS`)
-- **xheader Testing**: Enable/disable xheader library tests (`LOGENIUM_XHEADER_BUILD_TESTS`)
+- **Library Testing**: Enable/disable per-library tests (`LOGENIUM_XHEADER_BUILD_TESTS`, `LOGENIUM_DEBUG_BUILD_TESTS`)
 - **Build Mode**: Debug, Release, RelWithDebInfo, or MinSizeRel
 - **Generator**: Always uses Ninja
-
-Generates CMake build files in `build/` directory with selected options.
 
 Usage: `uv run devutils configure`
 
 #### build
-Runs Ninja build with custom output handling:
-- **Verbose mode**: `-v/--verbose` flag for detailed build output
-- **Parallel jobs**: `-j/--jobs N` flag (0 = auto, capped to CPU count)
-- **Enhanced status**: Custom `NINJA_STATUS` with human-readable elapsed time (format: `<d>d <h>h <m>m <s>s <ms>ms`)
-- **No override mode**: `--no-ninja-override` flag to preserve existing `NINJA_STATUS` environment variable
-- **Output normalization**: Converts Ninja's `\r` line updates to `\r\n` for continuous logs
-- **Error handling**: Exits with Ninja's exit code on failure
-
-**Default Ninja Status Format**: `[finished/total : percentage - elapsed_time]`
-
-Example output: `[42/238 : 17% - 0d 0h 0m 5s 234ms]`
-
-Requires prior configuration via `devutils configure` or manual CMake setup.
+Runs Ninja build with enhanced output:
+- `-v/--verbose`: Detailed build output
+- `-j/--jobs N`: Parallel jobs (0 = auto, capped to CPU count)
+- `--no-ninja-override`: Preserve existing `NINJA_STATUS` environment variable
+- Custom status format: `[finished/total : percentage - elapsed_time]` (e.g., `[42/238 : 17% - 0d 0h 0m 5s 234ms]`)
 
 Usage: `uv run devutils build [-v] [-j N] [--no-ninja-override]`
 
 #### clean
-Removes the build directory and all its contents. Equivalent to `rm -rf build` but with proper handling of read-only files.
-
-**Features**:
-- Checks if build directory exists before attempting removal
-- Handles read-only files (common in git objects from CMake FetchContent)
-- Uses `shutil.rmtree()` with error handler for Windows compatibility
-- Graceful handling when build directory doesn't exist
-
-**Implementation Details**:
-- Uses `handle_remove_readonly()` callback to make read-only files writable before deletion
-- Essential for cleaning FetchContent dependencies with git objects on Windows
+Removes build directory with proper read-only file handling (essential for FetchContent git objects on Windows).
 
 Usage: `uv run devutils clean`
 
 #### check-license-headers (alias: cls)
-Validates and fixes SPDX license headers across project files. Supports C, C++, Python, CMake, PowerShell, and Batch files.
+Validates and fixes SPDX license headers. Supports C/C++, Python, CMake, PowerShell, Batch.
 
-**Subcommands**:
-- **show-headers**: Display expected license header format for each file type
-- **check**: Scan all project files and report header status (OK/MISSING/INCORRECT/ERROR)
-- **fix**: Automatically prepend missing or incorrect headers to files
+**Subcommands**: `show-headers`, `check`, `fix`
 
-**File Coverage**:
-- C/C++ source files (`.c`, `.h`, `.cxx`, `.hxx`) in `src/` and `libs/`
-- CMake files (`CMakeLists.txt`, `*.cmake`) in root, `cmake/`, and library directories
-- Python files (`.py`, `.pyi`) in `devutils/src/`
-- Windows scripts (`devutils.bat`, `devutils.ps1`)
+**File Coverage**: C/C++ in `src/`/`libs/`, CMake files, Python in `devutils/`, Windows scripts
 
-**Expected Header Format** (SPDX-compliant):
-```
-// SPDX-FileCopyrightText: 2025 Logenium Authors and Contributors
-// SPDX-License-Identifier: BSD-3-Clause
-```
-(Comment syntax varies by language: `//` for C/C++, `#` for Python/CMake/PowerShell, `@REM` for Batch)
+**Header Format**: `// SPDX-FileCopyrightText: 2025 Logenium Authors and Contributors` + `// SPDX-License-Identifier: BSD-3-Clause` (syntax varies by language)
 
-**Exit Codes**:
-- `0`: Success (all headers correct or successfully fixed)
-- `1`: Failure (missing/incorrect headers in check mode, or errors in fix mode)
+Usage: `uv run devutils cls check` | `uv run devutils cls fix`
 
-Usage:
-```bash
-uv run devutils check-license-headers show-headers  # Display header templates
-uv run devutils cls check                           # Check all files (CI-friendly)
-uv run devutils cls fix                             # Fix all files
-```
-
-**Architecture**:
-The command uses a configuration-driven architecture via the `LanguageConfig` dataclass:
-- **LanguageConfig**: Encapsulates language name, extensions, search directories, specific files, and license header template
-- **get_language_configs()**: Returns list of all language configurations
-- **collect_files()**: Method on LanguageConfig that gathers files from search directories and specific file paths
-- All commands (`show-headers`, `check`, `fix`) iterate over the language configs
-
-**Adding New Language Support**:
-To add a new language, add an entry to `get_language_configs()` in `check_license_headers.py`:
-```python
-LanguageConfig(
-    name="Language Name",
-    extensions=Extensions.language_source,  # from constants/extensions.py
-    search_dirs=[Directories.target_dir],   # from constants/paths.py
-    specific_files=[Directories.root / "specific_file.ext"],
-    license_header=LicenseHeaders.language, # from constants/license_header.py
-)
-```
-Also update the corresponding constants files (`extensions.py`, `license_header.py`, optionally `comments.py`).
+**Architecture**: Configuration-driven via `LanguageConfig` dataclass. To add languages, update `get_language_configs()` in `check_license_headers.py` and constants files.
 
 #### format
-Checks and fixes code formatting across the project using language-specific formatters. Supports C/C++ (via clang-format) and Python (via ruff).
+Checks and fixes code formatting. Supports C/C++ (clang-format) and Python (ruff).
 
-**Subcommands**:
-- **check**: Verify all files are formatted correctly without modifying them
-- **fix**: Automatically format all files that need formatting
+**Subcommands**: `check`, `fix`
 
-**File Coverage**:
-- C/C++ files (`.c`, `.h`, `.cxx`, `.hxx`) in `src/`, `include/`, `libs/xheader/`, `libs/debug/`
-- Python files (`.py`, `.pyi`) in `devutils/src/`
+**File Coverage**: C/C++ in `src/`/`libs/`, Python in `devutils/`
 
-**Formatter Tools**:
-- **clang-format**: Used for C/C++ files
-  - Check mode: `clang-format --dry-run -Werror <file>`
-  - Fix mode: `clang-format -i <file>`
-  - Must be installed and available in PATH
-- **ruff**: Used for Python files
-  - Check mode: `uv run ruff format --check <file>`
-  - Fix mode: `uv run ruff format <file>`
-  - Provided by virtual environment (no separate installation needed)
+**Tools**: clang-format (must be in PATH), ruff (auto-installed via uv)
 
-**Exit Codes**:
-- `0`: Success (all files formatted correctly or successfully formatted)
-- `1`: Failure (unformatted files in check mode, tool not available, or errors in fix mode)
+Usage: `uv run devutils format check` | `uv run devutils format fix`
 
-Usage:
-```bash
-uv run devutils format check  # Check all files (CI-friendly)
-uv run devutils format fix    # Format all files
-```
-
-**Architecture**:
-Similar to `check-license-headers`, the command uses a configuration-driven architecture:
-- **LanguageConfig**: Encapsulates language name, extensions, search directories, formatter tool, and tool arguments
-- **get_language_configs()**: Returns list of language configurations with formatter settings
-- **Tool availability check**: Verifies required formatter tools are installed before processing files
-- Shared utilities with `check-license-headers` in `devutils.utils.file_checking` module
-
-**Shared Utilities**:
-The format and check-license-headers commands share common code in `devutils/utils/file_checking.py`:
-- **collect_files()**: Gathers files from search directories and specific file paths
-- **FileResult**: Dataclass for file processing results
-- **print_status()**: Standardized file status output formatting
-- **format_file_path()**: Converts absolute paths to repository-relative paths
+**Architecture**: Configuration-driven via `LanguageConfig`. Shares utilities with `check-license-headers` in `devutils.utils.file_checking`.
 
 #### lint
-Checks and fixes linting issues across the project using language-specific linters. Features **parallel processing** and **YAML-based caching** for significantly improved performance. Supports C/C++ (via clang-tidy + clang-check) and Python (via mypy + ruff two-step process).
+Multi-step linting with **parallel processing** and **YAML-based caching**. Supports C/C++ (clang-tidy + clang-check) and Python (mypy + ruff).
 
-**Subcommands**:
-- **check**: Verify all files pass linting checks without modifying them
-- **fix**: Automatically fix linting issues where possible
+**Subcommands**: `check`, `fix` | **Flag**: `--no-cache`
 
-**Command-Line Flags**:
-- **`--no-cache`**: Disable caching and re-lint all files (default: caching enabled)
+**File Coverage**: C/C++ in `src/`/`libs/`, Python in `devutils/`
 
-**File Coverage**:
-- C/C++ files (`.c`, `.h`, `.cxx`, `.hxx`) in `src/`, `include/`, `libs/xheader/`, `libs/debug/`
-- Python files (`.py`, `.pyi`) in `devutils/src/`
+**Tools**:
+- C/C++: clang-tidy (standards, can fix) + clang-check (static analysis, read-only)
+- Python: mypy (type checking, read-only) + ruff (linting, can fix)
+- Requires: clang-tidy/clang-check in PATH, `build/compile_commands.json`; mypy/ruff auto-installed via uv
 
-**Linting Tools**:
+**Performance**:
+- Parallel: 3-5x speedup (first run)
+- Cache (`.cache/devutils/lint_cache.yaml`, mtime-based): 10-50x speedup (no changes), 5-10x (partial changes)
 
-*C/C++ files undergo two linting steps:*
-- **clang-tidy**: Coding standards and best practices
-  - Check mode: `clang-tidy -p build <file>`
-  - Fix mode: `clang-tidy -p build --fix <file>`
-  - Uses `-p build` flag to read compilation database from build directory
-  - Must be installed and available in PATH
-  - Requires `build/compile_commands.json` to exist (generated by CMake)
-  - Can auto-fix issues
-- **clang-check**: Static analysis
-  - Check mode: `clang-check --analyze -p build <file>`
-  - Performs deep semantic analysis (null pointer checks, memory leaks, etc.)
-  - Must be installed and available in PATH
-  - Cannot auto-fix (analysis only)
+**Output Tags**: `[OK]`, `[CACHED:OK]`, `[WARNING]`, `[HAS_ISSUES]`, `[FIXED]`, `[PARTIAL]`, `[ERROR]`
+- Warnings don't cause failure; errors do
 
-*Python files undergo two linting steps:*
-- **mypy**: Type checking
-  - Check mode: `uv run mypy <file>`
-  - Provided by virtual environment
-  - Cannot auto-fix (type checking only)
-- **ruff**: Code linting
-  - Check mode: `uv run ruff check <file>`
-  - Fix mode: `uv run ruff check --fix <file>`
-  - Provided by virtual environment
-  - Can auto-fix many issues
+Usage: `uv run devutils lint check [--no-cache]` | `uv run devutils lint fix [--no-cache]`
 
-**Performance Features**:
-
-*Parallel Processing*:
-- Uses `ThreadPoolExecutor` to lint multiple files concurrently
-- Expected speedup: **3-5x** on multi-core systems (first run)
-- Optimal for I/O-bound linting tools
-- Thread-safe statistics collection
-
-*YAML-Based Caching*:
-- Cache location: `.cache/devutils/lint_cache.yaml`
-- Stores results per-file, per-language, per-tool
-- Cache key format: `"{language}:{tool}:{relative_path}"`
-- Invalidation: File modification time (mtime) comparison
-- Expected speedup: **10-50x** on cached runs with no file changes
-- Combined speedup: **5-10x** with partial changes (80% cache hits)
-
-**Output Tags**:
-
-*Check Mode*:
-- **[OK]** (green): File passed all linting checks
-- **[CACHED:OK]** (green): File passed (result from cache)
-- **[WARNING]** (yellow): File has warnings (does not cause failure)
-- **[CACHED:WARNING]** (yellow): File has warnings (result from cache)
-- **[HAS_ISSUES]** (red): File has linting issues (causes failure)
-- **[CACHED:ISSUE]** (red): File has linting issues (result from cache)
-- **[ERROR]** (red): Linting tool error (causes failure)
-- **[CACHED:ERROR]** (red): Linting tool error (result from cache)
-
-*Fix Mode*:
-- **[SKIP]** (cyan): No issues found
-- **[CACHED:SKIP]** (cyan): No issues found (result from cache)
-- **[FIXED]** (green): All fixable issues resolved
-- **[PARTIAL]** (yellow): Some issues fixed, but unfixable issues remain
-- **[ERROR]** (red): Fix operation failed
-
-**Warning vs. Error Handling**:
-The lint command distinguishes between warnings and errors:
-- **Warnings**: Logged and displayed but **do not cause command failure** (exit code 0)
-- **Errors**: Cause command failure (exit code 1)
-- **Detection**: Based on tool output keywords ("warning:", "note:" vs "error:", "traceback")
-
-Files are classified as:
-1. **ERROR** if output contains: "error:", "traceback", "assertion"
-2. **WARNING** if output contains: "warning:", "note:"
-3. **ISSUE** for all other non-zero exit codes
-
-**Exit Codes**:
-- `0`: Success (all files passed or only warnings found)
-- `1`: Failure (files with errors or issues in check mode, tool not available, or errors in fix mode)
-
-**Performance Comparison**:
-
-*First Run (Cold Cache)*:
-- Sequential (old): 100 Python files ~35s, 50 C++ files ~75s
-- Parallel (new): 100 Python files ~10s (3.5x faster), 50 C++ files ~20s (3.75x faster)
-
-*Subsequent Runs (Warm Cache, No Changes)*:
-- With cache: 100 Python files ~2s (17.5x faster), 50 C++ files ~4s (18.75x faster)
-
-*Partial Changes (80% Cache Hits)*:
-- Combined: 100 Python files ~5s (7x faster), 50 C++ files ~10s (7.5x faster)
-
-Usage:
-```bash
-uv run devutils lint check            # Check all files with caching (CI-friendly)
-uv run devutils lint check --no-cache # Check all files, bypass cache
-uv run devutils lint fix              # Fix linting issues where possible with caching
-uv run devutils lint fix --no-cache   # Fix without using cache
-```
-
-**Example Output**:
-
-*Check Mode*:
-```
-Linting C/C++ files...
-[OK]                src/main.cxx
-[CACHED:OK]         src/window.cxx
-[WARNING]           include/logenium/application.hxx
-[clang-tidy]
-warning: single-argument constructors must be marked explicit...
-
-[HAS_ISSUES]        src/application.cxx
-[clang-tidy]
-error: use of undeclared identifier 'foo'
-
-============================================================
-Summary (check mode)
-============================================================
-Total files checked: 75
-  [OK]          70
-  [WARNING]     3
-  [HAS_ISSUES]  2
-============================================================
-```
-
-*Fix Mode*:
-```
-Linting Python files...
-[CACHED:SKIP]       devutils/src/devutils/__init__.py
-[FIXED]             devutils/src/devutils/commands/lint.py
-[PARTIAL]           devutils/src/devutils/commands/format.py
-[mypy]
-error: Missing type annotation for variable
-
-============================================================
-Summary (fix mode)
-============================================================
-Total files checked: 50
-  [FIXED]      5
-  [SKIPPED]    43
-  [ERROR]      2
-============================================================
-```
-
-**Architecture**:
-Extended version of the format command architecture with multi-step and parallel support:
-- **LintStep**: Dataclass defining a single linting step (tool name, args, fix capability)
-- **LintLanguageConfig**: Contains list of lint steps for sequential execution per file
-- **LintCacheManager**: Thread-safe YAML cache manager with atomic file writes
-- **Parallel processing**: `ThreadPoolExecutor` with per-file worker functions
-- **Thread safety**: `threading.Lock` for statistics updates and console output
-- **Multi-step processing**: Each file is checked/fixed by all lint steps in order
-- **Tool availability check**: Verifies all required linting tools are installed before processing
-- **Cache granularity**: Per-file, per-tool (separate cache entries for clang-tidy vs clang-check)
-- Shared utilities with format and check-license-headers in `devutils.utils.file_checking` module
-
-**Cache Structure** (`.cache/devutils/lint_cache.yaml`):
-```yaml
-version: '1.0'
-cache:
-  'C/C++:clang-tidy:src/main.cxx':
-    mtime: 1734967890.123456
-    status: ok
-    error: null
-  'C/C++:clang-check:src/main.cxx':
-    mtime: 1734967890.123456
-    status: warning
-    error: |
-      warning: potential null pointer dereference...
-  'Python:mypy:devutils/src/devutils/commands/lint.py':
-    mtime: 1734967890.123456
-    status: ok
-    error: null
-```
-
-**Adding New Linting Steps**:
-To add a new linting step for a language, modify the `lint_steps` list in `get_language_configs()`:
-```python
-LintStep(
-    tool_name="tool-name",
-    check_args=["arg1", "arg2"],
-    fix_args=["arg1", "--fix"],
-    can_fix=True,  # Set to False for check-only tools like mypy or clang-check
-)
-```
-
-**Dependencies**:
-- Required: `pyyaml>=6.0.3`, `types-pyyaml>=6.0.12.20250915` (added to `pyproject.toml`)
+**Architecture**: Multi-step parallel processing via `ThreadPoolExecutor`, thread-safe YAML cache (`LintCacheManager`), per-file per-tool cache entries. Cache key: `"{language}:{tool}:{relative_path}"`. To add lint steps, modify `lint_steps` in `get_language_configs()`. Dependencies: `pyyaml>=6.0.3`, `types-pyyaml>=6.0.12.20250915`.
 
 #### python stubgen
-Generates and checks Python stub files (`.pyi`) inline with source code using mypy's stubgen tool. Stub files provide type hints for type checkers and IDEs.
+Generates/checks Python stub files (`.pyi`) inline with source code using mypy's stubgen.
 
-**Subcommands**:
-- **generate**: Generate stub files inline with source code
-- **check**: Verify stub files exist and are up to date
+**Subcommands**: `generate [-v]`, `check [-v]`
 
-**File Generation**:
-- Generates `.pyi` files directly alongside `.py` source files
-- Example: `lint.py` → `lint.pyi` (same directory)
-- Covers all Python modules in `devutils/src/devutils/`
-- Total: 23 stub files generated for the devutils package
+**Process**: Generate to temp (`stubgen -p devutils`) → Copy `.pyi` alongside `.py` files → 23 stubs for devutils package
 
-**Tool Requirements**:
-- **stubgen**: Part of mypy package
-- Automatically run via `uv run stubgen`
-- Provided by virtual environment (no separate installation needed if mypy is in requirements.txt)
+**Regenerate when**: Adding/modifying functions, classes, type annotations, or modules
 
-**Generation Process**:
-1. Generate stubs to temporary directory using `stubgen -p devutils`
-2. Copy `.pyi` files from temp directory to source locations
-3. Each `.py` file gets a corresponding `.pyi` file in the same directory
+Usage: `uv run devutils python stubgen generate` | `uv run devutils python stubgen check`
 
-**Check Process**:
-1. Verify `.pyi` files exist in source directory
-2. Generate fresh stubs to temporary directory
-3. Compare existing stubs with fresh stubs
-4. Report missing, extra, or out-of-date stub files
+### devutils Constants & Utilities
 
-**Exit Codes**:
-- `0`: Success (stubs generated or all up to date)
-- `1`: Failure (generation failed, stubs missing, or out of date)
+**Singletons** (frozen dataclasses in `devutils.constants`):
+- `Directories`: Project paths (`root`, `build`, `libs`, library-specific paths)
+- `Files`: Build file paths (`ninja_build_file`)
+- `Comments`: Language comment syntax (`//`, `#`, `@REM`)
+- `Extensions`: File extension lists (`.c/.h`, `.cxx/.hxx`, `.py/.pyi`, etc.)
+- `LicenseHeaders`: SPDX header templates for each language
 
-Usage:
-```bash
-uv run devutils python stubgen generate    # Generate inline stubs
-uv run devutils python stubgen generate -v # Generate with verbose output
-uv run devutils python stubgen check       # Check if stubs are up to date
-uv run devutils python stubgen check -v    # Check with verbose output
-```
-
-**Output Tags**:
-- **[SUCCESS]** (green): Operation completed successfully
-- **[FAIL]** (red): Operation failed or stubs are out of date
-
-**When to Regenerate Stubs**:
-- After adding new functions, classes, or methods
-- After changing function signatures or type annotations
-- After adding new Python modules to the package
-- When `check` command reports out-of-date stubs
-
-**Benefits**:
-- Type checkers (mypy, pyright) can find stubs automatically
-- IDEs get better autocomplete and type hints
-- Stubs co-located with source for easy maintenance
-- Simple workflow with minimal configuration
-
-### Path Constants
-
-The `devutils.constants` module provides frozen dataclass instances with project paths:
-
-**Directories** (via `Directories` singleton):
-- `root`: Repository root directory
-- `build`: Build output directory
-- `libs`: Libraries directory
-- `logenium_source`, `logenium_include`, `logenium_cmake`: Main application paths
-- `xheader_root`, `xheader_source`, `xheader_include`, `xheader_cmake`, `xheader_tests`: xheader library paths (under `libs/`)
-- `debug_root`, `debug_source`, `debug_include`: debug library paths (under `libs/`)
-- `devutils_root`, `devutils_source`: devutils package paths
-
-**Files** (via `Files` singleton):
-- `ninja_build_file`: Path to `build/build.ninja`
-
-All paths are `pathlib.Path` objects calculated relative to the package installation location.
-
-### Additional Constants
-
-**Comments** (via `Comments` singleton in `devutils.constants.comments`):
-Frozen dataclass containing comment syntax for different languages:
-- `c`, `cpp`: `//` (C-style line comments)
-- `python`, `cmake`, `powershell`: `#` (hash comments)
-- `bat`: `@REM` (Batch remark)
-
-**Extensions** (via `Extensions` singleton in `devutils.constants.extensions`):
-Frozen dataclass with file extension lists:
-- `c_source`: `[".c", ".h"]`
-- `cpp_source`: `[".cxx", ".hxx"]`
-- `cmake_source`: `[".cmake"]`
-- `python_source`: `[".py", ".pyi"]`
-- `powershell_source`: `[".ps1"]`
-- `bat_source`: `[".bat"]`
-
-**LicenseHeaders** (via `LicenseHeaders` singleton in `devutils.constants.license_header`):
-Frozen dataclass containing SPDX license header templates as `list[str]` (each line includes newline):
-- `c`, `cpp`: C/C++ style with `//` comments
-- `python`, `cmake`, `powershell`: Hash-style comments
-- `bat`: Batch-style comments with `@REM`
-
-All templates follow the format:
-```
-<comment> SPDX-FileCopyrightText: 2025 Logenium Authors and Contributors
-<comment> SPDX-License-Identifier: BSD-3-Clause
-<blank line>
-```
-
-### Utility Modules
-
-**filesystem** (via `devutils.utils.fs`):
-- `find_files_by_extensions(path: Path, extensions: list[str]) -> list[Path]`:
-  - Recursively searches `path` for files matching any extension in `extensions`
-  - Uses `Path.rglob()` for each extension pattern
-  - Returns sorted list of matching file paths
-
-- `get_files_recursively(path: Path) -> list[Path]`:
-  - Recursively searches `path` for all files and directories
-  - Uses `Path.rglob("*")` to match everything
-  - Returns sorted list of all paths (files and directories)
-
-**file_checking** (via `devutils.utils.file_checking`):
-Shared utilities package for file checking commands (format, lint, check-license-headers). Organized into separate modules:
-
-**Module Structure**:
-- `file_result.py` - File processing result dataclass
-- `file_status.py` - Status enum for file processing
-- `language_config.py` - Language configuration base class
-- `statistics.py` - Statistics tracking and display
-- `utils.py` - Shared utility functions
-
-**Exported Classes and Functions**:
-
-- `FileResult` (from `file_result.py`): Dataclass for file processing results
-  - `path: pathlib.Path` - The file path
-  - `status: FileStatus` - The status enum value
-  - `error: str | None` - Optional error message
-
-- `FileStatus` (from `file_status.py`): Enum for file processing status
-  - `OK` - File passed checks
-  - `ISSUE` - File has issues that need fixing
-  - `ERROR` - Error occurred while processing file
-
-- `LanguageConfig` (from `language_config.py`): Base dataclass for language configurations
-  - `name: str` - Language display name
-  - `extensions: list[str]` - File extensions for this language
-  - `search_dirs: list[Path]` - Directories to search recursively
-  - `specific_files: list[Path]` - Specific files to include
-  - `collect_files() -> list[Path]` - Method to gather all files for this language
-
-- `Statistics` (from `statistics.py`): Dataclass for tracking and displaying file processing statistics
-  - Fields: `total`, `ok`, `issues`, `errors`, `fixed`, `skipped`, `issue_label`
-  - `record_result(result: FileResult)` - Record a check result
-  - `record_fix(fixed: bool)` - Record a fix operation
-  - `print_summary(mode: str)` - Display formatted summary
-  - `has_failures() -> bool` - Check if there are any issues or errors
-
-- `collect_files(extensions, search_dirs, specific_files) -> list[Path]` (from `utils.py`):
-  - Gathers files from search directories and specific file paths
-  - Recursively searches each search directory for files with matching extensions
-  - Includes specified files if they exist
-  - Returns sorted list of collected file paths
-
-- `format_file_path(file_path: Path) -> str` (from `utils.py`):
-  - Converts absolute file path to repository-relative path
-  - Used for consistent output formatting
-  - Returns string representation relative to repository root
-
-- `print_status(status_label, color, file_path, message="")` (from `utils.py`):
-  - Standardized file status output with color formatting
-  - Displays status label, file path, and optional message
-  - Used by format, lint, and check-license-headers commands
+**Utilities** (`devutils.utils`):
+- `fs`: File system utilities (`find_files_by_extensions`, `get_files_recursively`)
+- `file_checking`: Shared file processing utilities (5 modules: `file_result`, `file_status`, `language_config`, `statistics`, `utils`)
+  - Key classes: `FileResult`, `FileStatus`, `LanguageConfig`, `Statistics`
+  - Key functions: `collect_files`, `format_file_path`, `print_status`
 
 ### Development
 
@@ -658,79 +246,16 @@ uv run devutils <command>
 
 **Entry Points**: Two CLI entry points (`logenium-devutils`, `devutils`) map to `devutils.__main__:app`
 
-### Common Pitfalls and Debugging
+### devutils Development Notes
 
-When working on devutils commands, be aware of these patterns:
+**Common Pitfalls**:
+1. Capture subprocess error output in `FileResult`: `error_output = result.stdout + result.stderr`
+2. Display error messages from `FileResult.error` in `check_files()`/`fix_files()`
+3. Clear `__pycache__` after changes: `find devutils -name "__pycache__" -type d -exec rm -rf {} +`
 
-1. **Capturing subprocess error output**: When running external tools via `subprocess.run()`, always capture and return error output in the `FileResult`:
-   ```python
-   result = subprocess.run(cmd, capture_output=True, text=True, check=False)
-   if result.returncode == 0:
-       return FileResult(file_path, FileStatus.OK)
-   else:
-       error_output = result.stdout + result.stderr
-       return FileResult(file_path, FileStatus.ISSUE, error_output.strip())
-   ```
+**Why uv?**: Auto-manages Python versions, fast (Rust-based), zero config, deterministic
 
-2. **Displaying error messages**: In `check_files()` and `fix_files()` functions, always display the error message from `FileResult.error` when files have issues or errors:
-   ```python
-   if result.status == FileStatus.ISSUE:
-       print_status("[ISSUE]", "red", file_path)
-       if result.error:
-           typer.echo(result.error)
-           typer.echo()
-   ```
-
-3. **Python cache**: When making changes to devutils code, clear `__pycache__` to see changes: `find devutils -name "__pycache__" -type d -exec rm -rf {} +`
-
-### Why uv?
-The project uses [uv](https://github.com/astral-sh/uv) instead of traditional `pip` because:
-- **No Python installation required**: uv automatically downloads and manages Python versions
-- **Fast**: Written in Rust, significantly faster than pip
-- **Zero configuration**: Users don't need to manually install Python 3.14+ or create virtual environments
-- **Deterministic**: Ensures consistent dependency resolution across environments
-
-### Windows Scripts (devutils.bat & devutils.ps1)
-
-Located at repository root: `devutils.bat` and `devutils.ps1`
-
-Convenience wrappers for Windows users that automate the entire devutils setup and execution process.
-
-**Features** (both scripts):
-1. **Auto-install uv**: Detects if uv is installed; if not, downloads and installs it automatically
-2. **Environment refresh**: Refreshes PATH after uv installation
-3. **Python installation**: Ensures Python 3.14 is installed via `uv python install 3.14`
-4. **Virtual environment**: Creates `.venv` if it doesn't exist
-5. **Dependencies**: Installs packages from `requirements.txt` on first run
-6. **Command forwarding**: Passes all arguments to devutils
-7. **User-friendly**: Pauses at end so users can see output
-
-#### devutils.bat (Batch Script)
-
-**Implementation Details**:
-- Uses `@echo off` for clean output
-- Checks uv availability with `uv --version >nul 2>&1`
-- Downloads uv installer: `powershell -c "irm https://astral.sh/uv/install.ps1 | iex"`
-- Refreshes environment via registry query (HKLM System and HKCU paths)
-- Only creates venv/installs dependencies once (checks for `.venv` directory)
-- Runs `uv run devutils %*` where `%*` forwards all script arguments
-
-**Usage**: `devutils.bat <command>` from repository root (cmd.exe)
-
-#### devutils.ps1 (PowerShell Script)
-
-**Implementation Details**:
-- Uses `Get-Command` with `-ErrorAction Stop` to check for uv
-- Downloads uv installer: `Invoke-RestMethod https://astral.sh/uv/install.ps1 | Invoke-Expression`
-- Refreshes environment via `[System.Environment]::GetEnvironmentVariable()` for Machine and User paths
-- Uses `Test-Path ".venv"` to check for existing virtual environment
-- Runs `uv run devutils $args` where `$args` forwards all script arguments
-- Color-coded output with `Write-Host -ForegroundColor`
-- Interactive pause using `$Host.UI.RawUI.ReadKey()`
-
-**Usage**: `.\devutils.ps1 <command>` from repository root (PowerShell)
-
-**Note**: First run of either script may take a few minutes for setup. Subsequent runs are instant.
+**Windows Scripts**: `devutils.bat` (cmd.exe) and `devutils.ps1` (PowerShell) auto-install uv, Python 3.14, create venv, install dependencies, forward commands. First run: ~few minutes; subsequent: instant.
 
 ## Architecture Overview
 
@@ -1002,41 +527,43 @@ typedef struct HFOO__ *HFOO;
 
 ### Dependencies
 The project uses **GoogleTest v1.17.0** for unit testing, managed via CMake FetchContent:
-- Locations:
-  - Root level: `cmake/dependencies.cmake`
-  - xheader level: `libs/xheader/cmake/dependencies.cmake`
-- Automatically fetched from GitHub during CMake configuration
-- Shallow clone with progress reporting
+- Locations: `cmake/dependencies.cmake`, `libs/xheader/cmake/dependencies.cmake`, `libs/debug/cmake/dependencies.cmake`
+- Automatically fetched from GitHub during CMake configuration (shallow clone)
 - Provides: `gtest`, `gmock`, `gtest_main`, `gmock_main` targets
-- FetchContent temporarily disables `CMAKE_EXPORT_COMPILE_COMMANDS` during fetch
 
-**Note**: The xheader library is written in C23, but its tests are written in C++ (using GoogleTest framework). This is why the xheader CMakeLists.txt declares both `LANGUAGES C CXX`.
+**Note**: xheader library is C23, but tests are C++ (GoogleTest requires C++). xheader CMakeLists.txt declares both `LANGUAGES C CXX`.
 
 ### Test Targets
 
 The project uses a hierarchical test target structure:
 
-1. **Library-specific test executables** (e.g., `xheader_win32api_tests`):
+1. **Library-specific test executables**: `xheader_win32api_tests`, `debug_utility_tests`
    - Self-contained test executable per library
    - Links against its specific library and GoogleTest
    - Can be run independently
 
-2. **Aggregate library test target** (e.g., `xheader_tests`):
+2. **Aggregate library test targets**: `xheader_tests`, `debug_tests`
    - Reuses sources from library-specific tests
-   - Provides a unified test target per library
-   - Same sources, alternative target for aggregation
+   - Provides unified test target per library
 
-3. **Project-wide aggregate** (`all_logenium_tests`):
+3. **Project-wide aggregate**: `all_logenium_tests`
    - Combines all library test targets
    - Single executable for running all project tests
-   - Built at root level when `LOGENIUM_BUILD_TESTS=ON`
 
 ### xheader Tests
-The xheader library includes comprehensive unit tests using GoogleTest/GMock:
 - Location: `libs/xheader/tests/`
 - Test executables: `xheader_win32api_tests`, `xheader_tests`
-- Coverage: All Windows API stub functions have corresponding tests
-- Build control: `LOGENIUM_XHEADER_BUILD_TESTS` option (ON by default)
+- Coverage: All Windows API stub functions
+- Build control: `LOGENIUM_XHEADER_BUILD_TESTS` (default: ON)
+- Organization: One test file per API function, separate A/W variants
+
+### debug Tests
+- Location: `libs/debug/tests/`
+- Test executables: `debug_utility_tests`, `debug_tests`
+- Coverage: Assert, Breakpoint, BreakpointIfDebugging, IsDebuggerPresent
+- Build control: `LOGENIUM_DEBUG_BUILD_TESTS` (default: ON)
+- Test strategy: Safe predicates in debug builds, consteval verification in release builds
+- Key issue: Must link against `logenium::debug` alias (not `debug`) to avoid CMake target name conflicts
 
 ### Running Tests
 ```bash
@@ -1045,51 +572,35 @@ cmake -B build -G Ninja -DLOGENIUM_BUILD_TESTS=ON
 cmake --build build
 ctest --test-dir build
 
-# Run specific test executable
+# Run specific test executables
 ./build/libs/xheader/tests/xheader_win32api_tests
-./build/libs/xheader/tests/xheader_tests
+./build/libs/debug/tests/debug_utility_tests
 ./build/all_logenium_tests
 ```
 
 ### Test Organization
-- One test file per Windows API function
-- Separate tests for A/W variants (e.g., `get_message_a.cxx`, `get_message_w.cxx`)
-- All source paths use `${CMAKE_CURRENT_SOURCE_DIR}/` prefix for portability
-- Tests verify stub implementations compile and link correctly
-- All test files are C++ (`.cxx`) even though the library is C
-- Test targets explicitly specify C++23 and C23 standard requirements
-- Tests are discovered automatically via `gtest_discover_tests()`
+- Source paths use `${CMAKE_CURRENT_SOURCE_DIR}/` prefix for portability
+- Test files are C++ (`.cxx`) even for C libraries
+- Test targets specify required C++/C standards
+- Tests discovered automatically via `gtest_discover_tests()`
 
 ## CMake Configuration Options
 
-Available CMake options (defined in `cmake/options.cmake` and `libs/xheader/cmake/options.cmake`):
+Available CMake options:
 
 - `LOGENIUM_BUILD_TESTS`: Master switch for all tests (default: ON)
 - `LOGENIUM_XHEADER_BUILD_TESTS`: Build xheader library tests (default: ON)
+- `LOGENIUM_DEBUG_BUILD_TESTS`: Build debug library tests (default: ON)
 
 ### How Testing Options Work
-1. Root `CMakeLists.txt`:
-   - Includes `dependencies.cmake` to fetch GoogleTest
-   - Checks `LOGENIUM_BUILD_TESTS`
-   - If ON: enables CTest and GoogleTest integration via `enable_testing()`, `CTest`, and `GoogleTest` modules
-   - Creates `all_logenium_tests` target that aggregates tests from all libraries
-
-2. xheader `CMakeLists.txt`:
-   - Includes `cmake/dependencies.cmake` (library-level GoogleTest fetch)
-   - Checks BOTH `LOGENIUM_BUILD_TESTS` AND `LOGENIUM_XHEADER_BUILD_TESTS`
-   - Only then does it add the `tests` subdirectory
-   - Creates both `xheader_win32api_tests` and `xheader_tests` targets
+1. Root `CMakeLists.txt`: Checks `LOGENIUM_BUILD_TESTS`, enables CTest/GoogleTest, creates `all_logenium_tests`
+2. Library `CMakeLists.txt`: Checks BOTH master switch AND library-specific option, adds `tests` subdirectory
 
 ### Usage Examples
 ```bash
-# Build with all tests (default)
-cmake -B build -G Ninja
-
-# Disable all tests
-cmake -B build -G Ninja -DLOGENIUM_BUILD_TESTS=OFF
-
-# Build only specific library tests (xheader tests disabled)
-cmake -B build -G Ninja -DLOGENIUM_XHEADER_BUILD_TESTS=OFF
+cmake -B build -G Ninja                              # All tests enabled (default)
+cmake -B build -G Ninja -DLOGENIUM_BUILD_TESTS=OFF   # All tests disabled
+cmake -B build -G Ninja -DLOGENIUM_DEBUG_BUILD_TESTS=OFF  # Debug tests disabled only
 ```
 
 ## Current Limitations
