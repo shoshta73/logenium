@@ -48,6 +48,9 @@ add_library(
         src/windows/unregister_class_a.c
         src/windows/unregister_class_w.c
         src/windows/update_window.c
+
+        src/dlfcn/dlopen.c
+        src/dlfcn/dlclose.c
 )
 
 add_library(
@@ -64,6 +67,12 @@ target_compile_features(
         xheader
         PRIVATE
         c_std_23
+)
+
+target_link_libraries(
+        xheader
+        PUBLIC
+        $<$<PLATFORM_ID:Linux>:dl>
 )
 
 if(LOGENIUM_XHEADER_BUILD_TESTS AND LOGENIUM_BUILD_TESTS)

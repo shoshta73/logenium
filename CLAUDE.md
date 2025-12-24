@@ -315,11 +315,17 @@ First run: ~few minutes; subsequent: instant.
 
 ### Library Architecture
 
-1. **xheader library** (C23): Cross-platform Windows API abstraction
+1. **xheader library** (C23): Cross-platform API abstraction
    - Location: `libs/xheader/`
-   - Provides stub implementations for non-Windows platforms
-   - Each Windows API function has corresponding `.c` files with A/W suffix variants
-   - Header: `libs/xheader/include/xheader/windows.h`
+   - Provides platform-specific APIs and stub implementations for unsupported platforms
+   - **Windows API** (`xheader/windows.h`):
+     - Each Windows API function has corresponding `.c` files with A/W suffix variants
+     - Provides stub implementations for non-Windows platforms
+   - **Linux dlfcn API** (`xheader/dlfcn.h`):
+     - Re-exports system `<dlfcn.h>` on Linux
+     - Provides stub implementations for non-Linux platforms
+     - Functions: `dlopen`, `dlclose`
+     - Links against `dl` library on Linux
    - **Important**: Library is C23, but tests are C++ (GoogleTest requires C++)
    - CMake declares `LANGUAGES C CXX` to support both library and tests
 
@@ -397,14 +403,22 @@ The debug library provides debugging utilities that are completely eliminated in
 
 ### xheader Library
 
-**Critical Convention**: Windows API functions follow ANSI (A) / Wide (W) naming:
+**Windows API Convention**: Windows API functions follow ANSI (A) / Wide (W) naming:
 - `*A` functions use `LPCSTR`, `WNDCLASSEXA` (narrow char)
 - `*W` functions use `LPCWSTR`, `WNDCLASSEXW` (wide char)
 - Implementation files MUST match header declarations exactly
+- Stub implementations wrapped in `#ifndef _WIN32` blocks
+
+**Linux dlfcn API Convention**:
+- Re-exports system header on Linux: `#include <dlfcn.h> // IWYU pragma: export`
+- Provides stub implementations on non-Linux platforms
+- Platform detection: `#ifdef __linux__` for header re-export, `#ifndef __linux__` for stubs
+- Stub behavior:
+  - `dlopen(const char *__file, int __mode)`: Returns `NULL`
+  - `dlclose(void *__handle)`: Returns `0`
+- CMake linkage: Links against `dl` library on Linux via `$<$<PLATFORM_ID:Linux>:dl>`
 
 **C23 Constexpr Limitation**: In C23, constexpr pointers can only be null. Non-null pointer constants (like `IDI_APPLICATION`, `IDC_ARROW`) must use `#define` macros, not `constexpr`.
-
-**Platform Detection**: All stub implementations wrapped in `#ifndef _WIN32` blocks.
 
 ### Application Initialization and Lifecycle
 
@@ -540,6 +554,29 @@ Complete list of xheader Windows API stubs (see `libs/xheader/CMakeLists.txt` fo
 - Window data: `GetWindowLongPtr`, `SetWindowLongPtr`
 - Debugging: `IsDebuggerPresent`, `__debugbreak`
 
+## Linux dlfcn API Functions in xheader
+
+The xheader library provides Linux dynamic linking functions via `<xheader/dlfcn.h>`:
+
+### Dynamic Linking Functions
+
+- **dlopen**: Opens a dynamic library
+  - Signature: `void *dlopen(const char *__file, int __mode)`
+  - On Linux: System implementation from `<dlfcn.h>`
+  - On non-Linux: Stub returns `NULL`
+  - Usage: `dlopen(nullptr, RTLD_NOW)` for self-loading
+
+- **dlclose**: Closes a dynamic library handle
+  - Signature: `int dlclose(void *__handle)`
+  - On Linux: System implementation from `<dlfcn.h>`
+  - On non-Linux: Stub returns `0` (success)
+
+### All Implemented Functions
+Complete list of xheader dlfcn stubs (see `libs/xheader/CMakeLists.txt` for current list):
+- Dynamic linking: `dlopen`, `dlclose`
+
+**Note**: Additional dlfcn functions (`dlsym`, `dlerror`) are not yet implemented.
+
 ## Adding New Windows API Functions
 
 1. Add function declaration to `libs/xheader/include/xheader/windows.h`
@@ -557,6 +594,31 @@ Complete list of xheader Windows API stubs (see `libs/xheader/CMakeLists.txt` fo
    #define FunctionName FunctionNameA
    #endif
    ```
+
+## Adding New Linux dlfcn Functions
+
+1. Add function declaration to `libs/xheader/include/xheader/dlfcn.h`
+2. Create stub implementation file:
+   - `libs/xheader/src/dlfcn/function_name.c`
+3. Add to `libs/xheader/CMakeLists.txt` sources
+4. Create corresponding test file in `libs/xheader/tests/dlfcn/`
+5. Ensure proper platform detection:
+   - Header: Use `#ifdef __linux__` to re-export system header
+   - Implementation: Use `#ifndef __linux__` to wrap stub implementation
+   - Example:
+     ```c
+     // In header
+     #ifdef __linux__
+     #include <dlfcn.h>  // IWYU pragma: export
+     #else
+     void *dlsym(void *__handle, const char *__name);
+     #endif
+
+     // In implementation
+     #ifndef __linux__
+     void *dlsym(void *__handle, const char *__name) { return NULL; }
+     #endif
+     ```
 
 ## Adding Type Definitions to xheader
 
@@ -591,13 +653,14 @@ The project uses **GoogleTest v1.17.0** for unit testing, managed via CMake Fetc
 
 The project uses a hierarchical test target structure:
 
-1. **Library-specific test executables**: `xheader_win32api_tests`, `debug_utility_tests`
-   - Self-contained test executable per library
+1. **Library-specific test executables**: `xheader_win32api_tests`, `xheader_dlfnc_tests`, `debug_utility_tests`
+   - Self-contained test executable per library/API
    - Links against its specific library and GoogleTest
    - Can be run independently
 
 2. **Aggregate library test targets**: `xheader_tests`, `debug_tests`
    - Reuses sources from library-specific tests
+   - `xheader_tests` combines both `xheader_win32api_tests` and `xheader_dlfnc_tests`
    - Provides unified test target per library
 
 3. **Project-wide aggregate**: `all_logenium_tests`
@@ -606,10 +669,14 @@ The project uses a hierarchical test target structure:
 
 ### xheader Tests
 - Location: `libs/xheader/tests/`
-- Test executables: `xheader_win32api_tests`, `xheader_tests`
-- Coverage: All Windows API stub functions
+- Test executables: `xheader_win32api_tests`, `xheader_dlfnc_tests`, `xheader_tests`
+- Coverage:
+  - Windows API stub functions (`tests/windows/`)
+  - Linux dlfcn stub functions (`tests/dlfcn/`)
 - Build control: `LOGENIUM_XHEADER_BUILD_TESTS` (default: ON)
-- Organization: One test file per API function, separate A/W variants
+- Organization:
+  - Windows API: One test file per API function, separate A/W variants
+  - Linux dlfcn: One test file per function
 
 ### debug Tests
 - Location: `libs/debug/tests/`
@@ -628,6 +695,7 @@ ctest --test-dir build
 
 # Run specific test executables
 ./build/libs/xheader/tests/xheader_win32api_tests
+./build/libs/xheader/tests/xheader_dlfnc_tests
 ./build/libs/debug/tests/debug_utility_tests
 ./build/all_logenium_tests
 ```

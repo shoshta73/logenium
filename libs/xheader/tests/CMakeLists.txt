@@ -56,11 +56,40 @@ gtest_discover_tests(
         xheader_win32api_tests
 )
 
+add_executable(
+        xheader_dlfnc_tests
+        ${CMAKE_CURRENT_SOURCE_DIR}/dlfcn/dlopen.cxx
+        ${CMAKE_CURRENT_SOURCE_DIR}/dlfcn/dlclose.cxx
+)
+
+target_link_libraries(
+        xheader_dlfnc_tests
+        PRIVATE
+        xheader
+        gtest
+        gmock
+        gtest_main
+        gmock_main
+)
+
+target_compile_features(
+        xheader_dlfnc_tests
+        PRIVATE
+        cxx_std_23
+        c_std_23
+)
+
+gtest_discover_tests(
+        xheader_dlfnc_tests
+)
+
 get_target_property(XHEADER_WIN32API_SRCS xheader_win32api_tests SOURCES)
+get_target_property(XHEADER_DLFNC_SRCS xheader_dlfnc_tests SOURCES)
 
 add_executable(
         xheader_tests
         ${XHEADER_WIN32API_SRCS}
+        ${XHEADER_DLFNC_SRCS}
 )
 
 target_link_libraries(
