@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2025 Logenium Authors and Contributors
+# SPDX-License-Identifier: BSD-3-Clause
+
 from .file_result import FileResult as FileResult
 from .file_status import FileStatus as FileStatus
 from .language_config import LanguageConfig as LanguageConfig

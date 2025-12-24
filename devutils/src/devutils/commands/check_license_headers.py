@@ -73,7 +73,7 @@ def get_language_configs() -> list[LicenseLanguageConfig]:
             name="Bash",
             extensions=Extensions.bash_source,
             search_dirs=[],
-            specific_files=[Directories.root / "devutils.sh"],
+            specific_files=[],
             license_header=LicenseHeaders.bash,
         ),
     ]

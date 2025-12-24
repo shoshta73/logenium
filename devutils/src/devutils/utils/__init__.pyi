@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2025 Logenium Authors and Contributors
+# SPDX-License-Identifier: BSD-3-Clause
+
 from . import file_checking as file_checking
 from . import filesystem as fs
 

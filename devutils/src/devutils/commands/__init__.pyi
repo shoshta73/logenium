@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2025 Logenium Authors and Contributors
+# SPDX-License-Identifier: BSD-3-Clause
+
 from .build import build as build
 from .check_license_headers import check_license_headers as check_license_headers
 from .clean import clean as clean
