@@ -8,10 +8,37 @@ Logenium is a Logisim-like logic circuit simulator in early development. Built w
 
 **Current Status**: The application can create a window and run a basic Windows message loop. Event handling and custom window procedures are not yet implemented.
 
+## Compiler Requirements
+
+This project **requires Clang as the compiler** for both C and C++:
+- **C compiler**: `clang`
+- **C++ compiler**: `clang++`
+
+**Important**: On Windows, `clang-cl` (MSVC-compatible Clang driver) is **not allowed**. You must use the GNU-compatible Clang driver.
+
+### Setting Compilers
+
+**Method 1: Environment variables** (recommended):
+```bash
+export CC=clang CXX=clang++
+cmake -B build -G Ninja
+```
+
+**Method 2: CMake command line**:
+```bash
+cmake -B build -G Ninja -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++
+```
+
+The build system will automatically verify that Clang is being used and fail configuration if:
+- The C compiler is not Clang
+- The C++ compiler is not Clang
+- `clang-cl` is detected on Windows
+
 ## Build Commands
 
 ### Standard Build
 ```bash
+export CC=clang CXX=clang++
 cmake -B build -G Ninja
 cmake --build build
 ```
@@ -24,6 +51,7 @@ cmake --build build
 
 ### Build with Tests
 ```bash
+export CC=clang CXX=clang++
 cmake -B build -G Ninja -DLOGENIUM_BUILD_TESTS=ON
 cmake --build build
 ctest --test-dir build  # Run all tests
@@ -32,6 +60,7 @@ ctest --test-dir build  # Run all tests
 ### Clean Build
 ```bash
 rm -rf build
+export CC=clang CXX=clang++
 cmake -B build -G Ninja
 cmake --build build
 ```

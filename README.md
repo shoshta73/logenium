@@ -8,7 +8,7 @@ Build requirements:
 
 - CMake 4.0 or newer
 - Ninja
-- C23 and C++23 compatible compiler (clang is recommended)
+- Clang compiler (clang/clang++ with C23 and C++23 support)
 
 optional:
 
@@ -26,16 +26,31 @@ Ninja is used to build the project.
 
 If you don't have Ninja Installed you can download it from [ninja-build.org](https://ninja-build.org/).
 
-### C23 and C++23 compatible compiler
+### Clang Compiler
 
-The project requires C23 and C++23 compatible compiler.
+**This project requires Clang as the compiler.** Other compilers (GCC, MSVC, etc.) are not supported.
 
-Clang is recommended as it is the most widely used compiler.
+- **Required**: `clang` and `clang++` with C23 and C++23 support
+- **Not allowed**: `clang-cl` (the MSVC-compatible Clang driver on Windows)
 
-If you don't have Clang Installed you can download it from llvm project github [releases](https://github.com/llvm/llvm-project/releases).
+If you don't have Clang installed, download it from the LLVM project GitHub [releases](https://github.com/llvm/llvm-project/releases).
 
-> [!NOTE]
-> On windows it is recommended that you install the clang+llvm-version-arch-pc-windows-msvc.tar.xz package from the llvm project github releases.
+> [!IMPORTANT]
+> On Windows, install the **GNU-compatible** Clang driver (clang/clang++), not clang-cl. The build system will reject clang-cl during configuration.
+
+#### Setting the Compiler
+
+Before running CMake, set the compiler environment variables:
+
+```bash
+export CC=clang CXX=clang++
+```
+
+Or specify compilers directly in the CMake command:
+
+```bash
+cmake -B build -G Ninja -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++
+```
 
 ## License
 

@@ -26,6 +26,7 @@ project(
         LANGUAGES CXX C
 )
 
+include(compiler_check)
 include(options)
 include(dependencies)
 
