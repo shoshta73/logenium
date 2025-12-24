@@ -276,7 +276,11 @@ uv run devutils <command>
 
 **Why uv?**: Auto-manages Python versions, fast (Rust-based), zero config, deterministic
 
-**Windows Scripts**: `devutils.bat` (cmd.exe) and `devutils.ps1` (PowerShell) auto-install uv, Python 3.14, create venv, install dependencies, forward commands. First run: ~few minutes; subsequent: instant.
+**Wrapper Scripts**: Platform-specific wrapper scripts auto-install uv, Python 3.14, create venv, install dependencies, and forward commands:
+- **Windows**: `devutils.bat` (cmd.exe) and `devutils.ps1` (PowerShell)
+- **Unix-like**: `devutils.sh` (bash for Linux/macOS)
+
+First run: ~few minutes; subsequent: instant.
 
 ## Architecture Overview
 
