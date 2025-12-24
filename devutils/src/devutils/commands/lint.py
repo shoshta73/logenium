@@ -4,9 +4,13 @@
 import pathlib
 import subprocess
 import sys
+import threading
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
+from typing import Any
 
 import typer
+import yaml
 
 from devutils.constants import Directories, Extensions
 from devutils.utils.file_checking import (
@@ -14,10 +18,104 @@ from devutils.utils.file_checking import (
     FileStatus,
     LanguageConfig,
     Statistics,
+    format_file_path,
     print_status,
 )
 
 lint = typer.Typer()
+
+
+class LintCacheManager:
+    def __init__(self, cache_path: pathlib.Path, enabled: bool = True):
+        self.cache_path = cache_path
+        self.enabled = enabled
+        self.cache_data: dict[str, Any] = {"version": "1.0", "cache": {}}
+        self.lock = threading.Lock()
+
+        if self.enabled:
+            self.load_cache()
+
+    def load_cache(self) -> None:
+        if not self.cache_path.exists():
+            return
+
+        try:
+            with open(self.cache_path) as f:
+                data = yaml.safe_load(f)
+                if data and data.get("version") == "1.0":
+                    self.cache_data = data
+        except (yaml.YAMLError, OSError):
+            pass
+
+    def save_cache(self) -> None:
+        if not self.enabled:
+            return
+
+        self.cache_path.parent.mkdir(parents=True, exist_ok=True)
+
+        temp_path = self.cache_path.with_suffix(".tmp")
+        try:
+            with open(temp_path, "w") as f:
+                yaml.dump(self.cache_data, f, default_flow_style=False)
+            temp_path.replace(self.cache_path)
+        except OSError:
+            if temp_path.exists():
+                temp_path.unlink()
+
+    def get_cache_key(self, language: str, tool_name: str, file_path: pathlib.Path) -> str:
+        rel_path = format_file_path(file_path)
+        return f"{language}:{tool_name}:{rel_path}"
+
+    def get_cached_result(self, language: str, tool_name: str, file_path: pathlib.Path) -> FileResult | None:
+        if not self.enabled:
+            return None
+
+        cache_key = self.get_cache_key(language, tool_name, file_path)
+
+        with self.lock:
+            entry = self.cache_data["cache"].get(cache_key)
+
+        if not entry:
+            return None
+
+        try:
+            current_mtime = file_path.stat().st_mtime
+        except OSError:
+            return None
+
+        if entry["mtime"] != current_mtime:
+            return None
+
+        status_map = {
+            "ok": FileStatus.OK,
+            "warning": FileStatus.WARNING,
+            "issue": FileStatus.ISSUE,
+            "error": FileStatus.ERROR,
+        }
+        status = status_map.get(entry["status"], FileStatus.ERROR)
+        return FileResult(file_path, status, entry.get("error"))
+
+    def update_cache(self, language: str, tool_name: str, file_path: pathlib.Path, result: FileResult) -> None:
+        if not self.enabled:
+            return
+
+        cache_key = self.get_cache_key(language, tool_name, file_path)
+
+        try:
+            mtime = file_path.stat().st_mtime
+        except OSError:
+            return
+
+        status_map = {
+            FileStatus.OK: "ok",
+            FileStatus.WARNING: "warning",
+            FileStatus.ISSUE: "issue",
+            FileStatus.ERROR: "error",
+        }
+        entry = {"mtime": mtime, "status": status_map[result.status], "error": result.error}
+
+        with self.lock:
+            self.cache_data["cache"][cache_key] = entry
 
 
 @dataclass
@@ -54,7 +152,13 @@ def get_language_configs() -> list[LintLanguageConfig]:
                     check_args=["-p", str(Directories.build)],
                     fix_args=["-p", str(Directories.build), "--fix"],
                     can_fix=True,
-                )
+                ),
+                LintStep(
+                    tool_name="clang-check",
+                    check_args=["--analyze", "-p", str(Directories.build)],
+                    fix_args=[],
+                    can_fix=False,
+                ),
             ],
         ),
         LintLanguageConfig(
@@ -115,11 +219,21 @@ def check_file_lint(file_path: pathlib.Path, lint_step: LintStep) -> FileResult:
             check=False,
         )
 
+        output = result.stdout + result.stderr
+        output_lower = output.lower()
+
         if result.returncode == 0:
-            return FileResult(file_path, FileStatus.OK)
+            if "warning:" in output_lower or "note:" in output_lower:
+                return FileResult(file_path, FileStatus.WARNING, output.strip())
+            else:
+                return FileResult(file_path, FileStatus.OK)
         else:
-            error_output = result.stdout + result.stderr
-            return FileResult(file_path, FileStatus.ISSUE, error_output.strip())
+            if "error:" in output_lower or "traceback" in output_lower or "assertion" in output_lower:
+                return FileResult(file_path, FileStatus.ERROR, output.strip())
+            elif "warning:" in output_lower or "note:" in output_lower:
+                return FileResult(file_path, FileStatus.WARNING, output.strip())
+            else:
+                return FileResult(file_path, FileStatus.ISSUE, output.strip())
 
     except Exception as e:
         return FileResult(file_path, FileStatus.ERROR, str(e))
@@ -148,98 +262,227 @@ def fix_file_lint(file_path: pathlib.Path, lint_step: LintStep) -> bool:
         return False
 
 
-def check_files(files: list[pathlib.Path], config: LintLanguageConfig, stats: Statistics) -> None:
-    for file_path in files:
-        file_has_issues = False
-        file_has_errors = False
-        error_messages = []
+def check_single_file(
+    file_path: pathlib.Path,
+    config: LintLanguageConfig,
+    cache_manager: LintCacheManager,
+    output_lock: threading.Lock,
+) -> tuple[FileStatus, list[str]]:
+    file_has_warnings = False
+    file_has_issues = False
+    file_has_errors = False
+    error_messages = []
+    cached_count = 0
 
-        for lint_step in config.lint_steps:
+    for lint_step in config.lint_steps:
+        cached_result = cache_manager.get_cached_result(config.name, lint_step.tool_name, file_path)
+
+        if cached_result:
+            result = cached_result
+            cached_count += 1
+        else:
             result = check_file_lint(file_path, lint_step)
 
-            if result.status == FileStatus.ISSUE:
-                file_has_issues = True
-                if result.error:
-                    error_messages.append(f"[{lint_step.tool_name}]\n{result.error}")
-            elif result.status == FileStatus.ERROR:
-                file_has_errors = True
-                if result.error:
-                    error_messages.append(f"[{lint_step.tool_name}]\n{result.error}")
+            cache_manager.update_cache(config.name, lint_step.tool_name, file_path, result)
 
-        if file_has_errors:
-            stats.total += 1
-            stats.errors += 1
-            print_status("[ERROR]", "yellow", file_path)
+        if result.status == FileStatus.WARNING:
+            file_has_warnings = True
+            if result.error:
+                error_messages.append(f"[{lint_step.tool_name}]\n{result.error}")
+        elif result.status == FileStatus.ISSUE:
+            file_has_issues = True
+            if result.error:
+                error_messages.append(f"[{lint_step.tool_name}]\n{result.error}")
+        elif result.status == FileStatus.ERROR:
+            file_has_errors = True
+            if result.error:
+                error_messages.append(f"[{lint_step.tool_name}]\n{result.error}")
+
+    if file_has_errors:
+        final_status = FileStatus.ERROR
+    elif file_has_issues:
+        final_status = FileStatus.ISSUE
+    elif file_has_warnings:
+        final_status = FileStatus.WARNING
+    else:
+        final_status = FileStatus.OK
+
+    is_cached = cached_count == len(config.lint_steps)
+
+    with output_lock:
+        if final_status == FileStatus.ERROR:
+            tag = "[CACHED:ERROR]" if is_cached else "[ERROR]"
+            print_status(tag, "red", file_path)
             if error_messages:
                 typer.echo("\n".join(error_messages))
                 typer.echo()
-        elif file_has_issues:
-            stats.total += 1
-            stats.issues += 1
-            print_status("[HAS_ISSUES]", "red", file_path)
+        elif final_status == FileStatus.ISSUE:
+            tag = "[CACHED:ISSUE]" if is_cached else "[HAS_ISSUES]"
+            print_status(tag, "red", file_path)
+            if error_messages:
+                typer.echo("\n".join(error_messages))
+                typer.echo()
+        elif final_status == FileStatus.WARNING:
+            tag = "[CACHED:WARNING]" if is_cached else "[WARNING]"
+            print_status(tag, "yellow", file_path)
             if error_messages:
                 typer.echo("\n".join(error_messages))
                 typer.echo()
         else:
-            stats.total += 1
-            stats.ok += 1
-            print_status("[OK]", "green", file_path)
+            tag = "[CACHED:OK]" if is_cached else "[OK]"
+            print_status(tag, "green", file_path)
+
+    return final_status, error_messages
 
 
-def fix_files(files: list[pathlib.Path], config: LintLanguageConfig, stats: Statistics) -> None:
-    for file_path in files:
-        file_had_issues = False
-        all_fixed = True
-        file_has_errors = False
-        error_messages = []
+def check_files_parallel(
+    files: list[pathlib.Path],
+    config: LintLanguageConfig,
+    stats: Statistics,
+    cache_manager: LintCacheManager,
+) -> None:
+    output_lock = threading.Lock()
 
-        for lint_step in config.lint_steps:
+    with ThreadPoolExecutor() as executor:
+        future_to_file = {
+            executor.submit(check_single_file, file_path, config, cache_manager, output_lock): file_path
+            for file_path in files
+        }
+
+        for future in as_completed(future_to_file):
+            file_path = future_to_file[future]
+            try:
+                final_status, error_messages = future.result()
+
+                result = FileResult(file_path, final_status, "\n".join(error_messages) if error_messages else None)
+                stats.record_result_threadsafe(result)
+
+            except Exception as e:
+                with output_lock:
+                    print_status("[ERROR]", "yellow", file_path, str(e))
+                stats.increment_total_threadsafe()
+                stats.increment_errors_threadsafe()
+
+
+def fix_single_file(
+    file_path: pathlib.Path,
+    config: LintLanguageConfig,
+    cache_manager: LintCacheManager,
+    output_lock: threading.Lock,
+) -> tuple[str, list[str]]:
+    file_had_issues = False
+    all_fixed = True
+    file_has_errors = False
+    error_messages = []
+    cached_count = 0
+
+    for lint_step in config.lint_steps:
+        cached_result = cache_manager.get_cached_result(config.name, lint_step.tool_name, file_path)
+
+        if cached_result:
+            result = cached_result
+            cached_count += 1
+        else:
             result = check_file_lint(file_path, lint_step)
+            cache_manager.update_cache(config.name, lint_step.tool_name, file_path, result)
 
-            if result.status == FileStatus.ERROR:
-                file_has_errors = True
-                if result.error:
-                    error_messages.append(f"[{lint_step.tool_name}]\n{result.error}")
-                break
-            elif result.status == FileStatus.ISSUE:
-                file_had_issues = True
-                if lint_step.can_fix:
-                    fixed = fix_file_lint(file_path, lint_step)
-                    if not fixed:
-                        all_fixed = False
-                        if result.error:
-                            error_messages.append(f"[{lint_step.tool_name}]\n{result.error}")
+        if result.status == FileStatus.ERROR:
+            file_has_errors = True
+            if result.error:
+                error_messages.append(f"[{lint_step.tool_name}]\n{result.error}")
+            break
+        elif result.status == FileStatus.ISSUE:
+            file_had_issues = True
+            if lint_step.can_fix:
+                fixed = fix_file_lint(file_path, lint_step)
+                if fixed:
+                    ok_result = FileResult(file_path, FileStatus.OK, None)
+                    cache_manager.update_cache(config.name, lint_step.tool_name, file_path, ok_result)
                 else:
                     all_fixed = False
                     if result.error:
                         error_messages.append(f"[{lint_step.tool_name}]\n{result.error}")
+            else:
+                all_fixed = False
+                if result.error:
+                    error_messages.append(f"[{lint_step.tool_name}]\n{result.error}")
 
-        stats.total += 1
+    if file_has_errors:
+        outcome = "error"
+    elif not file_had_issues:
+        outcome = "skip"
+    elif all_fixed:
+        outcome = "fixed"
+    else:
+        outcome = "partial"
 
-        if file_has_errors:
+    is_cached = cached_count == len(config.lint_steps) and outcome == "skip"
+
+    with output_lock:
+        if outcome == "error":
             print_status("[ERROR]", "yellow", file_path)
-            stats.errors += 1
             if error_messages:
                 typer.echo("\n".join(error_messages))
                 typer.echo()
-        elif not file_had_issues:
-            print_status("[SKIP]", "cyan", file_path)
-            stats.record_fix(False)
-        elif all_fixed:
+        elif outcome == "skip":
+            tag = "[CACHED:SKIP]" if is_cached else "[SKIP]"
+            print_status(tag, "cyan", file_path)
+        elif outcome == "fixed":
             print_status("[FIXED]", "green", file_path)
-            stats.record_fix(True)
         else:
             print_status("[PARTIAL]", "yellow", file_path)
-            stats.record_fix(False)
             if error_messages:
                 typer.echo("\n".join(error_messages))
                 typer.echo()
+
+    return outcome, error_messages
+
+
+def fix_files_parallel(
+    files: list[pathlib.Path],
+    config: LintLanguageConfig,
+    stats: Statistics,
+    cache_manager: LintCacheManager,
+) -> None:
+    output_lock = threading.Lock()
+
+    with ThreadPoolExecutor() as executor:
+        future_to_file = {
+            executor.submit(fix_single_file, file_path, config, cache_manager, output_lock): file_path
+            for file_path in files
+        }
+
+        for future in as_completed(future_to_file):
+            file_path = future_to_file[future]
+            try:
+                outcome, error_messages = future.result()
+
+                stats.increment_total_threadsafe()
+
+                if outcome == "error":
+                    stats.increment_errors_threadsafe()
+                elif outcome == "skip":
+                    stats.record_fix_threadsafe(False)
+                elif outcome == "fixed":
+                    stats.record_fix_threadsafe(True)
+                else:
+                    stats.record_fix_threadsafe(False)
+
+            except Exception as e:
+                with output_lock:
+                    print_status("[ERROR]", "yellow", file_path, str(e))
+                stats.increment_total_threadsafe()
+                stats.increment_errors_threadsafe()
 
 
 @lint.command()
-def check() -> None:
+def check(no_cache: bool = typer.Option(False, "--no-cache", help="Disable caching and re-lint all files")) -> None:
     stats = Statistics(issue_label="[HAS_ISSUES]")
     configs = get_language_configs()
+
+    from devutils.constants import Files
+
+    cache_manager = LintCacheManager(Files.lint_cache_file, enabled=not no_cache)
 
     for config in configs:
         for lint_step in config.lint_steps:
@@ -257,7 +500,9 @@ def check() -> None:
         files = config.collect_files()
         if files:
             typer.echo(typer.style(f"\nLinting {config.name} files...", fg="cyan", bold=True))
-            check_files(files, config, stats)
+            check_files_parallel(files, config, stats, cache_manager)
+
+    cache_manager.save_cache()
 
     stats.print_summary("check")
 
@@ -277,9 +522,13 @@ def check() -> None:
 
 
 @lint.command()
-def fix() -> None:
+def fix(no_cache: bool = typer.Option(False, "--no-cache", help="Disable caching and re-lint all files")) -> None:
     stats = Statistics(issue_label="[HAS_ISSUES]")
     configs = get_language_configs()
+
+    from devutils.constants import Files
+
+    cache_manager = LintCacheManager(Files.lint_cache_file, enabled=not no_cache)
 
     for config in configs:
         for lint_step in config.lint_steps:
@@ -297,7 +546,9 @@ def fix() -> None:
         files = config.collect_files()
         if files:
             typer.echo(typer.style(f"\nLinting {config.name} files...", fg="cyan", bold=True))
-            fix_files(files, config, stats)
+            fix_files_parallel(files, config, stats, cache_manager)
+
+    cache_manager.save_cache()
 
     stats.print_summary("fix")
 

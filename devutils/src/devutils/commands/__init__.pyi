@@ -6,4 +6,4 @@ from .format import format as format
 from .lint import lint as lint
 from .python import python as python
 
-__all__ = ['build', 'check_license_headers', 'clean', 'configure', 'format', 'lint', 'python']
+__all__ = ["build", "check_license_headers", "clean", "configure", "format", "lint", "python"]

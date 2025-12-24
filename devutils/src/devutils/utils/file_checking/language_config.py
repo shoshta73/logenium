@@ -4,7 +4,7 @@
 import pathlib
 from dataclasses import dataclass
 
-from .utils import collect_files
+from .utils import collect_files as _collect_files
 
 
 @dataclass
@@ -15,4 +15,4 @@ class LanguageConfig:
     specific_files: list[pathlib.Path]
 
     def collect_files(self) -> list[pathlib.Path]:
-        return collect_files(self.extensions, self.search_dirs, self.specific_files)
+        return _collect_files(self.extensions, self.search_dirs, self.specific_files)

@@ -125,9 +125,7 @@ def check(
         result = subprocess.run(cmd, capture_output=True, text=True, check=False)
 
         if result.returncode != 0:
-            typer.echo(
-                f"{typer.style('[FAIL]', fg='red')} Failed to generate temporary stubs for comparison", err=True
-            )
+            typer.echo(f"{typer.style('[FAIL]', fg='red')} Failed to generate temporary stubs for comparison", err=True)
             raise typer.Exit(result.returncode)
 
         temp_stub_dir = temp_path / package

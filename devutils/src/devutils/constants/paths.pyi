@@ -1,6 +1,7 @@
-from _typeshed import Incomplete
 from dataclasses import dataclass
 from pathlib import Path
+
+from _typeshed import Incomplete
 
 @dataclass(frozen=True)
 class _Directories:
@@ -24,6 +25,7 @@ class _Directories:
 @dataclass(frozen=True)
 class _Files:
     ninja_build_file: Path = ...
+    lint_cache_file: Path = ...
 
 Directories: Incomplete
 Files: Incomplete

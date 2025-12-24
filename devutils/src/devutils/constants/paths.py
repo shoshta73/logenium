@@ -36,6 +36,7 @@ class _Directories:
 @dataclass(frozen=True)
 class _Files:
     ninja_build_file: Path = _BUILD_DIR / "build.ninja"
+    lint_cache_file: Path = _ROOT_DIR / ".cache" / "devutils" / "lint_cache.yaml"
 
 
 Directories = _Directories()

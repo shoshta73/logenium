@@ -1,6 +1,8 @@
-from .comments import Comments as Comments
-from _typeshed import Incomplete
 from dataclasses import dataclass, field
+
+from _typeshed import Incomplete
+
+from .comments import Comments as Comments
 
 @dataclass(frozen=True)
 class _LicenseHeaders:

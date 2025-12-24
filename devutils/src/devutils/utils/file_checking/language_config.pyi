@@ -1,5 +1,4 @@
 import pathlib
-from .utils import collect_files as collect_files
 from dataclasses import dataclass
 
 @dataclass

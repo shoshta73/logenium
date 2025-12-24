@@ -1,6 +1,7 @@
 import pathlib
-from .file_status import FileStatus as FileStatus
 from dataclasses import dataclass
+
+from .file_status import FileStatus as FileStatus
 
 @dataclass
 class FileResult:
