@@ -527,6 +527,40 @@ The project uses two patterns for including CMake modules:
    ```
    Used in subdirectories for explicit control over which file is included
 
+## Git Commit Message Conventions
+
+### Commit Message Tagging
+
+The project uses a tag-based commit message convention to categorize changes by component:
+
+**Tagged Commits** (component-specific changes):
+- `[xheader]` - Changes to the xheader library
+- `[debug]` - Changes to the debug library
+- `[devutils]` - Changes to the devutils package
+- `[build]` - Changes to the build system (CMake files)
+- `[logenium]` - General logenium application changes
+- `[logenium(application)]` - Specific application component changes (with sub-component in parentheses)
+
+**Untagged Commits** (repository-wide changes):
+- No tag prefix indicates changes that affect the entire repository
+- Examples: license headers, README updates, editorconfig, repository-wide documentation
+
+### Message Format
+
+1. **Tag placement**: Tags appear at the beginning in square brackets `[tag]`
+2. **Sub-components**: Use parentheses for sub-components: `[logenium(application)]`
+3. **Message style**:
+   - Use lowercase after the tag
+   - Use imperative mood (e.g., "add", "fix", "update")
+   - Keep messages concise and single-line
+   - No period at the end
+4. **Examples**:
+   - `[xheader] add dlfcn.h stubs and cross platform implementation`
+   - `[debug] fix builds on linux`
+   - `[devutils] add parallel processing to the lint command`
+   - `[logenium(application)] add linux specific application skeleton`
+   - `fix license headers` (no tag = repo-wide)
+
 ## Windows API Functions in xheader
 
 ### Message Loop Functions
