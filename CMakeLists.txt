@@ -52,6 +52,15 @@ add_executable(
 
         src/platform/windows/application.cxx
         src/platform/windows/window.cxx
+
+        src/platform/linux/application.cxx
+        src/platform/linux/window.cxx
+
+        src/platform/linux/X11/application.cxx
+        src/platform/linux/X11/window.cxx
+
+        src/platform/linux/wayland/application.cxx
+        src/platform/linux/wayland/window.cxx
 )
 
 target_compile_features(

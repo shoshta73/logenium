@@ -13,11 +13,11 @@ class WindowsApplication : public Application {
     WindowsApplication();
     ~WindowsApplication();
 
-    void Run() override;
+    void Run() final;
 
   private:
-    void RegisterWindowClass() override;
-    void UnregisterWindowClass() override;
+    void RegisterWindowClass() final;
+    void UnregisterWindowClass() final;
 };
 
 }  // namespace logenium

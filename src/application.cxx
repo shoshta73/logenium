@@ -7,7 +7,8 @@
 
 #include <debug/assert.hxx>
 
-#include "logenium/platform/windows/application.hxx"
+#include "logenium/platform/linux/application.hxx"    // IWYU pragma: keep
+#include "logenium/platform/windows/application.hxx"  // IWYU pragma: keep
 
 namespace logenium {
 
@@ -33,6 +34,10 @@ std::unique_ptr<Application> Application::Create() {
 #if defined(_WIN32)
 
     return std::make_unique<WindowsApplication>();
+
+#elif defined(__linux__)
+
+    return LinuxApplication::Create();
 
 #else
 
