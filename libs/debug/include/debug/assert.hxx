@@ -6,6 +6,7 @@
 #include <source_location>
 #include <stacktrace>
 #include <string>
+#include <utility>
 
 #include <debug/breakpoint.hxx>
 
@@ -19,7 +20,7 @@ struct AssertImpl {
                std::source_location location = std::source_location::current(),
                const std::stacktrace &stacktrace = std::stacktrace::current()) {
         if (!predicate) {
-            std::println("Assertion failed: {}", std::format(format, args...));
+            std::println("Assertion failed: {}", std::format(format, std::forward<Args>(args)...));
             std::println("Location: {}:{} in {}", location.file_name(), location.line(), location.function_name());
             std::println("Stacktrace:\n{}", std::to_string(stacktrace));
             Breakpoint();

@@ -85,15 +85,21 @@ if(LOGENIUM_BUILD_TESTS)
                 get_target_property(XHEADER_TESTS_SRCS xheader_tests SOURCES)
         endif()
 
+        if(TARGET debug_tests)
+                get_target_property(DEBUG_TESTS_SRCS debug_tests SOURCES)
+        endif()
+
         add_executable(
                 all_logenium_tests
                 ${XHEADER_TESTS_SRCS}
+                ${DEBUG_TESTS_SRCS}
         )
 
         target_link_libraries(
                 all_logenium_tests
                 PRIVATE
                 xheader
+                logenium::debug
                 gtest
                 gmock
                 gtest_main

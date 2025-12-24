@@ -8,6 +8,10 @@ project(
         DESCRIPTION "Debug library for logenium"
 )
 
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/dependencies.cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/options.cmake")
+
 log_info("Project ${PROJECT_NAME} version ${PROJECT_VERSION}")
 log_info("Building in ${CMAKE_BUILD_TYPE} mode")
 
@@ -40,3 +44,8 @@ target_link_libraries(
         PUBLIC
         xheader
 )
+
+if(LOGENIUM_BUILD_TESTS AND LOGENIUM_DEBUG_BUILD_TESTS)
+        log_info("Building debug tests")
+        add_subdirectory(tests)
+endif()
