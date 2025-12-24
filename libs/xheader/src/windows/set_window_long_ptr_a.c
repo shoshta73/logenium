@@ -4,6 +4,6 @@
 
 #include <stddef.h>
 
-LONG_PTR SetWindowLongPtrA(HWND hWnd, int nIndex, LONG_PTR dwNewLong) { return NULL; }
+LONG_PTR SetWindowLongPtrA(HWND hWnd, int nIndex, LONG_PTR dwNewLong) { return (LONG_PTR)NULL; }
 
 #endif

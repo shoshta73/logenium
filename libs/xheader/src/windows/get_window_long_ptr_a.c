@@ -4,6 +4,6 @@
 
 #include <stddef.h>
 
-LONG_PTR GetWindowLongPtrA(HWND hWnd, int nIndex) { return NULL; }
+LONG_PTR GetWindowLongPtrA(HWND hWnd, int nIndex) { return (LONG_PTR)NULL; }
 
 #endif
