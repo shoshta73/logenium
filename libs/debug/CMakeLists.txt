@@ -43,6 +43,7 @@ target_link_libraries(
         debug
         PUBLIC
         xheader
+        $<$<PLATFORM_ID:Linux>:stdc++exp>
 )
 
 if(LOGENIUM_BUILD_TESTS AND LOGENIUM_DEBUG_BUILD_TESTS)
