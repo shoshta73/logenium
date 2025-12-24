@@ -1,8 +1,6 @@
 import typer
 from _typeshed import Incomplete
-
-from devutils.constants import Directories as Directories
-from devutils.constants import Files as Files
+from devutils.constants import Directories as Directories, Files as Files
 
 build: Incomplete
 

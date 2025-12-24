@@ -19,12 +19,16 @@ def handle_remove_readonly(func, path, exc):
 
 @clean.command()
 def run() -> None:
-    if not Directories.build.exists():
+    if not Directories.build.exists() and not Directories.cache.exists():
         typer.echo("Build directory does not exist. Nothing to clean.")
         return
 
     typer.echo(f"Removing {Directories.build}...")
     shutil.rmtree(Directories.build, onexc=handle_remove_readonly)
+
+    typer.echo(f"Removing {Directories.cache}...")
+    shutil.rmtree(Directories.cache, onexc=handle_remove_readonly)
+
     typer.echo("Done!")
 
 

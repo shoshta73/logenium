@@ -1,5 +1,4 @@
 from _typeshed import Incomplete
-
 from devutils.constants import Directories as Directories
 
 stubgen: Incomplete

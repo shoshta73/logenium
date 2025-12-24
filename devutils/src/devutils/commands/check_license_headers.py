@@ -37,13 +37,14 @@ def get_language_configs() -> list[LicenseLanguageConfig]:
         LicenseLanguageConfig(
             name="CMake",
             extensions=Extensions.cmake_source,
-            search_dirs=[Directories.logenium_cmake, Directories.xheader_cmake],
+            search_dirs=[Directories.logenium_cmake, Directories.xheader_cmake, Directories.debug_cmake],
             specific_files=[
                 Directories.root / "CMakeLists.txt",
                 Directories.libs / "CMakeLists.txt",
                 Directories.xheader_root / "CMakeLists.txt",
                 Directories.xheader_tests / "CMakeLists.txt",
                 Directories.debug_root / "CMakeLists.txt",
+                Directories.debug_tests / "CMakeLists.txt",
             ],
             license_header=LicenseHeaders.cmake,
         ),

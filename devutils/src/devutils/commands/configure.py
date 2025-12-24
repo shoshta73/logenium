@@ -18,6 +18,7 @@ def run() -> None:
 
     enable_testing = typer.confirm("Do you want to enable testing?")
     enable_xheader_testing = False
+    enable_debug_testing = False
 
     if enable_testing:
         typer.echo("Testing is enabled")
@@ -27,6 +28,12 @@ def run() -> None:
             typer.echo("Xheader testing is enabled")
         else:
             typer.echo("Xheader testing is disabled")
+
+        enable_debug_testing = typer.confirm("Do you want to enable debug testing?")
+        if enable_debug_testing:
+            typer.echo("Debug testing is enabled")
+        else:
+            typer.echo("Debug testing is disabled")
 
     else:
         typer.echo("Testing is disabled")
@@ -56,6 +63,7 @@ def run() -> None:
     command_line.extend(["-DCMAKE_BUILD_TYPE=" + mode])
     command_line.extend([f"-DLOGENIUM_BUILD_TESTS={'ON' if enable_testing else 'OFF'}"])
     command_line.extend([f"-DLOGENIUM_XHEADER_BUILD_TESTS={'ON' if enable_xheader_testing else 'OFF'}"])
+    command_line.extend([f"-DLOGENIUM_DEBUG_BUILD_TESTS={'ON' if enable_debug_testing else 'OFF'}"])
     command_line.extend(["-G", "Ninja"])
 
     command = shlex.join(command_line)

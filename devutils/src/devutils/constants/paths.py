@@ -7,6 +7,7 @@ from pathlib import Path
 _ROOT_DIR: Path = Path(__file__).parent.parent.parent.parent.parent.resolve()
 _BUILD_DIR: Path = _ROOT_DIR / "build"
 _LIBS_DIR: Path = _ROOT_DIR / "libs"
+_CAHCE_DIR: Path = _ROOT_DIR / ".cache"
 
 
 @dataclass(frozen=True)
@@ -14,6 +15,7 @@ class _Directories:
     root: Path = _ROOT_DIR
     build: Path = _BUILD_DIR
     libs: Path = _LIBS_DIR
+    cache: Path = _CAHCE_DIR
 
     logenium_source: Path = _ROOT_DIR / "src"
     logenium_include: Path = _ROOT_DIR / "include"
@@ -28,15 +30,18 @@ class _Directories:
     debug_root: Path = _LIBS_DIR / "debug"
     debug_source: Path = _LIBS_DIR / "debug" / "src"
     debug_include: Path = _LIBS_DIR / "debug" / "include"
+    debug_cmake: Path = _LIBS_DIR / "debug" / "cmake"
+    debug_tests: Path = _LIBS_DIR / "debug" / "tests"
 
     devutils_root: Path = _ROOT_DIR / "devutils"
     devutils_source: Path = _ROOT_DIR / "devutils" / "src"
+    devutils_cache: Path = _CAHCE_DIR / "devutils"
 
 
 @dataclass(frozen=True)
 class _Files:
     ninja_build_file: Path = _BUILD_DIR / "build.ninja"
-    lint_cache_file: Path = _ROOT_DIR / ".cache" / "devutils" / "lint_cache.yaml"
+    devutils_lint_cache_file: Path = _CAHCE_DIR / "devutils" / "lint_cache.yaml"
 
 
 Directories = _Directories()

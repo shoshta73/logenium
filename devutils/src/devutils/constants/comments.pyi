@@ -1,6 +1,5 @@
-from dataclasses import dataclass
-
 from _typeshed import Incomplete
+from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class _Comments:
