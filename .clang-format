@@ -18,6 +18,8 @@ IncludeCategories:
     Priority: 7
 
   # Project libraries
+  - Regex: '^(<|")debug.hxx'
+    Priority: 6
   - Regex: '^(<|")debug/'
     Priority: 6
   - Regex: '^(<|")xheader/'
