@@ -1,6 +1,7 @@
+from dataclasses import dataclass
+
 from .file_result import FileResult as FileResult
 from .file_status import FileStatus as FileStatus
-from dataclasses import dataclass
 
 @dataclass
 class Statistics:

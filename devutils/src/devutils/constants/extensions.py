@@ -12,6 +12,7 @@ class _Extensions:
     python_source: list[str] = field(default_factory=lambda: [".py", ".pyi"])
     powershell_source: list[str] = field(default_factory=lambda: [".ps1"])
     bat_source: list[str] = field(default_factory=lambda: [".bat"])
+    bash_source: list[str] = field(default_factory=lambda: [".sh"])
 
 
 Extensions = _Extensions()

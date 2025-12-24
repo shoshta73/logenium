@@ -26,6 +26,7 @@ _licence_header_python.append("\n")
 
 _licence_header_cmake: list[str] = _licence_header_python
 _license_header_powershell: list[str] = _licence_header_python
+_license_header_bash: list[str] = _licence_header_python
 
 _licence_header_bat: list[str] = []
 
@@ -42,6 +43,7 @@ class _LicenseHeaders:
     cmake: list[str] = field(default_factory=lambda: _licence_header_cmake.copy())
     powershell: list[str] = field(default_factory=lambda: _license_header_powershell.copy())
     bat: list[str] = field(default_factory=lambda: _licence_header_bat.copy())
+    bash: list[str] = field(default_factory=lambda: _license_header_bash.copy())
 
 
 LicenseHeaders = _LicenseHeaders()

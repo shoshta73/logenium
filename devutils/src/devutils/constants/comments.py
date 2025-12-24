@@ -12,6 +12,7 @@ class _Comments:
     cmake: str = python
     powershell: str = "#"
     bat: str = "@REM"
+    bash: str = "#"
 
 
 Comments = _Comments()

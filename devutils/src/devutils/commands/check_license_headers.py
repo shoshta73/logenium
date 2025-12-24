@@ -69,6 +69,13 @@ def get_language_configs() -> list[LicenseLanguageConfig]:
             specific_files=[Directories.root / "devutils.ps1"],
             license_header=LicenseHeaders.powershell,
         ),
+        LicenseLanguageConfig(
+            name="Bash",
+            extensions=Extensions.bash_source,
+            search_dirs=[],
+            specific_files=[Directories.root / "devutils.sh"],
+            license_header=LicenseHeaders.bash,
+        ),
     ]
 
 

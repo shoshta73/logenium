@@ -69,7 +69,28 @@ Both scripts automatically:
 
 **First run may take a few minutes for setup. Subsequent runs are instant.**
 
-#### Linux/macOS or Manual Usage
+#### Linux/macOS Users (Easiest)
+Use the provided wrapper script which handles all setup automatically:
+
+**Bash script**:
+```bash
+# Run from repository root - automatically installs uv if needed
+./devutils.sh configure
+./devutils.sh build
+./devutils.sh clean
+./devutils.sh --version
+```
+
+The script automatically:
+- Detect and install uv if not present (to ~/.local/bin)
+- Install Python 3.14 if needed
+- Create and manage virtual environment
+- Install dependencies from requirements.txt
+- Run devutils with your arguments
+
+**First run may take a few minutes for setup. Subsequent runs are instant.**
+
+#### Manual Usage
 ```bash
 # Run devutils commands (uv auto-manages Python 3.14+)
 uv run devutils configure
@@ -93,7 +114,7 @@ uv run devutils python stubgen check
 uv run devutils --version
 ```
 
-**Note**: devutils is optional. Standard CMake commands work identically. On Linux/macOS, requires [uv](https://github.com/astral-sh/uv) to be installed manually.
+**Note**: devutils is optional. Standard CMake commands work identically. On all platforms, the wrapper scripts (devutils.bat, devutils.ps1, devutils.sh) provide the easiest experience. For manual usage, requires [uv](https://github.com/astral-sh/uv) to be installed manually.
 
 ## devutils Package
 

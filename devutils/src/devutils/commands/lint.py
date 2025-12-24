@@ -12,7 +12,7 @@ from typing import Any
 import typer
 import yaml
 
-from devutils.constants import Directories, Extensions
+from devutils.constants import Directories, Extensions, Files
 from devutils.utils.file_checking import (
     FileResult,
     FileStatus,
@@ -144,6 +144,7 @@ def get_language_configs() -> list[LintLanguageConfig]:
                 Directories.xheader_tests,
                 Directories.debug_source,
                 Directories.debug_include,
+                Directories.debug_tests,
             ],
             specific_files=[],
             lint_steps=[
@@ -480,9 +481,7 @@ def check(no_cache: bool = typer.Option(False, "--no-cache", help="Disable cachi
     stats = Statistics(issue_label="[HAS_ISSUES]")
     configs = get_language_configs()
 
-    from devutils.constants import Files
-
-    cache_manager = LintCacheManager(Files.lint_cache_file, enabled=not no_cache)
+    cache_manager = LintCacheManager(Files.devutils_lint_cache_file, enabled=not no_cache)
 
     for config in configs:
         for lint_step in config.lint_steps:
@@ -526,9 +525,7 @@ def fix(no_cache: bool = typer.Option(False, "--no-cache", help="Disable caching
     stats = Statistics(issue_label="[HAS_ISSUES]")
     configs = get_language_configs()
 
-    from devutils.constants import Files
-
-    cache_manager = LintCacheManager(Files.lint_cache_file, enabled=not no_cache)
+    cache_manager = LintCacheManager(Files.devutils_lint_cache_file, enabled=not no_cache)
 
     for config in configs:
         for lint_step in config.lint_steps:
