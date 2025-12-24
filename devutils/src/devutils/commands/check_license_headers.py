@@ -30,7 +30,16 @@ def get_language_configs() -> list[LicenseLanguageConfig]:
         LicenseLanguageConfig(
             name="C/C++",
             extensions=Extensions.c_source + Extensions.cpp_source,
-            search_dirs=[Directories.logenium_source],
+            search_dirs=[
+                Directories.logenium_source,
+                Directories.logenium_include,
+                Directories.xheader_source,
+                Directories.xheader_include,
+                Directories.xheader_tests,
+                Directories.debug_source,
+                Directories.debug_include,
+                Directories.debug_tests,
+            ],
             specific_files=[],
             license_header=LicenseHeaders.cpp,
         ),
