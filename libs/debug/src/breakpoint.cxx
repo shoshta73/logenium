@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2025 Logenium Authors and Contributors
+// SPDX-License-Identifier: BSD-3-Clause
+
 #include "debug/breakpoint.hxx"
 
 #include <csignal>  // IWYU pragma: keep // for std::raise

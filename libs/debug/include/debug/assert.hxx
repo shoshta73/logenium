@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2025 Logenium Authors and Contributors
+// SPDX-License-Identifier: BSD-3-Clause
+
 #ifndef LOGENIUM_DEBUG_ASSERT_HXX
 #define LOGENIUM_DEBUG_ASSERT_HXX
 
