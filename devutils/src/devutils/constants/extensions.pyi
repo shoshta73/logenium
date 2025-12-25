@@ -13,5 +13,6 @@ class _Extensions:
     python_source: list[str] = field(default_factory=Incomplete)
     powershell_source: list[str] = field(default_factory=Incomplete)
     bat_source: list[str] = field(default_factory=Incomplete)
+    bash_source: list[str] = field(default_factory=Incomplete)
 
 Extensions: Incomplete

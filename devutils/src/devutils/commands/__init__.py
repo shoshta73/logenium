@@ -4,6 +4,7 @@
 from .build import build
 from .check_license_headers import check_license_headers
 from .clean import clean
+from .codegen import codegen
 from .configure import configure
 from .format import format
 from .lint import lint
@@ -13,6 +14,7 @@ __all__ = [
     "build",
     "check_license_headers",
     "clean",
+    "codegen",
     "configure",
     "format",
     "lint",

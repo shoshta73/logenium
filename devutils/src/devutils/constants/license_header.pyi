@@ -15,5 +15,6 @@ class _LicenseHeaders:
     cmake: list[str] = field(default_factory=Incomplete)
     powershell: list[str] = field(default_factory=Incomplete)
     bat: list[str] = field(default_factory=Incomplete)
+    bash: list[str] = field(default_factory=Incomplete)
 
 LicenseHeaders: Incomplete

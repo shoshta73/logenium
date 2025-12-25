@@ -3,7 +3,7 @@
 
 import typer
 
-from .commands import build, check_license_headers, clean, configure, format, lint, python
+from .commands import build, check_license_headers, clean, codegen, configure, format, lint, python
 
 app = typer.Typer()
 
@@ -11,6 +11,7 @@ app.add_typer(build, name="build", help="Build the project")
 app.add_typer(check_license_headers, name="check-license-headers", help="Check license headers")
 app.add_typer(check_license_headers, name="cls", help="Alias for check-license-headers")
 app.add_typer(clean, name="clean", help="Clean the project")
+app.add_typer(codegen, name="codegen", help="Code generation commands")
 app.add_typer(configure, name="configure", help="Configure the project")
 app.add_typer(format, name="format", help="Format the project")
 app.add_typer(lint, name="lint", help="Lint the project")
