@@ -1,18 +1,14 @@
 # SPDX-FileCopyrightText: 2025 Logenium Authors and Contributors
 # SPDX-License-Identifier: BSD-3-Clause
 
-from dataclasses import dataclass, field
+from typing import ClassVar
 
 
-@dataclass(frozen=True)
-class _Extensions:
-    c_source: list[str] = field(default_factory=lambda: [".c", ".h"])
-    cpp_source: list[str] = field(default_factory=lambda: [".cxx", ".hxx"])
-    cmake_source: list[str] = field(default_factory=lambda: [".cmake"])
-    python_source: list[str] = field(default_factory=lambda: [".py", ".pyi"])
-    powershell_source: list[str] = field(default_factory=lambda: [".ps1"])
-    bat_source: list[str] = field(default_factory=lambda: [".bat"])
-    bash_source: list[str] = field(default_factory=lambda: [".sh"])
-
-
-Extensions = _Extensions()
+class Extensions:
+    c_source: ClassVar[list[str]] = [".c", ".h"]
+    cpp_source: ClassVar[list[str]] = [".cxx", ".hxx"]
+    cmake_source: ClassVar[list[str]] = [".cmake"]
+    python_source: ClassVar[list[str]] = [".py", ".pyi"]
+    powershell_source: ClassVar[list[str]] = [".ps1"]
+    bat_source: ClassVar[list[str]] = [".bat"]
+    bash_source: ClassVar[list[str]] = [".sh"]

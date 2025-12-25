@@ -12,7 +12,7 @@ import typer
 
 from devutils.constants import Directories, Files
 
-build = typer.Typer()
+build: typer.Typer = typer.Typer()
 
 
 def format_elapsed_time(seconds: float) -> str:
@@ -27,7 +27,7 @@ def format_elapsed_time(seconds: float) -> str:
     return f"{days}d {hours}h {minutes}m {secs}s {ms}ms"
 
 
-@build.command()
+@build.command()  # type: ignore[misc]
 def run(
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Show verbose output"),
     jobs: int = typer.Option(0, "--jobs", "-j", help="Number of parallel jobs (0 = auto, capped to CPU count)"),
@@ -109,7 +109,7 @@ def run(
     typer.echo("Done!")
 
 
-@build.callback(invoke_without_command=True)
+@build.callback(invoke_without_command=True)  # type: ignore[misc]
 def main(
     ctx: typer.Context,
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Show verbose output"),

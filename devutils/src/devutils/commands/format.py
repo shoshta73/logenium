@@ -17,7 +17,7 @@ from devutils.utils.file_checking import (
     print_status,
 )
 
-format = typer.Typer()
+format: typer.Typer = typer.Typer()
 
 
 @dataclass
@@ -171,7 +171,7 @@ def fix_files(files: list[pathlib.Path], config: FormatLanguageConfig, stats: St
                 stats.errors += 1
 
 
-@format.command()
+@format.command()  # type: ignore[misc]
 def check() -> None:
     stats = Statistics(issue_label="[UNFORMATTED]")
     configs = get_language_configs()
@@ -210,7 +210,7 @@ def check() -> None:
         sys.exit(0)
 
 
-@format.command()
+@format.command()  # type: ignore[misc]
 def fix() -> None:
     stats = Statistics(issue_label="[UNFORMATTED]")
     configs = get_language_configs()

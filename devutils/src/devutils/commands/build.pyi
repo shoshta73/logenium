@@ -2,12 +2,11 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import typer
-from _typeshed import Incomplete
 
 from devutils.constants import Directories as Directories
 from devutils.constants import Files as Files
 
-build: Incomplete
+build: typer.Typer
 
 def format_elapsed_time(seconds: float) -> str: ...
 def run(verbose: bool = ..., jobs: int = ..., no_ninja_override: bool = ...) -> None: ...

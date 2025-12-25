@@ -9,14 +9,14 @@ import typer
 
 from devutils.constants import Directories
 
-wayland = typer.Typer()
+wayland: typer.Typer = typer.Typer()
 
 
 def check_wayland_scanner_available() -> bool:
     return shutil.which("wayland-scanner") is not None
 
 
-@wayland.callback(invoke_without_command=True)
+@wayland.callback(invoke_without_command=True)  # type: ignore[misc]
 def main(ctx: typer.Context) -> None:
     if not check_wayland_scanner_available():
         typer.echo(

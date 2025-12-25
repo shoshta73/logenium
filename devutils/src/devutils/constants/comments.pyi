@@ -1,18 +1,13 @@
 # SPDX-FileCopyrightText: 2025 Logenium Authors and Contributors
 # SPDX-License-Identifier: BSD-3-Clause
 
-from dataclasses import dataclass
+from typing import ClassVar
 
-from _typeshed import Incomplete
-
-@dataclass(frozen=True)
-class _Comments:
-    c: str = ...
-    cpp: str = ...
-    python: str = ...
-    cmake: str = ...
-    powershell: str = ...
-    bat: str = ...
-    bash: str = ...
-
-Comments: Incomplete
+class Comments:
+    c: ClassVar[str]
+    cpp: ClassVar[str]
+    python: ClassVar[str]
+    cmake: ClassVar[str]
+    powershell: ClassVar[str]
+    bat: ClassVar[str]
+    bash: ClassVar[str]

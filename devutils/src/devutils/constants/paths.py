@@ -11,7 +11,7 @@ _CAHCE_DIR: Path = _ROOT_DIR / ".cache"
 
 
 @dataclass(frozen=True)
-class _Directories:
+class Directories:
     root: Path = _ROOT_DIR
     build: Path = _BUILD_DIR
     libs: Path = _LIBS_DIR
@@ -39,10 +39,13 @@ class _Directories:
 
 
 @dataclass(frozen=True)
-class _Files:
-    ninja_build_file: Path = _BUILD_DIR / "build.ninja"
-    devutils_lint_cache_file: Path = _CAHCE_DIR / "devutils" / "lint_cache.yaml"
+class Files:
+    ninja_build_file: Path = Directories.build / "build.ninja"
+    devutils_lint_cache_file: Path = Directories.devutils_cache / "lint_cache.yaml"
+    devutils_pyproject_toml: Path = Directories.devutils_root / "pyproject.toml"
 
 
-Directories = _Directories()
-Files = _Files()
+__all__ = [
+    "Directories",
+    "Files",
+]

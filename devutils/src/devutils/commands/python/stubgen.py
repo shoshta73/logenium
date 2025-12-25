@@ -11,7 +11,7 @@ import typer
 
 from devutils.constants import Directories
 
-stubgen = typer.Typer()
+stubgen: typer.Typer = typer.Typer()
 
 
 def check_stubgen_available() -> bool:
@@ -27,7 +27,7 @@ def check_stubgen_available() -> bool:
         return False
 
 
-@stubgen.command()
+@stubgen.command()  # type: ignore[misc]
 def generate(
     verbose: bool = typer.Option(
         False,
@@ -89,7 +89,7 @@ def generate(
         )
 
 
-@stubgen.command()
+@stubgen.command()  # type: ignore[misc]
 def check(
     verbose: bool = typer.Option(
         False,

@@ -5,6 +5,6 @@ import typer
 
 from .wayland import wayland
 
-codegen = typer.Typer()
+codegen: typer.Typer = typer.Typer()
 
 codegen.add_typer(wayland, name="wayland", help="Generate Wayland protocol files")

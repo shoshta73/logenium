@@ -26,7 +26,7 @@ def version_callback(value: bool) -> None:
         raise typer.Exit(0)
 
 
-@app.callback(invoke_without_command=True)
+@app.callback(invoke_without_command=True)  # type: ignore[misc]
 def main(
     ctx: typer.Context,
     version: bool = typer.Option(

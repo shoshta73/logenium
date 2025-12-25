@@ -1,18 +1,14 @@
 # SPDX-FileCopyrightText: 2025 Logenium Authors and Contributors
 # SPDX-License-Identifier: BSD-3-Clause
 
-from dataclasses import dataclass
+from typing import ClassVar
 
 
-@dataclass(frozen=True)
-class _Comments:
-    c: str = "//"
-    cpp: str = c
-    python: str = "#"
-    cmake: str = python
-    powershell: str = "#"
-    bat: str = "@REM"
-    bash: str = "#"
-
-
-Comments = _Comments()
+class Comments:
+    c: ClassVar[str] = "//"
+    cpp: ClassVar[str] = c
+    python: ClassVar[str] = "#"
+    cmake: ClassVar[str] = python
+    powershell: ClassVar[str] = "#"
+    bat: ClassVar[str] = "@REM"
+    bash: ClassVar[str] = "#"

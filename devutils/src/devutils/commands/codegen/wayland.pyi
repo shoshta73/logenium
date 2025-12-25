@@ -2,11 +2,10 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import typer
-from _typeshed import Incomplete
 
 from devutils.constants import Directories as Directories
 
-wayland: Incomplete
+wayland: typer.Typer
 
 def check_wayland_scanner_available() -> bool: ...
 def main(ctx: typer.Context) -> None: ...

@@ -4,15 +4,16 @@
 import shlex
 import shutil
 import subprocess
+from typing import cast
 
 import typer
 
 import devutils.constants
 
-configure = typer.Typer()
+configure: typer.Typer = typer.Typer()
 
 
-@configure.command()
+@configure.command()  # type: ignore[misc]
 def run() -> None:
     typer.echo("Configuring the project...")
 
@@ -38,7 +39,7 @@ def run() -> None:
     else:
         typer.echo("Testing is disabled")
 
-    mode = typer.prompt("In What mode do you want to build?")
+    mode: str = cast(str, typer.prompt("In What mode do you want to build?"))
     mode_map = {
         "debug": "Debug",
         "release": "Release",
@@ -72,7 +73,7 @@ def run() -> None:
     typer.echo("Done!")
 
 
-@configure.callback(invoke_without_command=True)
+@configure.callback(invoke_without_command=True)  # type: ignore[misc]
 def main(ctx: typer.Context) -> None:
     if ctx.invoked_subcommand is None:
         run()

@@ -4,10 +4,10 @@
 from dataclasses import dataclass
 from pathlib import Path
 
-from _typeshed import Incomplete
+__all__ = ["Directories", "Files"]
 
 @dataclass(frozen=True)
-class _Directories:
+class Directories:
     root: Path = ...
     build: Path = ...
     libs: Path = ...
@@ -30,9 +30,7 @@ class _Directories:
     devutils_cache: Path = ...
 
 @dataclass(frozen=True)
-class _Files:
+class Files:
     ninja_build_file: Path = ...
     devutils_lint_cache_file: Path = ...
-
-Directories: Incomplete
-Files: Incomplete
+    devutils_pyproject_toml: Path = ...

@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2025 Logenium Authors and Contributors
 # SPDX-License-Identifier: BSD-3-Clause
 
-from dataclasses import dataclass, field
+from typing import ClassVar
 
 from .comments import Comments
 
@@ -35,15 +35,11 @@ for line in _LICENCE_HEADER:
 _licence_header_bat.append("\n")
 
 
-@dataclass(frozen=True)
-class _LicenseHeaders:
-    c: list[str] = field(default_factory=lambda: _licence_header_c.copy())
-    cpp: list[str] = field(default_factory=lambda: _licence_header_cpp.copy())
-    python: list[str] = field(default_factory=lambda: _licence_header_python.copy())
-    cmake: list[str] = field(default_factory=lambda: _licence_header_cmake.copy())
-    powershell: list[str] = field(default_factory=lambda: _license_header_powershell.copy())
-    bat: list[str] = field(default_factory=lambda: _licence_header_bat.copy())
-    bash: list[str] = field(default_factory=lambda: _license_header_bash.copy())
-
-
-LicenseHeaders = _LicenseHeaders()
+class LicenseHeaders:
+    c: ClassVar[list[str]] = _licence_header_c
+    cpp: ClassVar[list[str]] = _licence_header_cpp
+    python: ClassVar[list[str]] = _licence_header_python
+    cmake: ClassVar[list[str]] = _licence_header_cmake
+    powershell: ClassVar[list[str]] = _license_header_powershell
+    bat: ClassVar[list[str]] = _licence_header_bat
+    bash: ClassVar[list[str]] = _license_header_bash

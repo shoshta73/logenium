@@ -2,9 +2,8 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import typer
-from _typeshed import Incomplete
 
-configure: Incomplete
+configure: typer.Typer
 
 def run() -> None: ...
 def main(ctx: typer.Context) -> None: ...

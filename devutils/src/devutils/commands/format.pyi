@@ -4,27 +4,17 @@
 import pathlib
 from dataclasses import dataclass
 
-from _typeshed import Incomplete
+import typer
 
 from devutils.constants import Directories as Directories
 from devutils.constants import Extensions as Extensions
-from devutils.utils.file_checking import (
-    FileResult as FileResult,
-)
-from devutils.utils.file_checking import (
-    FileStatus as FileStatus,
-)
-from devutils.utils.file_checking import (
-    LanguageConfig as LanguageConfig,
-)
-from devutils.utils.file_checking import (
-    Statistics as Statistics,
-)
-from devutils.utils.file_checking import (
-    print_status as print_status,
-)
+from devutils.utils.file_checking import FileResult as FileResult
+from devutils.utils.file_checking import FileStatus as FileStatus
+from devutils.utils.file_checking import LanguageConfig as LanguageConfig
+from devutils.utils.file_checking import Statistics as Statistics
+from devutils.utils.file_checking import print_status as print_status
 
-format: Incomplete
+format: typer.Typer
 
 @dataclass
 class FormatLanguageConfig(LanguageConfig):

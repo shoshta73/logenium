@@ -17,7 +17,7 @@ from devutils.utils.file_checking import (
     print_status,
 )
 
-check_license_headers = typer.Typer()
+check_license_headers: typer.Typer = typer.Typer()
 
 
 @dataclass
@@ -227,14 +227,14 @@ def fix_files(files: list[pathlib.Path], header_lines: list[str], stats: License
                 stats.record_fix(False)
 
 
-@check_license_headers.command()
+@check_license_headers.command()  # type: ignore[misc]
 def show_headers() -> None:
     for config in get_language_configs():
         typer.echo(f"{config.name} License Header:")
         typer.echo("".join(config.license_header[:2]) + "\n")
 
 
-@check_license_headers.command()
+@check_license_headers.command()  # type: ignore[misc]
 def check() -> None:
     stats = LicenseHeaderStatistics()
 
@@ -260,7 +260,7 @@ def check() -> None:
         sys.exit(0)
 
 
-@check_license_headers.command()
+@check_license_headers.command()  # type: ignore[misc]
 def fix() -> None:
     stats = LicenseHeaderStatistics()
 

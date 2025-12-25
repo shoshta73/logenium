@@ -4,20 +4,21 @@
 import os
 import shutil
 import stat
+from collections.abc import Callable
 
 import typer
 
 from devutils.constants import Directories
 
-clean = typer.Typer()
+clean: typer.Typer = typer.Typer()
 
 
-def handle_remove_readonly(func, path, exc):
+def handle_remove_readonly(func: Callable[[str], object], path: str, exc: BaseException) -> object:
     os.chmod(path, stat.S_IWRITE)
-    func(path)
+    return func(path)
 
 
-@clean.command()
+@clean.command()  # type: ignore[misc]
 def run() -> None:
     if not Directories.build.exists() and not Directories.cache.exists():
         typer.echo("Build directory does not exist. Nothing to clean.")
@@ -32,7 +33,7 @@ def run() -> None:
     typer.echo("Done!")
 
 
-@clean.callback(invoke_without_command=True)
+@clean.callback(invoke_without_command=True)  # type: ignore[misc]
 def main(ctx: typer.Context) -> None:
     if ctx.invoked_subcommand is None:
         run()

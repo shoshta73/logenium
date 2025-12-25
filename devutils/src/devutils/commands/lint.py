@@ -7,7 +7,7 @@ import sys
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
-from typing import Any
+from typing import TypedDict
 
 import typer
 import yaml
@@ -22,14 +22,30 @@ from devutils.utils.file_checking import (
     print_status,
 )
 
-lint = typer.Typer()
+lint: typer.Typer = typer.Typer()
+
+
+class CacheEntry(TypedDict):
+    mtime: float
+    status: str
+    error: str | None
+
+
+class CacheData(TypedDict):
+    version: str
+    cache: dict[str, CacheEntry]
 
 
 class LintCacheManager:
+    cache_path: pathlib.Path
+    enabled: bool
+    cache_data: CacheData
+    lock: threading.Lock
+
     def __init__(self, cache_path: pathlib.Path, enabled: bool = True):
         self.cache_path = cache_path
         self.enabled = enabled
-        self.cache_data: dict[str, Any] = {"version": "1.0", "cache": {}}
+        self.cache_data: CacheData = {"version": "1.0", "cache": {}}
         self.lock = threading.Lock()
 
         if self.enabled:
@@ -41,9 +57,12 @@ class LintCacheManager:
 
         try:
             with open(self.cache_path) as f:
-                data = yaml.safe_load(f)
-                if data and data.get("version") == "1.0":
-                    self.cache_data = data
+                data: object = yaml.safe_load(f)
+                if isinstance(data, dict):
+                    version = data.get("version")
+                    if isinstance(version, str) and version == "1.0":
+                        if "cache" in data and isinstance(data["cache"], dict):
+                            self.cache_data = data  # type: ignore[assignment]
         except (yaml.YAMLError, OSError):
             pass
 
@@ -112,7 +131,7 @@ class LintCacheManager:
             FileStatus.ISSUE: "issue",
             FileStatus.ERROR: "error",
         }
-        entry = {"mtime": mtime, "status": status_map[result.status], "error": result.error}
+        entry: CacheEntry = {"mtime": mtime, "status": status_map[result.status], "error": result.error}
 
         with self.lock:
             self.cache_data["cache"][cache_key] = entry
@@ -170,7 +189,7 @@ def get_language_configs() -> list[LintLanguageConfig]:
             lint_steps=[
                 LintStep(
                     tool_name="mypy",
-                    check_args=[],
+                    check_args=["--config-file", str(Files.devutils_pyproject_toml)],
                     fix_args=[],
                     can_fix=False,
                 ),
@@ -476,7 +495,7 @@ def fix_files_parallel(
                 stats.increment_errors_threadsafe()
 
 
-@lint.command()
+@lint.command()  # type: ignore[misc]
 def check(no_cache: bool = typer.Option(False, "--no-cache", help="Disable caching and re-lint all files")) -> None:
     stats = Statistics(issue_label="[HAS_ISSUES]")
     configs = get_language_configs()
@@ -520,7 +539,7 @@ def check(no_cache: bool = typer.Option(False, "--no-cache", help="Disable cachi
         sys.exit(0)
 
 
-@lint.command()
+@lint.command()  # type: ignore[misc]
 def fix(no_cache: bool = typer.Option(False, "--no-cache", help="Disable caching and re-lint all files")) -> None:
     stats = Statistics(issue_label="[HAS_ISSUES]")
     configs = get_language_configs()

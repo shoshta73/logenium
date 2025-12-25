@@ -4,39 +4,36 @@
 import pathlib
 import threading
 from dataclasses import dataclass
-from typing import Any
+from typing import TypedDict
 
-from _typeshed import Incomplete
+import typer
 
 from devutils.constants import Directories as Directories
 from devutils.constants import Extensions as Extensions
 from devutils.constants import Files as Files
-from devutils.utils.file_checking import (
-    FileResult as FileResult,
-)
-from devutils.utils.file_checking import (
-    FileStatus as FileStatus,
-)
-from devutils.utils.file_checking import (
-    LanguageConfig as LanguageConfig,
-)
-from devutils.utils.file_checking import (
-    Statistics as Statistics,
-)
-from devutils.utils.file_checking import (
-    format_file_path as format_file_path,
-)
-from devutils.utils.file_checking import (
-    print_status as print_status,
-)
+from devutils.utils.file_checking import FileResult as FileResult
+from devutils.utils.file_checking import FileStatus as FileStatus
+from devutils.utils.file_checking import LanguageConfig as LanguageConfig
+from devutils.utils.file_checking import Statistics as Statistics
+from devutils.utils.file_checking import format_file_path as format_file_path
+from devutils.utils.file_checking import print_status as print_status
 
-lint: Incomplete
+lint: typer.Typer
+
+class CacheEntry(TypedDict):
+    mtime: float
+    status: str
+    error: str | None
+
+class CacheData(TypedDict):
+    version: str
+    cache: dict[str, CacheEntry]
 
 class LintCacheManager:
-    cache_path: Incomplete
-    enabled: Incomplete
-    cache_data: dict[str, Any]
-    lock: Incomplete
+    cache_path: pathlib.Path
+    enabled: bool
+    cache_data: CacheData
+    lock: threading.Lock
     def __init__(self, cache_path: pathlib.Path, enabled: bool = True) -> None: ...
     def load_cache(self) -> None: ...
     def save_cache(self) -> None: ...
