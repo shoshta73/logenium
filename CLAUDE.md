@@ -4,9 +4,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Logenium is a Logisim-like logic circuit simulator in early development. Built with modern C++ (C++23) and targeting Windows with infrastructure for cross-platform support, the project currently focuses on establishing the GUI foundation. The project uses a layered architecture with platform abstraction through the xheader library.
+Logenium is a Logisim-like logic circuit simulator in early development. Built with modern C++ (C++23) and targeting Windows and Linux platforms, the project currently focuses on establishing the GUI foundation. The project uses a layered architecture with platform abstraction through the xheader library.
 
-**Current Status**: The application can create a window and run a basic Windows message loop. Event handling and custom window procedures are not yet implemented.
+**Current Status**:
+- **Windows**: The application can create a window and run a basic message loop. Event handling and custom window procedures are not yet implemented.
+- **Linux**:
+  - **X11**: Fully functional window creation with XCB. Event loop implemented but event handling not yet processed.
+  - **Wayland**: Fully functional window creation with server-side decorations. Event loop implemented, close event handled.
 
 ## Compiler Requirements
 
@@ -134,6 +138,9 @@ uv run devutils clean
 uv run devutils check-license-headers check  # or: cls check
 # Check all files for correct SPDX license headers
 
+uv run devutils codegen wayland
+# Generate Wayland protocol files using wayland-scanner
+
 uv run devutils python stubgen generate
 # Generate Python stub files (.pyi) inline with source code
 
@@ -163,6 +170,9 @@ devutils/
 │   │   ├── build.py           # Ninja build with progress output
 │   │   ├── clean.py           # Build directory cleanup
 │   │   ├── check_license_headers.py  # License header validation and fixing
+│   │   ├── codegen/           # Code generation commands
+│   │   │   ├── __init__.py    # Codegen command group
+│   │   │   └── wayland.py     # Wayland protocol generation
 │   │   ├── format.py          # Code formatting with clang-format and ruff
 │   │   ├── lint.py            # Code linting with clang-tidy, mypy, and ruff
 │   │   └── python/            # Python-specific commands
@@ -216,6 +226,8 @@ Validates and fixes SPDX license headers. Supports C/C++, Python, CMake, PowerSh
 
 Usage: `uv run devutils cls check` | `uv run devutils cls fix`
 
+**Note**: When adding new source files or if license headers are missing, run `uv run devutils cls fix` to automatically add the correct SPDX headers to all files.
+
 **Architecture**: Configuration-driven via `LanguageConfig` dataclass. To add languages, update `get_language_configs()` in `check_license_headers.py` and constants files.
 
 #### format
@@ -240,8 +252,15 @@ Multi-step linting with **parallel processing** and **YAML-based caching**. Supp
 
 **Tools**:
 - C/C++: clang-tidy (standards, can fix) + clang-check (static analysis, read-only)
-- Python: mypy (type checking, read-only) + ruff (linting, can fix)
+- Python: mypy (type checking with **strict mode**, read-only) + ruff (linting, can fix)
 - Requires: clang-tidy/clang-check in PATH, `build/compile_commands.json`; mypy/ruff auto-installed via uv
+
+**Python Type Checking** (mypy strict configuration in `devutils/pyproject.toml`):
+- **Strict mode enabled**: All optional error checking flags active
+- **Disallows**: Untyped definitions, incomplete definitions, untyped calls/decorators, explicit `Any` types, `Any` in expressions/generics
+- **Enforces**: No implicit reexports, no implicit optional, strict equality checks
+- **No `Incomplete` types**: All type annotations must be complete and explicit
+- Configuration automatically loaded via `--config-file` argument in lint command
 
 **Performance**:
 - Parallel: 3-5x speedup (first run)
@@ -251,6 +270,8 @@ Multi-step linting with **parallel processing** and **YAML-based caching**. Supp
 - Warnings don't cause failure; errors do
 
 Usage: `uv run devutils lint check [--no-cache]` | `uv run devutils lint fix [--no-cache]`
+
+**Important for AI Coding Agents**: For performance and API usage efficiency, always use `uv run devutils lint check` with caching **enabled** (default behavior, omit `--no-cache` flag). The intelligent cache provides 10-50x speedup on unchanged files while maintaining accuracy through mtime-based validation.
 
 **Architecture**: Multi-step parallel processing via `ThreadPoolExecutor`, thread-safe YAML cache (`LintCacheManager`), per-file per-tool cache entries. Cache key: `"{language}:{tool}:{relative_path}"`. To add lint steps, modify `lint_steps` in `get_language_configs()`. Dependencies: `pyyaml>=6.0.3`, `types-pyyaml>=6.0.12.20250915`.
 
@@ -265,14 +286,77 @@ Generates/checks Python stub files (`.pyi`) inline with source code using mypy's
 
 Usage: `uv run devutils python stubgen generate` | `uv run devutils python stubgen check`
 
+#### codegen wayland
+Generates Wayland protocol files from XML protocol specifications using `wayland-scanner`.
+
+**Requirements**:
+- `wayland-scanner` executable must be in PATH
+- `wayland-protocols` package must be installed (provides `/usr/share/wayland-protocols/`)
+
+**Output Files** (per protocol):
+- **xdg-shell**:
+  - Client header: `libs/xheader/include/xheader/internal/xdg-shell-client-protocol.h`
+  - Private code: `libs/xheader/src/internal/xdg-shell-protocol.c`
+- **xdg-decoration-unstable-v1**:
+  - Client header: `libs/xheader/include/xheader/internal/xdg-decoration-unstable-v1-client-protocol.h`
+  - Private code: `libs/xheader/src/internal/xdg-decoration-unstable-v1-protocol.c`
+
+**Protocol Sources**:
+- `/usr/share/wayland-protocols/stable/xdg-shell/xdg-shell.xml`
+- `/usr/share/wayland-protocols/unstable/xdg-decoration/xdg-decoration-unstable-v1.xml`
+
+**Process**:
+1. Checks if `wayland-scanner` is available
+2. For each protocol:
+   - Verifies protocol file exists (skips if not found)
+   - Generates client header with `wayland-scanner client-header`
+   - Generates private code with `wayland-scanner private-code`
+
+**Installation** (if wayland-scanner not found):
+- Arch/Manjaro: `sudo pacman -S wayland-protocols`
+- Ubuntu/Debian: `sudo apt install wayland-protocols libwayland-dev`
+- Fedora: `sudo dnf install wayland-protocols-devel`
+
+Usage: `uv run devutils codegen wayland`
+
+**Note**: This command is Linux-specific. On other platforms, it will fail gracefully if `wayland-scanner` is not found.
+
+**Git Integration**: Generated files are listed in `libs/xheader/.gitignore` and should not be committed to version control. Run `uv run devutils codegen wayland` after cloning the repository to regenerate these files.
+
 ### devutils Constants & Utilities
 
-**Singletons** (frozen dataclasses in `devutils.constants`):
+**Constants Architecture** in `devutils.constants`:
+
+All constant modules use **class-level attributes pattern** - classes accessed directly without instantiation:
+- All exports are public classes (no private `_ClassName` pattern)
+- Access via class attributes: `Directories.root`, `Extensions.c_source`, `Comments.python`
+- Values are class-level constants (not instance attributes)
+- Memory-efficient (no instance creation, no object overhead)
+- Enables clean type inference and autocomplete in IDEs
+
+**Key Implementation Details**:
+- `Directories` and `Files`: Frozen dataclasses with simple default values from module-level constants
+- `Files`: References `Directories` class for derived paths (e.g., `Directories.build / "build.ninja"`)
+- `Comments`, `Extensions`, `LicenseHeaders`: Regular classes (not dataclasses) with class attributes
+  - Avoids dataclass mutable default issues
+  - Simpler for never-instantiated namespace classes
+
+**Available Constants**:
 - `Directories`: Project paths (`root`, `build`, `libs`, library-specific paths)
-- `Files`: Build file paths (`ninja_build_file`)
-- `Comments`: Language comment syntax (`//`, `#`, `@REM`)
-- `Extensions`: File extension lists (`.c/.h`, `.cxx/.hxx`, `.py/.pyi`, etc.)
-- `LicenseHeaders`: SPDX header templates for each language
+- `Files`: Build and config file paths (`ninja_build_file`, `devutils_lint_cache_file`, `devutils_pyproject_toml`)
+- `Comments`: Language comment syntax (`c="//",` `python="#"`, `bat="@REM"`)
+- `Extensions`: File extension lists (`c_source=[".c", ".h"]`, `python_source=[".py", ".pyi"]`)
+- `LicenseHeaders`: SPDX header templates for each language (runtime-generated from `Comments`)
+
+**Type Safety**:
+- `Directories` and `Files`: Frozen dataclasses with explicit type annotations
+- `Comments`, `Extensions`, `LicenseHeaders`: Regular classes with `ClassVar` annotations for class-level attributes
+  - Example: `c_source: ClassVar[list[str]] = [".c", ".h"]`
+  - Required for correct mypy strict mode and stubgen compatibility
+- No private classes - all public exports via `__all__` where applicable
+- Passes strict mypy checks with zero `Incomplete` or `Any` types
+- Full type inference: mypy understands `Directories.root: Path`, `Extensions.c_source: ClassVar[list[str]]`, etc.
+- Stub files (`.pyi`) auto-generated by stubgen preserve `ClassVar` annotations
 
 **Utilities** (`devutils.utils`):
 - `fs`: File system utilities (`find_files_by_extensions`, `get_files_recursively`)
@@ -292,16 +376,23 @@ uv run devutils <command>
 **Code Quality Tools** (configured in `pyproject.toml`):
 - **Ruff**: Linting and formatting (120 char line length)
   - Enabled rules: pycodestyle, pyflakes, isort, flake8-bugbear, comprehensions, pyupgrade
-- **Mypy**: Strict type checking with Python 3.14 target
+- **Mypy**: Maximum strictness type checking with Python 3.14 target
+  - `strict = true`: All optional error checking flags enabled
+  - **Disallow untyped code**: `disallow_untyped_defs`, `disallow_incomplete_defs`, `disallow_untyped_calls`, `disallow_untyped_decorators`
+  - **Disallow Any types**: `disallow_any_unimported`, `disallow_any_expr`, `disallow_any_decorated`, `disallow_any_explicit`, `disallow_any_generics`, `disallow_subclassing_any`
+  - **Additional checks**: `warn_return_any`, `warn_redundant_casts`, `warn_unused_ignores`, `warn_no_return`, `warn_unreachable`, `no_implicit_reexport`, `no_implicit_optional`, `strict_equality`, `extra_checks`
+  - **No `Incomplete` types allowed**: All module-level Typer objects must have explicit `typer.Typer` type annotations
 
 **Entry Points**: Two CLI entry points (`logenium-devutils`, `devutils`) map to `devutils.__main__:app`
 
 ### devutils Development Notes
 
 **Common Pitfalls**:
-1. Capture subprocess error output in `FileResult`: `error_output = result.stdout + result.stderr`
-2. Display error messages from `FileResult.error` in `check_files()`/`fix_files()`
-3. Clear `__pycache__` after changes: `find devutils -name "__pycache__" -type d -exec rm -rf {} +`
+1. **NEVER edit .pyi stub files manually** - they are automatically generated by stubgen and will be overwritten. Always make changes to the .py source files instead
+2. For class-level attributes, use `ClassVar` in the source .py files to ensure correct stub generation: `field: ClassVar[type] = value`
+3. Capture subprocess error output in `FileResult`: `error_output = result.stdout + result.stderr`
+4. Display error messages from `FileResult.error` in `check_files()`/`fix_files()`
+5. Clear `__pycache__` after changes: `find devutils -name "__pycache__" -type d -exec rm -rf {} +`
 
 **Why uv?**: Auto-manages Python versions, fast (Rust-based), zero config, deterministic
 
@@ -326,6 +417,21 @@ First run: ~few minutes; subsequent: instant.
      - Provides stub implementations for non-Linux platforms
      - Functions: `dlopen`, `dlclose`
      - Links against `dl` library on Linux
+   - **Linux XCB API** (`xheader/xcb/xcb.h`, `xheader/xcb/xproto.h`):
+     - Re-exports system `<xcb/xcb.h>` and `<xcb/xproto.h>` on Linux
+     - Provides stub implementations for non-Linux platforms
+     - Functions: Connection management, window creation, event handling
+     - Links against `xcb` library on Linux
+   - **Wayland Protocols** (`xheader/wayland-client-protocol.h`, `xheader/xdg-shell-client-protocol.h`, `xheader/xdg-decoration-unstable-v1-client-protocol.h`):
+     - Re-exports system Wayland headers on Linux
+     - Provides stub implementations for non-Linux platforms
+     - Links against `wayland-client` library on Linux
+   - **Generated Files** (`xheader/internal/`):
+     - Wayland protocol files generated by `wayland-scanner`
+     - Located in `include/xheader/internal/` and `src/internal/`
+     - Protocols: `xdg-shell`, `xdg-decoration-unstable-v1`
+     - Listed in `libs/xheader/.gitignore` (not committed to version control)
+     - Regenerate with `uv run devutils codegen wayland` after cloning
    - **Important**: Library is C23, but tests are C++ (GoogleTest requires C++)
    - CMake declares `LANGUAGES C CXX` to support both library and tests
 
@@ -345,17 +451,27 @@ First run: ~few minutes; subsequent: instant.
 
 ```
 Application (abstract)
-└── WindowsApplication
-    └── Creates WindowsWindow
+├── WindowsApplication
+│   └── Creates WindowsWindow
+└── LinuxApplication
+    ├── X11Application
+    │   └── Creates X11Window
+    └── WaylandApplication
+        └── Creates WaylandWindow
 
 Window (abstract)
-└── WindowsWindow
+├── WindowsWindow
+└── LinuxWindow
+    ├── X11Window
+    └── WaylandWindow
 ```
 
 ### NativeHandle Pattern
 
 Both `Application` and `Window` classes use a `NativeHandle` nested struct that:
-- Wraps platform-specific handles (HMODULE, HWND)
+- Wraps platform-specific handles:
+  - Windows: HMODULE (Application), HWND (Window)
+  - Linux: void* from dlopen (Application)
 - Provides implicit conversions to/from void* and platform types
 - Ensures type safety while maintaining flexibility
 
@@ -422,8 +538,10 @@ The debug library provides debugging utilities that are completely eliminated in
 
 ### Application Initialization and Lifecycle
 
+#### Windows Platform
+
 1. **Initialization** (`main()` → `Application::Create()`):
-   - Factory returns `WindowsApplication` on Windows, nullptr otherwise
+   - Factory returns `WindowsApplication` on Windows
    - `WindowsApplication` constructor:
      - Gets module handle via `GetModuleHandle(nullptr)`
      - Calls `RegisterWindowClass()`
@@ -445,6 +563,29 @@ The debug library provides debugging utilities that are completely eliminated in
    - Unregisters window class via `UnregisterClass()`
    - Clears module handle
 
+#### Linux Platform
+
+1. **Initialization** (`main()` → `Application::Create()` → `LinuxApplication::Create()`):
+   - Factory checks `XDG_SESSION_TYPE` environment variable
+   - Returns `X11Application` if session type is "x11"
+   - Returns `WaylandApplication` if session type is "wayland"
+   - Asserts on unsupported session types
+   - `LinuxApplication` base constructor:
+     - Calls `dlopen(nullptr, RTLD_NOW)` to self-load the application
+     - Stores handle in `native_handle`
+   - `X11Application`/`WaylandApplication` constructors:
+     - Call parent constructor
+     - Call `RegisterWindowClass()` (currently stub)
+   - Window creation: Not yet implemented
+
+2. **Main Loop** (`app->Run()`):
+   - Currently stub implementations (empty functions)
+   - No event loop implemented yet
+
+3. **Cleanup** (`~LinuxApplication()`):
+   - Calls `dlclose(native_handle)` to close self-loaded handle
+   - Asserts on failure
+
 ### Application State Management
 
 The `Application::State` struct tracks runtime state:
@@ -456,7 +597,110 @@ struct State {
 
 Accessible via `GetState()` method. Used to control the main loop execution.
 
-### Window Class Configuration
+### Linux Application Architecture
+
+The Linux platform implementation uses a hierarchical structure with session detection:
+
+**Session Type Detection**:
+- Uses `XDG_SESSION_TYPE` environment variable to detect display server
+- Supported values: `"x11"` (X11), `"wayland"` (Wayland)
+- Detection happens in `LinuxApplication::Create()` static factory method
+- Asserts on unsupported or missing session types
+
+**Class Hierarchy**:
+```
+LinuxApplication (base)
+├── X11Application (X11-specific)
+└── WaylandApplication (Wayland-specific)
+
+LinuxWindow (base)
+├── X11Window (X11-specific)
+└── WaylandWindow (Wayland-specific)
+```
+
+**Native Handle Usage**:
+- `LinuxApplication` uses `dlopen(nullptr, RTLD_NOW)` for self-loading
+- Returns void* handle stored in `native_handle`
+- Cleaned up with `dlclose()` in destructor
+- Required for dynamic symbol resolution (future use)
+
+**Current Implementation Status**:
+- Session detection: ✓ Implemented
+- Application factory: ✓ Implemented
+- **X11 Implementation**:
+  - XCB connection: ✓ Implemented (xcb_connect, xcb_disconnect)
+  - Window creation: ✓ Implemented (X11Window uses xcb_create_window, xcb_map_window)
+  - Event loop: ✓ Implemented (xcb_wait_for_event in Run() method)
+  - Event handling: ✗ Events are consumed but not processed
+  - RegisterWindowClass/UnregisterWindowClass: Empty stubs (not needed for XCB)
+- **Wayland Implementation**:
+  - Wayland connection: ✓ Implemented (wl_display_connect, wl_display_disconnect)
+  - Registry binding: ✓ Implemented (wl_compositor, xdg_wm_base, wl_shm, zxdg_decoration_manager_v1)
+  - Window creation: ✓ Implemented (WaylandWindow uses wl_compositor, xdg_surface, xdg_toplevel)
+  - Server-side decorations: ✓ Implemented (xdg-decoration protocol for titlebar/borders)
+  - Shared memory buffer: ✓ Implemented (creates 1280x720 buffer via memfd_create)
+  - Event loop: ✓ Implemented (wl_display_dispatch in Run() method)
+  - Event handling: ✓ Partial (configure events handled, close event stops application)
+  - RegisterWindowClass/UnregisterWindowClass: Empty stubs (not needed for Wayland)
+
+**File Locations**:
+- Base classes: `include/logenium/platform/linux/`, `src/platform/linux/`
+- X11 implementation: `include/logenium/platform/linux/X11/`, `src/platform/linux/X11/`
+- Wayland implementation: `include/logenium/platform/linux/wayland/`, `src/platform/linux/wayland/`
+
+### Wayland Window Implementation
+
+The Wayland implementation uses the modern Wayland protocol with server-side decorations:
+
+**Protocols Used**:
+- `wl_compositor` - Surface creation and management
+- `xdg_wm_base` - XDG shell for desktop windows
+- `wl_shm` - Shared memory buffers
+- `zxdg_decoration_manager_v1` - Server-side window decorations (titlebar, borders)
+
+**Window Creation Flow** (`WaylandWindow` constructor):
+1. Create `wl_surface` from compositor
+2. Create `xdg_surface` from XDG shell base
+3. Attach `xdg_surface_listener` for configure events
+4. Create `xdg_toplevel` from XDG surface
+5. Attach `xdg_toplevel_listener` for configure/close events
+6. Set window title to "Logenium"
+7. Request server-side decorations (if decoration manager available)
+8. Commit surface (initial configuration request)
+
+**Event Handling**:
+- `XdgSurfaceConfigure`: Acknowledges compositor configuration, creates buffer on first configure
+- `XdgToplevelConfigure`: Handles window resize requests (updates width/height if non-zero)
+- `XdgToplevelClose`: Sets `is_running = false` to stop application
+
+**Buffer Creation** (`CreateBuffer` method):
+1. Calculate buffer size: `width * height * 4` bytes (XRGB8888 format)
+2. Create anonymous file descriptor via `memfd_create`
+3. Set file size via `ftruncate`
+4. Map memory via `mmap` with `MAP_SHARED`
+5. Fill buffer with gray color (0x80)
+6. Create `wl_shm_pool` from file descriptor
+7. Create `wl_buffer` from pool
+8. Attach buffer to surface and commit
+
+**Destruction Order** (`~WaylandApplication`):
+1. Reset `is_running` flag (if still running)
+2. **Destroy window first** via `window.reset()` (critical to avoid segfault)
+3. Disconnect from display via `wl_display_disconnect`
+
+**Server-Side Decorations**:
+- Requested via `zxdg_decoration_manager_v1_get_toplevel_decoration`
+- Mode set to `ZXDG_TOPLEVEL_DECORATION_V1_MODE_SERVER_SIDE`
+- Compositor provides native titlebar, borders, and window controls
+- Gracefully degrades if decoration manager not available (null check)
+
+**Important Notes**:
+- Window must be destroyed before display disconnect to prevent use-after-free
+- Buffer is created once during first configure event, never updated
+- Uses POSIX headers: `<fcntl.h>`, `<sys/mman.h>`, `<unistd.h>` (via xheader wrappers)
+- Default window size: 1280x720 pixels
+
+### Window Class Configuration (Windows)
 
 Window class name is `"LogeniumWindowClass"` with:
 - Style: `CS_HREDRAW | CS_VREDRAW`
@@ -611,6 +855,110 @@ Complete list of xheader dlfcn stubs (see `libs/xheader/CMakeLists.txt` for curr
 
 **Note**: Additional dlfcn functions (`dlsym`, `dlerror`) are not yet implemented.
 
+## Linux XCB API Functions in xheader
+
+The xheader library provides X11 XCB (X protocol C-language Binding) functions via `<xheader/xcb/xcb.h>` and `<xheader/xcb/xproto.h>`:
+
+### XCB Connection Functions
+
+- **xcb_connect**: Establishes connection to X server
+  - Signature: `xcb_connection_t *xcb_connect(const char *displayname, int *screenp)`
+  - On Linux: System implementation from `<xcb/xcb.h>`
+  - On non-Linux: Stub returns `NULL`
+  - Usage: `xcb_connect(nullptr, nullptr)` for default display
+
+- **xcb_connection_has_error**: Checks connection error status
+  - Signature: `int xcb_connection_has_error(xcb_connection_t *c)`
+  - On Linux: System implementation from `<xcb/xcb.h>`
+  - On non-Linux: Stub returns `0` (no error)
+  - Returns non-zero error code if connection failed
+
+- **xcb_disconnect**: Closes connection to X server
+  - Signature: `void xcb_disconnect(xcb_connection_t *c)`
+  - On Linux: System implementation from `<xcb/xcb.h>`
+  - On non-Linux: Stub does nothing
+  - Should be called to clean up connection resources
+
+- **xcb_get_setup**: Retrieves X server setup information
+  - Signature: `const struct xcb_setup_t *xcb_get_setup(xcb_connection_t *c)`
+  - On Linux: System implementation from `<xcb/xcb.h>`
+  - On non-Linux: Stub returns `NULL`
+  - Returns setup information including screen roots
+
+- **xcb_generate_id**: Generates unique resource ID
+  - Signature: `uint32_t xcb_generate_id(xcb_connection_t *c)`
+  - On Linux: System implementation from `<xcb/xcb.h>`
+  - On non-Linux: Stub returns `0`
+  - Used to allocate IDs for windows and other resources
+
+- **xcb_flush**: Flushes pending requests to X server
+  - Signature: `int xcb_flush(xcb_connection_t *c)`
+  - On Linux: System implementation from `<xcb/xcb.h>`
+  - On non-Linux: Stub returns `0`
+  - Ensures all requests are sent to server
+
+- **xcb_wait_for_event**: Waits for and retrieves next event
+  - Signature: `xcb_generic_event_t *xcb_wait_for_event(xcb_connection_t *c)`
+  - On Linux: System implementation from `<xcb/xcb.h>`
+  - On non-Linux: Stub returns `NULL`
+  - Blocks until an event is available
+
+### XCB Protocol Functions
+
+- **xcb_setup_roots_iterator**: Gets iterator for screen roots
+  - Signature: `xcb_screen_iterator_t xcb_setup_roots_iterator(const xcb_setup_t *R)`
+  - On Linux: System implementation from `<xcb/xproto.h>`
+  - On non-Linux: Stub returns zero-initialized iterator
+  - Used to access screen information from setup
+
+- **xcb_create_window**: Creates a new window
+  - Signature: `xcb_void_cookie_t xcb_create_window(xcb_connection_t *c, uint8_t depth, xcb_window_t wid, xcb_window_t parent, int16_t x, int16_t y, uint16_t width, uint16_t height, uint16_t border_width, uint16_t _class, xcb_visualid_t visual, uint32_t value_mask, const void *value_list)`
+  - On Linux: System implementation from `<xcb/xproto.h>`
+  - On non-Linux: Stub returns zero cookie
+  - Creates window with specified parameters
+
+- **xcb_map_window**: Maps (displays) a window
+  - Signature: `xcb_void_cookie_t xcb_map_window(xcb_connection_t *c, xcb_window_t window)`
+  - On Linux: System implementation from `<xcb/xproto.h>`
+  - On non-Linux: Stub returns zero cookie
+  - Makes window visible on screen
+
+- **xcb_destroy_window**: Destroys a window
+  - Signature: `xcb_void_cookie_t xcb_destroy_window(xcb_connection_t *c, xcb_window_t window)`
+  - On Linux: System implementation from `<xcb/xproto.h>`
+  - On non-Linux: Stub returns zero cookie
+  - Removes window and frees resources
+
+### XCB Type Definitions
+
+The library provides stub type definitions for non-Linux platforms:
+
+**Connection Types** (`<xheader/xcb/xcb.h>`):
+- `xcb_connection_t`: Opaque connection handle
+- `xcb_generic_event_t`: Generic event structure for all X11 events
+- `xcb_void_cookie_t`: Cookie returned by requests that don't return data
+
+**Protocol Types** (`<xheader/xcb/xproto.h>`):
+- `xcb_keycode_t`: Key code type (`uint8_t`)
+- `xcb_window_t`: Window identifier (`uint32_t`)
+- `xcb_colormap_t`: Colormap identifier (`uint32_t`)
+- `xcb_visualid_t`: Visual identifier (`uint32_t`)
+- `xcb_screen_t`: Screen information structure
+- `xcb_setup_t`: Server setup information structure
+- `xcb_screen_iterator_t`: Screen iterator structure
+- `xcb_window_class_t`: Enum for window classes (COPY_FROM_PARENT, INPUT_OUTPUT, INPUT_ONLY)
+
+**Constants** (`<xheader/xcb/xcb.h>`):
+- `XCB_COPY_FROM_PARENT`: Value to copy attribute from parent window
+
+### All Implemented Functions
+Complete list of xheader XCB stubs (see `libs/xheader/CMakeLists.txt` for current list):
+- **Connection management**: `xcb_connect`, `xcb_connection_has_error`, `xcb_disconnect`, `xcb_get_setup`, `xcb_generate_id`, `xcb_flush`, `xcb_wait_for_event`
+- **Window management**: `xcb_create_window`, `xcb_map_window`, `xcb_destroy_window`
+- **Protocol utilities**: `xcb_setup_roots_iterator`
+
+**Note**: Functions support basic X11 window creation and event handling. Additional XCB functions will be added as needed.
+
 ## Adding New Windows API Functions
 
 1. Add function declaration to `libs/xheader/include/xheader/windows.h`
@@ -651,6 +999,40 @@ Complete list of xheader dlfcn stubs (see `libs/xheader/CMakeLists.txt` for curr
      // In implementation
      #ifndef __linux__
      void *dlsym(void *__handle, const char *__name) { return NULL; }
+     #endif
+     ```
+
+## Adding New Linux XCB Functions
+
+1. Determine appropriate header file:
+   - Connection functions: `libs/xheader/include/xheader/xcb/xcb.h`
+   - Protocol functions: `libs/xheader/include/xheader/xcb/xproto.h`
+2. Add function declaration to appropriate header
+3. Create stub implementation file:
+   - For `xcb.h` functions: `libs/xheader/src/xcb/xcb/function_name.c`
+   - For `xproto.h` functions: `libs/xheader/src/xcb/xproto/function_name.c`
+4. Add to `libs/xheader/CMakeLists.txt` sources
+5. Create corresponding test file:
+   - For `xcb.h` functions: `libs/xheader/tests/xcb/xcb/function_name.cxx`
+   - For `xproto.h` functions: `libs/xheader/tests/xcb/xproto/function_name.cxx`
+6. Add test source to appropriate test CMakeLists.txt:
+   - For `xcb.h` tests: `libs/xheader/tests/xcb/xcb/CMakeLists.txt`
+   - For `xproto.h` tests: `libs/xheader/tests/xcb/xproto/CMakeLists.txt`
+7. Ensure proper platform detection:
+   - Header: Use `#ifdef __linux__` to re-export system header
+   - Implementation: Use `#ifndef __linux__` to wrap stub implementation
+   - Example:
+     ```c
+     // In xcb.h
+     #ifdef __linux__
+     #include <xcb/xcb.h>  // IWYU pragma: export
+     #else
+     void xcb_new_function(xcb_connection_t *c);
+     #endif
+
+     // In xcb/xcb_new_function.c
+     #ifndef __linux__
+     void xcb_new_function(xcb_connection_t *c) {}
      #endif
      ```
 
@@ -761,9 +1143,32 @@ cmake -B build -G Ninja -DLOGENIUM_DEBUG_BUILD_TESTS=OFF  # Debug tests disabled
 
 ## Current Limitations
 
+### Windows Platform
 - No custom window procedure (uses `DefWindowProc` only)
 - No event handling callbacks or custom message handlers
-- Windows-only functionality (cross-platform infrastructure exists but unused)
 - Minimal error handling (mostly assertions)
 - No configuration options for window sizing/positioning
 - No support for multiple windows
+
+### Linux Platform
+
+**X11 Implementation:**
+- Basic window creation implemented (creates 1280x720 window)
+- Event loop implementation (waits for events via `xcb_wait_for_event`)
+- XCB connection management working
+- No event handling callbacks or custom event processing
+- No configuration options for window sizing/positioning
+- No support for multiple windows
+- RegisterWindowClass/UnregisterWindowClass are empty stubs (not needed for XCB)
+
+**Wayland Implementation:**
+- Basic window creation implemented (creates 1280x720 window with gray fill)
+- Server-side decorations working (titlebar, borders, window controls)
+- Event loop implementation (dispatches events via `wl_display_dispatch`)
+- Configure events handled (window resize requests processed)
+- Close event handled (stops application gracefully)
+- No custom event processing beyond configure/close
+- No configuration options for window sizing/positioning
+- No support for multiple windows
+- Buffer is created once and never updated (static gray screen)
+- RegisterWindowClass/UnregisterWindowClass are empty stubs (not needed for Wayland)
