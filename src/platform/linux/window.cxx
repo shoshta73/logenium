@@ -2,3 +2,11 @@
 // SPDX-License-Identifier: BSD-3-Clause
 
 #include "logenium/platform/linux/window.hxx"
+
+namespace logenium {
+
+LinuxWindow::LinuxWindow() {}
+
+LinuxWindow::~LinuxWindow() {}
+
+}  // namespace logenium

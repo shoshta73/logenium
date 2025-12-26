@@ -30,6 +30,12 @@ IncludeCategories:
     Priority: 4
 
   # System headers
+  - Regex: '^(<|")xheader/internal/'
+    Priority: 3
+  - Regex: '^(<|")(wayland-client|wayland-client-protocol)\.h'
+    Priority: 3
+  - Regex: '^(<|")xcb/'
+    Priority: 3
   - Regex: '^(<|")Windows\.h'
     Priority: 3
 
