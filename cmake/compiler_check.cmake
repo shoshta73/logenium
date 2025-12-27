@@ -6,13 +6,13 @@ function(check_compiler_is_clang)
 
     if(NOT CMAKE_C_COMPILER_ID STREQUAL "Clang")
         list(APPEND _errors "C compiler is not Clang (detected: ${CMAKE_C_COMPILER_ID})")
-    elseif(CMAKE_C_SIMULATE_ID STREQUAL "MSVC")
+    elseif(NOT CMAKE_C_COMPILER_FRONTEND_VARIANT STREQUAL "GNU")
         list(APPEND _errors "C compiler is clang-cl, which is not allowed (use clang instead)")
     endif()
 
     if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
         list(APPEND _errors "C++ compiler is not Clang (detected: ${CMAKE_CXX_COMPILER_ID})")
-    elseif(CMAKE_CXX_SIMULATE_ID STREQUAL "MSVC")
+    elseif(NOT CMAKE_CXX_COMPILER_FRONTEND_VARIANT STREQUAL "GNU")
         list(APPEND _errors "C++ compiler is clang-cl, which is not allowed (use clang++ instead)")
     endif()
 
