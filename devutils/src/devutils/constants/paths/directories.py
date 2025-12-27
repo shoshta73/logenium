@@ -4,7 +4,7 @@
 from dataclasses import dataclass
 from pathlib import Path
 
-_ROOT_DIR: Path = Path(__file__).parent.parent.parent.parent.parent.resolve()
+_ROOT_DIR: Path = Path(__file__).parent.parent.parent.parent.parent.parent.resolve()
 _BUILD_DIR: Path = _ROOT_DIR / "build"
 _LIBS_DIR: Path = _ROOT_DIR / "libs"
 _CAHCE_DIR: Path = _ROOT_DIR / ".cache"
@@ -36,16 +36,3 @@ class Directories:
     devutils_root: Path = _ROOT_DIR / "devutils"
     devutils_source: Path = _ROOT_DIR / "devutils" / "src"
     devutils_cache: Path = _CAHCE_DIR / "devutils"
-
-
-@dataclass(frozen=True)
-class Files:
-    ninja_build_file: Path = Directories.build / "build.ninja"
-    devutils_lint_cache_file: Path = Directories.devutils_cache / "lint_cache.yaml"
-    devutils_pyproject_toml: Path = Directories.devutils_root / "pyproject.toml"
-
-
-__all__ = [
-    "Directories",
-    "Files",
-]

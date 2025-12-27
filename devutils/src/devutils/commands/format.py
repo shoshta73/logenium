@@ -8,7 +8,8 @@ from dataclasses import dataclass
 
 import typer
 
-from devutils.constants import Directories, Extensions
+from devutils.constants import Extensions
+from devutils.constants.paths import Directories, Files
 from devutils.utils.file_checking import (
     FileResult,
     FileStatus,
@@ -25,6 +26,7 @@ class FormatLanguageConfig(LanguageConfig):
     check_args: list[str]
     fix_args: list[str]
     formatter_tool: str = ""
+    package_level: bool = False
 
 
 def get_language_configs() -> list[FormatLanguageConfig]:
@@ -52,8 +54,20 @@ def get_language_configs() -> list[FormatLanguageConfig]:
             search_dirs=[Directories.devutils_source],
             specific_files=[],
             formatter_tool="ruff",
-            check_args=["format", "--check"],
-            fix_args=["format"],
+            check_args=[
+                "--config",
+                str(Files.devutils_pyproject_toml),
+                "format",
+                "--check",
+                str(Directories.devutils_source / "devutils"),
+            ],
+            fix_args=[
+                "--config",
+                str(Files.devutils_pyproject_toml),
+                "format",
+                str(Directories.devutils_source / "devutils"),
+            ],
+            package_level=True,
         ),
     ]
 
@@ -79,7 +93,59 @@ def check_tool_available(tool_name: str) -> bool:
         return False
 
 
-def check_file_formatting(file_path: pathlib.Path, config: FormatLanguageConfig) -> FileResult:
+def run_package_format_check(files: list[pathlib.Path], config: FormatLanguageConfig) -> dict[pathlib.Path, FileResult]:
+    try:
+        if config.formatter_tool == "ruff":
+            cmd = ["uv", "run", config.formatter_tool] + config.check_args
+        else:
+            cmd = [config.formatter_tool] + config.check_args
+
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        output = result.stdout + result.stderr
+
+        unformatted_files = set()
+        for line in output.splitlines():
+            if "Would reformat:" in line or "would reformat" in line.lower():
+                parts = line.split(":", 1)
+                if len(parts) == 2:
+                    file_str = parts[1].strip()
+                    try:
+                        file_path_from_output = pathlib.Path(file_str)
+                        if not file_path_from_output.is_absolute():
+                            file_path_from_output = Directories.root / file_path_from_output
+                        file_path_from_output = file_path_from_output.resolve()
+                        unformatted_files.add(file_path_from_output)
+                    except Exception:
+                        pass
+
+        file_results: dict[pathlib.Path, FileResult] = {}
+        for file_path in files:
+            resolved_path = file_path.resolve()
+            if resolved_path in unformatted_files:
+                file_results[file_path] = FileResult(file_path, FileStatus.ISSUE, "File needs formatting")
+            else:
+                file_results[file_path] = FileResult(file_path, FileStatus.OK)
+
+        return file_results
+
+    except Exception as e:
+        return {file_path: FileResult(file_path, FileStatus.ERROR, str(e)) for file_path in files}
+
+
+def check_file_formatting(
+    file_path: pathlib.Path,
+    config: FormatLanguageConfig,
+    package_results: dict[pathlib.Path, FileResult] | None = None,
+) -> FileResult:
+    if config.package_level and package_results is not None:
+        return package_results.get(file_path, FileResult(file_path, FileStatus.OK))
+
     try:
         if config.formatter_tool == "ruff":
             cmd = ["uv", "run", config.formatter_tool] + config.check_args + [str(file_path)]
@@ -124,8 +190,12 @@ def fix_file_formatting(file_path: pathlib.Path, config: FormatLanguageConfig) -
 
 
 def check_files(files: list[pathlib.Path], config: FormatLanguageConfig, stats: Statistics) -> None:
+    package_results = None
+    if config.package_level:
+        package_results = run_package_format_check(files, config)
+
     for file_path in files:
-        result = check_file_formatting(file_path, config)
+        result = check_file_formatting(file_path, config, package_results)
         stats.record_result(result)
 
         if result.status == FileStatus.OK:
@@ -143,32 +213,78 @@ def check_files(files: list[pathlib.Path], config: FormatLanguageConfig, stats: 
 
 
 def fix_files(files: list[pathlib.Path], config: FormatLanguageConfig, stats: Statistics) -> None:
-    for file_path in files:
-        result = check_file_formatting(file_path, config)
-        stats.total += 1
+    package_results = None
+    if config.package_level:
+        package_results = run_package_format_check(files, config)
 
-        if result.status == FileStatus.ERROR:
-            print_status("[ERROR]", "yellow", file_path, result.error or "")
-            if result.error:
-                typer.echo(result.error)
-                typer.echo()
-            stats.errors += 1
-            continue
+    if config.package_level:
+        files_to_fix = [
+            f
+            for f in files
+            if package_results and package_results.get(f, FileResult(f, FileStatus.OK)).status != FileStatus.OK
+        ]
 
-        if result.status == FileStatus.OK:
-            print_status("[SKIP]", "cyan", file_path)
-            stats.record_fix(False)
+        if files_to_fix:
+            try:
+                if config.formatter_tool == "ruff":
+                    cmd = ["uv", "run", config.formatter_tool] + config.fix_args
+                else:
+                    cmd = [config.formatter_tool] + config.fix_args
+
+                proc_result = subprocess.run(cmd, capture_output=True, text=True, check=False)
+                package_fix_success = proc_result.returncode == 0
+
+                for file_path in files:
+                    stats.total += 1
+                    if (
+                        package_results
+                        and package_results.get(file_path, FileResult(file_path, FileStatus.OK)).status == FileStatus.OK
+                    ):
+                        print_status("[SKIP]", "cyan", file_path)
+                        stats.record_fix(False)
+                    elif package_fix_success:
+                        print_status("[FIXED]", "green", file_path)
+                        stats.record_fix(True)
+                    else:
+                        print_status("[ERROR]", "yellow", file_path)
+                        stats.errors += 1
+            except Exception as e:
+                for file_path in files:
+                    stats.total += 1
+                    print_status("[ERROR]", "yellow", file_path, str(e))
+                    stats.errors += 1
         else:
-            fixed = fix_file_formatting(file_path, config)
-            if fixed:
-                print_status("[FIXED]", "green", file_path)
-                stats.record_fix(True)
-            else:
-                print_status("[ERROR]", "yellow", file_path)
+            for file_path in files:
+                stats.total += 1
+                print_status("[SKIP]", "cyan", file_path)
+                stats.record_fix(False)
+    else:
+        for file_path in files:
+            result = check_file_formatting(file_path, config, package_results)
+            stats.total += 1
+
+            if result.status == FileStatus.ERROR:
+                print_status("[ERROR]", "yellow", file_path, result.error or "")
                 if result.error:
                     typer.echo(result.error)
                     typer.echo()
                 stats.errors += 1
+                continue
+
+            if result.status == FileStatus.OK:
+                print_status("[SKIP]", "cyan", file_path)
+                stats.record_fix(False)
+            else:
+                fixed = fix_file_formatting(file_path, config)
+                if fixed:
+                    print_status("[FIXED]", "green", file_path)
+                    stats.record_fix(True)
+                else:
+                    print_status("[ERROR]", "yellow", file_path)
+                    if result.error:
+                        typer.echo(result.error)
+                        typer.echo()
+                    stats.errors += 1
 
 
 @format.command()  # type: ignore[misc]

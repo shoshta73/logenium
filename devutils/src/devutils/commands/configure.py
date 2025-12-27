@@ -8,14 +8,40 @@ from typing import cast
 
 import typer
 
-import devutils.constants
+from devutils.constants.paths import CodegenFiles, Directories
 
 configure: typer.Typer = typer.Typer()
+
+
+def check_codegen_files() -> None:
+    required_files = [
+        CodegenFiles.xdg_shell_client_header,
+        CodegenFiles.xdg_shell_protocol_source,
+        CodegenFiles.xdg_decoration_client_header,
+        CodegenFiles.xdg_decoration_protocol_source,
+    ]
+
+    missing_files = [f for f in required_files if not f.exists()]
+
+    if missing_files:
+        typer.echo(
+            f"{typer.style('[WARNING]', fg='yellow')} Required Wayland protocol files are missing:",
+            err=True,
+        )
+        for file in missing_files:
+            typer.echo(f"  - {file.relative_to(Directories.root)}", err=True)
+        typer.echo(
+            f"\n{typer.style('[ACTION]', fg='cyan')} Run the following command to generate them:",
+            err=True,
+        )
+        typer.echo("  uv run devutils codegen wayland\n", err=True)
+        raise typer.Exit(1)
 
 
 @configure.command()  # type: ignore[misc]
 def run() -> None:
     typer.echo("Configuring the project...")
+    check_codegen_files()
 
     enable_testing = typer.confirm("Do you want to enable testing?")
     enable_xheader_testing = False
@@ -59,8 +85,8 @@ def run() -> None:
         raise typer.Exit(1)
 
     command_line = [cmake_path]
-    command_line.extend(["-S", str(devutils.constants.Directories.root)])
-    command_line.extend(["-B", str(devutils.constants.Directories.build)])
+    command_line.extend(["-S", str(Directories.root)])
+    command_line.extend(["-B", str(Directories.build)])
     command_line.extend(["-DCMAKE_BUILD_TYPE=" + mode])
     command_line.extend([f"-DLOGENIUM_BUILD_TESTS={'ON' if enable_testing else 'OFF'}"])
     command_line.extend([f"-DLOGENIUM_XHEADER_BUILD_TESTS={'ON' if enable_xheader_testing else 'OFF'}"])

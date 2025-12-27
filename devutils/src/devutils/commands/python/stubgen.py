@@ -9,7 +9,7 @@ from pathlib import Path
 
 import typer
 
-from devutils.constants import Directories
+from devutils.constants.paths import Directories
 
 stubgen: typer.Typer = typer.Typer()
 

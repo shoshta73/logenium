@@ -3,8 +3,8 @@
 
 import typer
 
-from devutils.constants import Directories as Directories
-from devutils.constants import Files as Files
+from devutils.constants.paths import Directories as Directories
+from devutils.constants.paths import Files as Files
 
 build: typer.Typer
 

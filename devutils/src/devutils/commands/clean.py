@@ -8,7 +8,7 @@ from collections.abc import Callable
 
 import typer
 
-from devutils.constants import Directories
+from devutils.constants.paths import Directories
 
 clean: typer.Typer = typer.Typer()
 

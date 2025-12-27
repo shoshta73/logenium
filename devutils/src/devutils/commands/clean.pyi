@@ -5,7 +5,7 @@ from collections.abc import Callable as Callable
 
 import typer
 
-from devutils.constants import Directories as Directories
+from devutils.constants.paths import Directories as Directories
 
 clean: typer.Typer
 

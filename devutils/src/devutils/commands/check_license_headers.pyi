@@ -7,14 +7,24 @@ from enum import Enum
 
 import typer
 
-from devutils.constants import Directories as Directories
 from devutils.constants import Extensions as Extensions
 from devutils.constants import LicenseHeaders as LicenseHeaders
-from devutils.utils.file_checking import FileResult as FileResult
-from devutils.utils.file_checking import FileStatus as FileStatus
-from devutils.utils.file_checking import LanguageConfig as LanguageConfig
-from devutils.utils.file_checking import Statistics as Statistics
-from devutils.utils.file_checking import print_status as print_status
+from devutils.constants.paths import Directories as Directories
+from devutils.utils.file_checking import (
+    FileResult as FileResult,
+)
+from devutils.utils.file_checking import (
+    FileStatus as FileStatus,
+)
+from devutils.utils.file_checking import (
+    LanguageConfig as LanguageConfig,
+)
+from devutils.utils.file_checking import (
+    Statistics as Statistics,
+)
+from devutils.utils.file_checking import (
+    print_status as print_status,
+)
 
 check_license_headers: typer.Typer
 

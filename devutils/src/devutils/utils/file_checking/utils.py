@@ -5,7 +5,7 @@ import pathlib
 
 import typer
 
-from devutils.constants import Directories
+from devutils.constants.paths import Directories
 from devutils.utils.filesystem import find_files_by_extensions
 
 

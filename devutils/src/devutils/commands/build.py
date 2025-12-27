@@ -10,7 +10,7 @@ import time
 
 import typer
 
-from devutils.constants import Directories, Files
+from devutils.constants.paths import Directories, Files
 
 build: typer.Typer = typer.Typer()
 

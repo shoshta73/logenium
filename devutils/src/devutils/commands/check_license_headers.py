@@ -8,7 +8,8 @@ from enum import Enum
 
 import typer
 
-from devutils.constants import Directories, Extensions, LicenseHeaders
+from devutils.constants import Extensions, LicenseHeaders
+from devutils.constants.paths import Directories
 from devutils.utils.file_checking import (
     FileResult,
     FileStatus,

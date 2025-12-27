@@ -3,7 +3,7 @@
 
 import typer
 
-from devutils.constants import Directories as Directories
+from devutils.constants.paths import Directories as Directories
 
 stubgen: typer.Typer
 

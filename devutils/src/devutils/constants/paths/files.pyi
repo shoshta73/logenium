@@ -1,0 +1,11 @@
+# SPDX-FileCopyrightText: 2025 Logenium Authors and Contributors
+# SPDX-License-Identifier: BSD-3-Clause
+
+from dataclasses import dataclass
+from pathlib import Path
+
+@dataclass(frozen=True)
+class Files:
+    ninja_build_file: Path = ...
+    devutils_lint_cache_file: Path = ...
+    devutils_pyproject_toml: Path = ...

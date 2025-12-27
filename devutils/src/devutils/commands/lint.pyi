@@ -8,15 +8,27 @@ from typing import TypedDict
 
 import typer
 
-from devutils.constants import Directories as Directories
 from devutils.constants import Extensions as Extensions
-from devutils.constants import Files as Files
-from devutils.utils.file_checking import FileResult as FileResult
-from devutils.utils.file_checking import FileStatus as FileStatus
-from devutils.utils.file_checking import LanguageConfig as LanguageConfig
-from devutils.utils.file_checking import Statistics as Statistics
-from devutils.utils.file_checking import format_file_path as format_file_path
-from devutils.utils.file_checking import print_status as print_status
+from devutils.constants.paths import Directories as Directories
+from devutils.constants.paths import Files as Files
+from devutils.utils.file_checking import (
+    FileResult as FileResult,
+)
+from devutils.utils.file_checking import (
+    FileStatus as FileStatus,
+)
+from devutils.utils.file_checking import (
+    LanguageConfig as LanguageConfig,
+)
+from devutils.utils.file_checking import (
+    Statistics as Statistics,
+)
+from devutils.utils.file_checking import (
+    format_file_path as format_file_path,
+)
+from devutils.utils.file_checking import (
+    print_status as print_status,
+)
 
 lint: typer.Typer
 
@@ -34,12 +46,15 @@ class LintCacheManager:
     enabled: bool
     cache_data: CacheData
     lock: threading.Lock
+    package_level_results: dict[str, dict[pathlib.Path, FileResult]]
     def __init__(self, cache_path: pathlib.Path, enabled: bool = True) -> None: ...
     def load_cache(self) -> None: ...
     def save_cache(self) -> None: ...
     def get_cache_key(self, language: str, tool_name: str, file_path: pathlib.Path) -> str: ...
     def get_cached_result(self, language: str, tool_name: str, file_path: pathlib.Path) -> FileResult | None: ...
     def update_cache(self, language: str, tool_name: str, file_path: pathlib.Path, result: FileResult) -> None: ...
+    def get_package_result(self, cache_key: str, file_path: pathlib.Path) -> FileResult | None: ...
+    def set_package_results(self, cache_key: str, results: dict[pathlib.Path, FileResult]) -> None: ...
 
 @dataclass
 class LintStep:
@@ -47,6 +62,7 @@ class LintStep:
     check_args: list[str]
     fix_args: list[str]
     can_fix: bool = ...
+    package_level: bool = ...
 
 @dataclass
 class LintLanguageConfig(LanguageConfig):
@@ -54,7 +70,12 @@ class LintLanguageConfig(LanguageConfig):
 
 def get_language_configs() -> list[LintLanguageConfig]: ...
 def check_tool_available(tool_name: str) -> bool: ...
-def check_file_lint(file_path: pathlib.Path, lint_step: LintStep) -> FileResult: ...
+def run_package_level_lint(
+    files: list[pathlib.Path], lint_step: LintStep, config_name: str, cache_manager: LintCacheManager
+) -> None: ...
+def check_file_lint(
+    file_path: pathlib.Path, lint_step: LintStep, config_name: str, cache_manager: LintCacheManager
+) -> FileResult: ...
 def fix_file_lint(file_path: pathlib.Path, lint_step: LintStep) -> bool: ...
 def check_single_file(
     file_path: pathlib.Path, config: LintLanguageConfig, cache_manager: LintCacheManager, output_lock: threading.Lock

@@ -12,7 +12,8 @@ from typing import TypedDict
 import typer
 import yaml
 
-from devutils.constants import Directories, Extensions, Files
+from devutils.constants import Extensions
+from devutils.constants.paths import Directories, Files
 from devutils.utils.file_checking import (
     FileResult,
     FileStatus,
@@ -41,12 +42,14 @@ class LintCacheManager:
     enabled: bool
     cache_data: CacheData
     lock: threading.Lock
+    package_level_results: dict[str, dict[pathlib.Path, FileResult]]
 
     def __init__(self, cache_path: pathlib.Path, enabled: bool = True):
         self.cache_path = cache_path
         self.enabled = enabled
         self.cache_data: CacheData = {"version": "1.0", "cache": {}}
         self.lock = threading.Lock()
+        self.package_level_results = {}
 
         if self.enabled:
             self.load_cache()
@@ -136,6 +139,17 @@ class LintCacheManager:
         with self.lock:
             self.cache_data["cache"][cache_key] = entry
 
+    def get_package_result(self, cache_key: str, file_path: pathlib.Path) -> FileResult | None:
+        with self.lock:
+            results = self.package_level_results.get(cache_key)
+            if results:
+                return results.get(file_path)
+        return None
+
+    def set_package_results(self, cache_key: str, results: dict[pathlib.Path, FileResult]) -> None:
+        with self.lock:
+            self.package_level_results[cache_key] = results
+
 
 @dataclass
 class LintStep:
@@ -143,6 +157,7 @@ class LintStep:
     check_args: list[str]
     fix_args: list[str]
     can_fix: bool = True
+    package_level: bool = False
 
 
 @dataclass
@@ -189,15 +204,32 @@ def get_language_configs() -> list[LintLanguageConfig]:
             lint_steps=[
                 LintStep(
                     tool_name="mypy",
-                    check_args=["--config-file", str(Files.devutils_pyproject_toml)],
+                    check_args=[
+                        "--config-file",
+                        str(Files.devutils_pyproject_toml),
+                        str(Directories.devutils_source / "devutils"),
+                    ],
                     fix_args=[],
                     can_fix=False,
+                    package_level=True,
                 ),
                 LintStep(
                     tool_name="ruff",
-                    check_args=["check"],
-                    fix_args=["check", "--fix"],
+                    check_args=[
+                        "--config",
+                        str(Files.devutils_pyproject_toml),
+                        "check",
+                        str(Directories.devutils_source / "devutils"),
+                    ],
+                    fix_args=[
+                        "--config",
+                        str(Files.devutils_pyproject_toml),
+                        "check",
+                        "--fix",
+                        str(Directories.devutils_source / "devutils"),
+                    ],
                     can_fix=True,
+                    package_level=True,
                 ),
             ],
         ),
@@ -225,7 +257,85 @@ def check_tool_available(tool_name: str) -> bool:
         return False
 
 
-def check_file_lint(file_path: pathlib.Path, lint_step: LintStep) -> FileResult:
+def run_package_level_lint(
+    files: list[pathlib.Path],
+    lint_step: LintStep,
+    config_name: str,
+    cache_manager: LintCacheManager,
+) -> None:
+    cache_key = f"{config_name}:{lint_step.tool_name}"
+
+    if cache_manager.get_package_result(cache_key, files[0]) is not None:
+        return
+
+    try:
+        if lint_step.tool_name in ["mypy", "ruff"]:
+            cmd = ["uv", "run", lint_step.tool_name] + lint_step.check_args
+        else:
+            cmd = [lint_step.tool_name] + lint_step.check_args
+
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        output = result.stdout + result.stderr
+        output_lower = output.lower()
+
+        file_results: dict[pathlib.Path, FileResult] = {}
+
+        for file_path in files:
+            file_path_str = format_file_path(file_path)
+            file_path_normalized = file_path_str.replace("\\", "/")
+            output_has_file_mention = file_path_str in output or file_path_normalized in output
+
+            if result.returncode == 0:
+                file_results[file_path] = FileResult(file_path, FileStatus.OK)
+            else:
+                if output_has_file_mention:
+                    lines = output.split("\n")
+                    file_lines = [line for line in lines if file_path_str in line or file_path_normalized in line]
+                    relevant_output = "\n".join(file_lines)
+
+                    if (
+                        "error:" in relevant_output.lower()
+                        or "traceback" in output_lower
+                        or "assertion" in output_lower
+                    ):
+                        file_results[file_path] = FileResult(file_path, FileStatus.ERROR, relevant_output)
+                    elif "warning:" in relevant_output.lower() or "note:" in relevant_output.lower():
+                        file_results[file_path] = FileResult(file_path, FileStatus.WARNING, relevant_output)
+                    else:
+                        file_results[file_path] = FileResult(file_path, FileStatus.ISSUE, relevant_output)
+                else:
+                    file_results[file_path] = FileResult(file_path, FileStatus.OK)
+
+        cache_manager.set_package_results(cache_key, file_results)
+
+    except Exception:
+        for file_path in files:
+            cache_manager.set_package_results(
+                cache_key,
+                {file_path: FileResult(file_path, FileStatus.ERROR, "Failed to run package-level linting")},
+            )
+
+
+def check_file_lint(
+    file_path: pathlib.Path,
+    lint_step: LintStep,
+    config_name: str,
+    cache_manager: LintCacheManager,
+) -> FileResult:
+    if lint_step.package_level:
+        cache_key = f"{config_name}:{lint_step.tool_name}"
+        result = cache_manager.get_package_result(cache_key, file_path)
+        if result:
+            return result
+        else:
+            return FileResult(file_path, FileStatus.ERROR, "Package-level linting not run")
+
     try:
         if lint_step.tool_name in ["mypy", "ruff"]:
             cmd = ["uv", "run", lint_step.tool_name] + lint_step.check_args + [str(file_path)]
@@ -301,7 +411,7 @@ def check_single_file(
             result = cached_result
             cached_count += 1
         else:
-            result = check_file_lint(file_path, lint_step)
+            result = check_file_lint(file_path, lint_step, config.name, cache_manager)
 
             cache_manager.update_cache(config.name, lint_step.tool_name, file_path, result)
 
@@ -361,6 +471,10 @@ def check_files_parallel(
     stats: Statistics,
     cache_manager: LintCacheManager,
 ) -> None:
+    for lint_step in config.lint_steps:
+        if lint_step.package_level:
+            run_package_level_lint(files, lint_step, config.name, cache_manager)
+
     output_lock = threading.Lock()
 
     with ThreadPoolExecutor() as executor:
@@ -403,7 +517,7 @@ def fix_single_file(
             result = cached_result
             cached_count += 1
         else:
-            result = check_file_lint(file_path, lint_step)
+            result = check_file_lint(file_path, lint_step, config.name, cache_manager)
             cache_manager.update_cache(config.name, lint_step.tool_name, file_path, result)
 
         if result.status == FileStatus.ERROR:
