@@ -82,6 +82,7 @@ target_link_libraries(
         PRIVATE
         xheader
         logenium::debug
+        corelib
 )
 
 target_compile_definitions(
@@ -100,10 +101,15 @@ if(LOGENIUM_BUILD_TESTS)
                 get_target_property(DEBUG_TESTS_SRCS debug_tests SOURCES)
         endif()
 
+        if(TARGET corelib_tests)
+                get_target_property(CORELIB_TESTS_SRCS corelib_tests SOURCES)
+        endif()
+
         add_executable(
                 all_logenium_tests
                 ${XHEADER_TESTS_SRCS}
                 ${DEBUG_TESTS_SRCS}
+                ${CORELIB_TESTS_SRCS}
         )
 
         target_link_libraries(
@@ -111,6 +117,7 @@ if(LOGENIUM_BUILD_TESTS)
                 PRIVATE
                 xheader
                 logenium::debug
+                corelib
                 gtest
                 gmock
                 gtest_main

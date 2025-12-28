@@ -4,7 +4,7 @@
 	"title": "Configure Command Configuration",
 	"description": "Configuration schema for project build settings",
 	"type": "object",
-	"required": ["revision", "enable_testing", "enable_xheader_testing", "enable_debug_testing", "build_mode"],
+	"required": ["revision", "enable_testing", "enable_xheader_testing", "enable_debug_testing", "enable_corelib_testing", "build_mode"],
 	"properties": {
 		"revision": {
 			"type": "integer",
@@ -22,6 +22,10 @@
 		"enable_debug_testing": {
 			"type": "boolean",
 			"description": "Whether to enable debug library tests"
+		},
+		"enable_corelib_testing": {
+			"type": "boolean",
+			"description": "Whether to enable corelib library tests"
 		},
 		"build_mode": {
 			"type": "string",

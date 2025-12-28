@@ -1,6 +1,4 @@
 # SPDX-FileCopyrightText: 2025 Logenium Authors and Contributors
 # SPDX-License-Identifier: BSD-3-Clause
 
-add_subdirectory(xheader)
-add_subdirectory(debug)
-add_subdirectory(corelib)
+option(LOGENIUM_CORELIB_BUILD_TESTS "Build tests" ON)

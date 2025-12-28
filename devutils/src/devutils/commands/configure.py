@@ -21,6 +21,7 @@ class Configuration(TypedDict):
     enable_testing: bool
     enable_xheader_testing: bool
     enable_debug_testing: bool
+    enable_corelib_testing: bool
     build_mode: str
 
 
@@ -124,11 +125,13 @@ def run(
         enable_testing = config["enable_testing"]
         enable_xheader_testing = config["enable_xheader_testing"]
         enable_debug_testing = config["enable_debug_testing"]
+        enable_corelib_testing = config["enable_corelib_testing"]
         mode = config["build_mode"]
     else:
         enable_testing = typer.confirm("Do you want to enable testing?")
         enable_xheader_testing = False
         enable_debug_testing = False
+        enable_corelib_testing = False
 
         if enable_testing:
             typer.echo("Testing is enabled")
@@ -144,6 +147,12 @@ def run(
                 typer.echo("Debug testing is enabled")
             else:
                 typer.echo("Debug testing is disabled")
+
+            enable_corelib_testing = typer.confirm("Do you want to enable corelib testing?")
+            if enable_corelib_testing:
+                typer.echo("Corelib testing is enabled")
+            else:
+                typer.echo("Corelib testing is disabled")
 
         else:
             typer.echo("Testing is disabled")
@@ -167,6 +176,7 @@ def run(
             "enable_testing": enable_testing,
             "enable_xheader_testing": enable_xheader_testing,
             "enable_debug_testing": enable_debug_testing,
+            "enable_corelib_testing": enable_corelib_testing,
             "build_mode": mode,
         }
         save_configuration(new_config)
@@ -184,6 +194,7 @@ def run(
     command_line.extend([f"-DLOGENIUM_BUILD_TESTS={'ON' if enable_testing else 'OFF'}"])
     command_line.extend([f"-DLOGENIUM_XHEADER_BUILD_TESTS={'ON' if enable_xheader_testing else 'OFF'}"])
     command_line.extend([f"-DLOGENIUM_DEBUG_BUILD_TESTS={'ON' if enable_debug_testing else 'OFF'}"])
+    command_line.extend([f"-DLOGENIUM_CORELIB_BUILD_TESTS={'ON' if enable_corelib_testing else 'OFF'}"])
     command_line.extend(["-G", "Ninja"])
 
     command = shlex.join(command_line)
