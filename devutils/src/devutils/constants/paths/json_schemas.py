@@ -10,3 +10,4 @@ from .directories import Directories as _Directories
 @dataclass(frozen=True)
 class JsonSchemas:
     codegen: Path = _Directories.devutils_root / "data" / "schemas" / "codegen.schema.json"
+    config: Path = _Directories.devutils_root / "data" / "schemas" / "config.schema.json"

@@ -9,4 +9,5 @@ from .directories import Directories as _Directories
 
 @dataclass(frozen=True)
 class ConfigFiles:
+    config: Path = _Directories.root / "config.yaml"
     xheader_wayland_codegen: Path = _Directories.xheader_root / "data" / "codegen" / "wayland.yaml"

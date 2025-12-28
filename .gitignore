@@ -3,5 +3,6 @@
 .vscode/*
 .idea/*
 build/*
+config.yaml
 **/logenium_devutils.egg-info/*
 **/__pycache__/*

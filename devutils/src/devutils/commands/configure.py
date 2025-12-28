@@ -1,16 +1,84 @@
 # SPDX-FileCopyrightText: 2025 Logenium Authors and Contributors
 # SPDX-License-Identifier: BSD-3-Clause
 
+import json
 import shlex
 import shutil
 import subprocess
-from typing import cast
+from typing import TypedDict, cast
 
+import jsonschema
 import typer
+import yaml
 
-from devutils.constants.paths import CodegenFiles, Directories
+from devutils.constants.paths import CodegenFiles, ConfigFiles, Directories, JsonSchemas
 
 configure: typer.Typer = typer.Typer()
+
+
+class Configuration(TypedDict):
+    revision: int
+    enable_testing: bool
+    enable_xheader_testing: bool
+    enable_debug_testing: bool
+    build_mode: str
+
+
+def load_schema() -> object:
+    with JsonSchemas.config.open("r", encoding="utf-8") as f:
+        schema: object = json.load(f)
+    return schema
+
+
+def load_configuration() -> Configuration | None:
+    if not ConfigFiles.config.exists():
+        return None
+
+    with ConfigFiles.config.open("r", encoding="utf-8") as f:
+        data: object = yaml.safe_load(f)
+
+    if not isinstance(data, dict):
+        typer.echo(
+            typer.style("[WARNING]", fg="yellow") + " Config file is not a valid YAML dictionary",
+            err=True,
+        )
+        return None
+
+    schema = load_schema()
+
+    try:
+        jsonschema.validate(instance=data, schema=schema)  # type: ignore[arg-type]
+    except jsonschema.ValidationError as e:
+        typer.echo(
+            typer.style("[ERROR]", fg="red") + f" Config validation failed: {e.message}",
+            err=True,
+        )
+        typer.echo(f"  Path: {'.'.join(str(p) for p in e.path)}", err=True)
+        return None
+    except jsonschema.SchemaError as e:
+        typer.echo(
+            typer.style("[ERROR]", fg="red") + f" Schema error: {e.message}",
+            err=True,
+        )
+        return None
+
+    return cast(Configuration, data)
+
+
+def save_configuration(config: Configuration) -> None:
+    schema = load_schema()
+
+    try:
+        jsonschema.validate(instance=config, schema=schema)  # type: ignore[arg-type]
+    except jsonschema.ValidationError as e:
+        typer.echo(
+            typer.style("[ERROR]", fg="red") + f" Config validation failed: {e.message}",
+            err=True,
+        )
+        raise typer.Exit(1) from e
+
+    with ConfigFiles.config.open("w", encoding="utf-8") as f:
+        yaml.safe_dump(dict(config), f, default_flow_style=False, sort_keys=False)
 
 
 def check_codegen_files() -> None:
@@ -39,45 +107,70 @@ def check_codegen_files() -> None:
 
 
 @configure.command()  # type: ignore[misc]
-def run() -> None:
+def run(
+    reconfigure: bool = typer.Option(False, "--reconfigure", help="Remove saved configuration and reconfigure"),
+) -> None:
     typer.echo("Configuring the project...")
     check_codegen_files()
 
-    enable_testing = typer.confirm("Do you want to enable testing?")
-    enable_xheader_testing = False
-    enable_debug_testing = False
+    if reconfigure and ConfigFiles.config.exists():
+        ConfigFiles.config.unlink()
+        typer.echo("Removed saved configuration")
 
-    if enable_testing:
-        typer.echo("Testing is enabled")
+    config = load_configuration()
 
-        enable_xheader_testing = typer.confirm("Do you want to enable xheader testing?")
-        if enable_xheader_testing:
-            typer.echo("Xheader testing is enabled")
-        else:
-            typer.echo("Xheader testing is disabled")
-
-        enable_debug_testing = typer.confirm("Do you want to enable debug testing?")
-        if enable_debug_testing:
-            typer.echo("Debug testing is enabled")
-        else:
-            typer.echo("Debug testing is disabled")
-
+    if config is not None:
+        typer.echo("Using saved configuration from config.yaml")
+        enable_testing = config["enable_testing"]
+        enable_xheader_testing = config["enable_xheader_testing"]
+        enable_debug_testing = config["enable_debug_testing"]
+        mode = config["build_mode"]
     else:
-        typer.echo("Testing is disabled")
+        enable_testing = typer.confirm("Do you want to enable testing?")
+        enable_xheader_testing = False
+        enable_debug_testing = False
 
-    mode: str = cast(str, typer.prompt("In What mode do you want to build?"))
-    mode_map = {
-        "debug": "Debug",
-        "release": "Release",
-        "relwithdebinfo": "RelWithDebInfo",
-        "minsizerel": "MinSizeRel",
-    }
+        if enable_testing:
+            typer.echo("Testing is enabled")
 
-    if mode.lower() not in mode_map:
-        typer.echo(typer.style("Invalid mode, defaulting to Release", fg=typer.colors.RED))
-        mode = "Release"
-    else:
-        mode = mode_map[mode.lower()]
+            enable_xheader_testing = typer.confirm("Do you want to enable xheader testing?")
+            if enable_xheader_testing:
+                typer.echo("Xheader testing is enabled")
+            else:
+                typer.echo("Xheader testing is disabled")
+
+            enable_debug_testing = typer.confirm("Do you want to enable debug testing?")
+            if enable_debug_testing:
+                typer.echo("Debug testing is enabled")
+            else:
+                typer.echo("Debug testing is disabled")
+
+        else:
+            typer.echo("Testing is disabled")
+
+        mode_input: str = cast(str, typer.prompt("In What mode do you want to build?"))
+        mode_map = {
+            "debug": "Debug",
+            "release": "Release",
+            "relwithdebinfo": "RelWithDebInfo",
+            "minsizerel": "MinSizeRel",
+        }
+
+        if mode_input.lower() not in mode_map:
+            typer.echo(typer.style("Invalid mode, defaulting to Release", fg=typer.colors.RED))
+            mode = "Release"
+        else:
+            mode = mode_map[mode_input.lower()]
+
+        new_config: Configuration = {
+            "revision": 1,
+            "enable_testing": enable_testing,
+            "enable_xheader_testing": enable_xheader_testing,
+            "enable_debug_testing": enable_debug_testing,
+            "build_mode": mode,
+        }
+        save_configuration(new_config)
+        typer.echo(f"Configuration saved to {ConfigFiles.config.relative_to(Directories.root)}")
 
     cmake_path = shutil.which("cmake")
     if cmake_path is None:
