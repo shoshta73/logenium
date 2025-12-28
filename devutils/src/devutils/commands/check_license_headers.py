@@ -3,27 +3,176 @@
 
 import pathlib
 import sys
+import threading
+from collections.abc import Callable
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from enum import Enum
+from typing import TypedDict
 
 import typer
+import yaml
 
-from devutils.constants import Extensions, LicenseHeaders
-from devutils.constants.paths import Directories
+from devutils.constants import Extensions
+from devutils.constants import license_header as lh
+from devutils.constants.paths import Directories, Files
 from devutils.utils.file_checking import (
     FileResult,
     FileStatus,
     LanguageConfig,
     Statistics,
+    format_file_path,
     print_status,
 )
+from devutils.utils.git import get_file_copyright_year
 
 check_license_headers: typer.Typer = typer.Typer()
 
 
+class CacheEntry(TypedDict):
+    mtime: float
+    status: str
+    year: int
+    error: str | None
+
+
+class CacheData(TypedDict):
+    version: str
+    cache: dict[str, CacheEntry]
+
+
+class LicenseHeaderCacheManager:
+    cache_path: pathlib.Path
+    enabled: bool
+    cache_data: CacheData
+    lock: threading.Lock
+    year_cache: dict[pathlib.Path, int]
+
+    def __init__(self, cache_path: pathlib.Path, enabled: bool = True):
+        self.cache_path = cache_path
+        self.enabled = enabled
+        self.cache_data: CacheData = {"version": "1.0", "cache": {}}
+        self.lock = threading.Lock()
+        self.year_cache = {}
+
+        if self.enabled:
+            self.load_cache()
+
+    def load_cache(self) -> None:
+        if not self.cache_path.exists():
+            return
+
+        try:
+            with open(self.cache_path) as f:
+                data: object = yaml.safe_load(f)
+                if isinstance(data, dict):
+                    version = data.get("version")
+                    if isinstance(version, str) and version == "1.0":
+                        if "cache" in data and isinstance(data["cache"], dict):
+                            self.cache_data = data  # type: ignore[assignment]
+        except (yaml.YAMLError, OSError):
+            pass
+
+    def save_cache(self) -> None:
+        if not self.enabled:
+            return
+
+        self.cache_path.parent.mkdir(parents=True, exist_ok=True)
+
+        temp_path = self.cache_path.with_suffix(".tmp")
+        try:
+            with open(temp_path, "w") as f:
+                yaml.dump(self.cache_data, f, default_flow_style=False)
+            temp_path.replace(self.cache_path)
+        except OSError:
+            if temp_path.exists():
+                temp_path.unlink()
+
+    def get_cache_key(self, language: str, file_path: pathlib.Path) -> str:
+        rel_path = format_file_path(file_path)
+        return f"license:{language}:{rel_path}"
+
+    def get_cached_result(self, language: str, file_path: pathlib.Path) -> HeaderCheckResult | None:
+        if not self.enabled:
+            return None
+
+        cache_key = self.get_cache_key(language, file_path)
+
+        with self.lock:
+            entry = self.cache_data["cache"].get(cache_key)
+
+        if not entry:
+            return None
+
+        try:
+            current_mtime = file_path.stat().st_mtime
+        except OSError:
+            return None
+
+        if entry["mtime"] != current_mtime:
+            return None
+
+        status_map = {
+            "ok": FileStatus.OK,
+            "missing": IssueType.MISSING,
+            "incorrect": IssueType.INCORRECT,
+            "error": FileStatus.ERROR,
+        }
+        cached_status = entry["status"]
+
+        if cached_status == "ok":
+            return HeaderCheckResult(FileResult(file_path, FileStatus.OK), None, entry["year"])
+        elif cached_status == "missing":
+            return HeaderCheckResult(FileResult(file_path, FileStatus.ISSUE), IssueType.MISSING, entry["year"])
+        elif cached_status == "incorrect":
+            return HeaderCheckResult(FileResult(file_path, FileStatus.ISSUE), IssueType.INCORRECT, entry["year"])
+        elif cached_status == "error":
+            return HeaderCheckResult(FileResult(file_path, FileStatus.ERROR, entry.get("error")), None, entry["year"])
+
+        return None
+
+    def update_cache(self, language: str, file_path: pathlib.Path, result: HeaderCheckResult) -> None:
+        if not self.enabled:
+            return
+
+        cache_key = self.get_cache_key(language, file_path)
+
+        try:
+            mtime = file_path.stat().st_mtime
+        except OSError:
+            return
+
+        if result.result.status == FileStatus.OK:
+            status = "ok"
+        elif result.issue_type == IssueType.MISSING:
+            status = "missing"
+        elif result.issue_type == IssueType.INCORRECT:
+            status = "incorrect"
+        else:
+            status = "error"
+
+        entry: CacheEntry = {
+            "mtime": mtime,
+            "status": status,
+            "year": result.year,
+            "error": result.result.error,
+        }
+
+        with self.lock:
+            self.cache_data["cache"][cache_key] = entry
+
+    def get_cached_year(self, file_path: pathlib.Path) -> int | None:
+        with self.lock:
+            return self.year_cache.get(file_path)
+
+    def cache_year(self, file_path: pathlib.Path, year: int) -> None:
+        with self.lock:
+            self.year_cache[file_path] = year
+
+
 @dataclass
 class LicenseLanguageConfig(LanguageConfig):
-    license_header: list[str]
+    header_generator: Callable[[int], list[str]]
 
 
 def get_language_configs() -> list[LicenseLanguageConfig]:
@@ -42,7 +191,7 @@ def get_language_configs() -> list[LicenseLanguageConfig]:
                 Directories.debug_tests,
             ],
             specific_files=[],
-            license_header=LicenseHeaders.cpp,
+            header_generator=lh.generate_cpp_header,
         ),
         LicenseLanguageConfig(
             name="CMake",
@@ -56,35 +205,35 @@ def get_language_configs() -> list[LicenseLanguageConfig]:
                 Directories.debug_root / "CMakeLists.txt",
                 Directories.debug_tests / "CMakeLists.txt",
             ],
-            license_header=LicenseHeaders.cmake,
+            header_generator=lh.generate_cmake_header,
         ),
         LicenseLanguageConfig(
             name="Python",
             extensions=Extensions.python_source,
             search_dirs=[Directories.devutils_source],
             specific_files=[],
-            license_header=LicenseHeaders.python,
+            header_generator=lh.generate_python_header,
         ),
         LicenseLanguageConfig(
             name="Batch",
             extensions=Extensions.bat_source,
             search_dirs=[],
             specific_files=[Directories.root / "devutils.bat"],
-            license_header=LicenseHeaders.bat,
+            header_generator=lh.generate_bat_header,
         ),
         LicenseLanguageConfig(
             name="PowerShell",
             extensions=Extensions.powershell_source,
             search_dirs=[],
             specific_files=[Directories.root / "devutils.ps1"],
-            license_header=LicenseHeaders.powershell,
+            header_generator=lh.generate_powershell_header,
         ),
         LicenseLanguageConfig(
             name="Bash",
             extensions=Extensions.bash_source,
             search_dirs=[],
-            specific_files=[],
-            license_header=LicenseHeaders.bash,
+            specific_files=[Directories.root / "devutils.sh"],
+            header_generator=lh.generate_bash_header,
         ),
     ]
 
@@ -144,43 +293,90 @@ class LicenseHeaderStatistics(Statistics):
 class HeaderCheckResult:
     result: FileResult
     issue_type: IssueType | None = None
+    year: int = 0
 
 
-def has_correct_license_header(file_path: pathlib.Path, expected_header: list[str]) -> HeaderCheckResult:
+def has_correct_license_header(
+    file_path: pathlib.Path,
+    header_generator: Callable[[int], list[str]],
+    cache_manager: LicenseHeaderCacheManager | None = None,
+) -> HeaderCheckResult:
     try:
+        cached_year = cache_manager.get_cached_year(file_path) if cache_manager else None
+        if cached_year is not None:
+            year = cached_year
+        else:
+            year = get_file_copyright_year(file_path)
+            if cache_manager:
+                cache_manager.cache_year(file_path, year)
+
+        expected_header = header_generator(year)
+
         with open(file_path, encoding="utf-8") as f:
             lines = f.readlines()
 
-        if len(lines) < len(expected_header):
-            return HeaderCheckResult(FileResult(file_path, FileStatus.ISSUE), IssueType.MISSING)
+        header_offset = 0
+        if lines and lines[0].startswith("#!"):
+            header_offset = 1
+
+        min_lines = len(expected_header) + header_offset
+        if len(lines) < min_lines:
+            return HeaderCheckResult(FileResult(file_path, FileStatus.ISSUE), IssueType.MISSING, year)
 
         for i, expected_line in enumerate(expected_header):
-            if lines[i] != expected_line:
-                return HeaderCheckResult(FileResult(file_path, FileStatus.ISSUE), IssueType.INCORRECT)
+            if lines[i + header_offset] != expected_line:
+                return HeaderCheckResult(FileResult(file_path, FileStatus.ISSUE), IssueType.INCORRECT, year)
 
-        return HeaderCheckResult(FileResult(file_path, FileStatus.OK))
+        return HeaderCheckResult(FileResult(file_path, FileStatus.OK), None, year)
 
     except PermissionError:
-        return HeaderCheckResult(FileResult(file_path, FileStatus.ERROR, "Permission denied"))
+        from datetime import datetime
+
+        return HeaderCheckResult(
+            FileResult(file_path, FileStatus.ERROR, "Permission denied"), None, datetime.now().year
+        )
     except UnicodeDecodeError:
-        return HeaderCheckResult(FileResult(file_path, FileStatus.ERROR, "Unicode decode error"))
+        from datetime import datetime
+
+        return HeaderCheckResult(
+            FileResult(file_path, FileStatus.ERROR, "Unicode decode error"), None, datetime.now().year
+        )
     except Exception as e:
-        return HeaderCheckResult(FileResult(file_path, FileStatus.ERROR, str(e)))
+        from datetime import datetime
+
+        return HeaderCheckResult(FileResult(file_path, FileStatus.ERROR, str(e)), None, datetime.now().year)
 
 
-def fix_header(file_path: pathlib.Path, expected_header: list[str]) -> bool:
+def fix_header(
+    file_path: pathlib.Path,
+    header_generator: Callable[[int], list[str]],
+    year: int,
+) -> bool:
     try:
+        expected_header = header_generator(year)
+
         with open(file_path, encoding="utf-8") as f:
             lines = f.readlines()
 
-        if len(lines) >= len(expected_header):
-            header_correct = all(lines[i] == expected_header[i] for i in range(len(expected_header)))
+        header_offset = 0
+        shebang_line = []
+        if lines and lines[0].startswith("#!"):
+            header_offset = 1
+            shebang_line = [lines[0]]
+
+        min_lines = len(expected_header) + header_offset
+        if len(lines) >= min_lines:
+            header_correct = all(lines[i + header_offset] == expected_header[i] for i in range(len(expected_header)))
             if header_correct:
                 return False
 
+        content_after_header = lines[header_offset:]
+
         with open(file_path, "w", encoding="utf-8") as f:
+            if shebang_line:
+                f.writelines(shebang_line)
             f.writelines(expected_header)
-            f.writelines(lines)
+            f.writelines(content_after_header)
 
         return True
 
@@ -189,9 +385,11 @@ def fix_header(file_path: pathlib.Path, expected_header: list[str]) -> bool:
         return False
 
 
-def check_files(files: list[pathlib.Path], header_lines: list[str], stats: LicenseHeaderStatistics) -> None:
+def check_files(
+    files: list[pathlib.Path], header_generator: Callable[[int], list[str]], stats: LicenseHeaderStatistics
+) -> None:
     for file_path in files:
-        check_result = has_correct_license_header(file_path, header_lines)
+        check_result = has_correct_license_header(file_path, header_generator)
         stats.record_result(check_result.result, check_result.issue_type)
 
         if check_result.result.status == FileStatus.OK:
@@ -205,9 +403,11 @@ def check_files(files: list[pathlib.Path], header_lines: list[str], stats: Licen
             print_status("[ERROR]", "yellow", file_path, check_result.result.error or "")
 
 
-def fix_files(files: list[pathlib.Path], header_lines: list[str], stats: LicenseHeaderStatistics) -> None:
+def fix_files(
+    files: list[pathlib.Path], header_generator: Callable[[int], list[str]], stats: LicenseHeaderStatistics
+) -> None:
     for file_path in files:
-        check_result = has_correct_license_header(file_path, header_lines)
+        check_result = has_correct_license_header(file_path, header_generator, None)
         stats.total += 1
 
         if check_result.result.status == FileStatus.ERROR:
@@ -219,7 +419,7 @@ def fix_files(files: list[pathlib.Path], header_lines: list[str], stats: License
             print_status("[SKIP]", "cyan", file_path)
             stats.record_fix(False)
         else:
-            fixed = fix_header(file_path, header_lines)
+            fixed = fix_header(file_path, header_generator, check_result.year)
             if fixed:
                 print_status("[FIXED]", "green", file_path)
                 stats.record_fix(True)
@@ -228,21 +428,176 @@ def fix_files(files: list[pathlib.Path], header_lines: list[str], stats: License
                 stats.record_fix(False)
 
 
+def check_single_file(
+    file_path: pathlib.Path,
+    header_generator: Callable[[int], list[str]],
+    language_name: str,
+    cache_manager: LicenseHeaderCacheManager,
+    output_lock: threading.Lock,
+) -> tuple[FileStatus, IssueType | None]:
+    cached_result = cache_manager.get_cached_result(language_name, file_path)
+
+    if cached_result:
+        check_result = cached_result
+        is_cached = True
+    else:
+        check_result = has_correct_license_header(file_path, header_generator, cache_manager)
+        cache_manager.update_cache(language_name, file_path, check_result)
+        is_cached = False
+
+    with output_lock:
+        if check_result.result.status == FileStatus.OK:
+            tag = "[CACHED:OK]" if is_cached else "[OK]"
+            print_status(tag, "green", file_path)
+        elif check_result.result.status == FileStatus.ISSUE:
+            if check_result.issue_type == IssueType.MISSING:
+                tag = "[CACHED:MISSING]" if is_cached else "[MISSING]"
+                print_status(tag, "red", file_path)
+            elif check_result.issue_type == IssueType.INCORRECT:
+                tag = "[CACHED:INCORRECT]" if is_cached else "[INCORRECT]"
+                print_status(tag, "red", file_path)
+        elif check_result.result.status == FileStatus.ERROR:
+            tag = "[CACHED:ERROR]" if is_cached else "[ERROR]"
+            print_status(tag, "yellow", file_path, check_result.result.error or "")
+
+    return check_result.result.status, check_result.issue_type
+
+
+def check_files_parallel(
+    files: list[pathlib.Path],
+    header_generator: Callable[[int], list[str]],
+    language_name: str,
+    stats: LicenseHeaderStatistics,
+    cache_manager: LicenseHeaderCacheManager,
+) -> None:
+    output_lock = threading.Lock()
+
+    with ThreadPoolExecutor() as executor:
+        future_to_file = {
+            executor.submit(
+                check_single_file, file_path, header_generator, language_name, cache_manager, output_lock
+            ): file_path
+            for file_path in files
+        }
+
+        for future in as_completed(future_to_file):
+            file_path = future_to_file[future]
+            try:
+                status, issue_type = future.result()
+
+                result = FileResult(file_path, status)
+                stats.record_result(result, issue_type)
+
+            except Exception as e:
+                with output_lock:
+                    print_status("[ERROR]", "yellow", file_path, str(e))
+                stats.total += 1
+                stats.errors += 1
+
+
+def fix_single_file(
+    file_path: pathlib.Path,
+    header_generator: Callable[[int], list[str]],
+    language_name: str,
+    cache_manager: LicenseHeaderCacheManager,
+    output_lock: threading.Lock,
+) -> str:
+    cached_result = cache_manager.get_cached_result(language_name, file_path)
+
+    if cached_result:
+        check_result = cached_result
+        is_cached = True
+    else:
+        check_result = has_correct_license_header(file_path, header_generator, cache_manager)
+        cache_manager.update_cache(language_name, file_path, check_result)
+        is_cached = False
+
+    if check_result.result.status == FileStatus.ERROR:
+        outcome = "error"
+        with output_lock:
+            print_status("[ERROR]", "yellow", file_path, check_result.result.error or "")
+    elif check_result.result.status == FileStatus.OK:
+        outcome = "skip"
+        with output_lock:
+            tag = "[CACHED:SKIP]" if is_cached else "[SKIP]"
+            print_status(tag, "cyan", file_path)
+    else:
+        fixed = fix_header(file_path, header_generator, check_result.year)
+        if fixed:
+            outcome = "fixed"
+            ok_result = HeaderCheckResult(FileResult(file_path, FileStatus.OK), None, check_result.year)
+            cache_manager.update_cache(language_name, file_path, ok_result)
+            with output_lock:
+                print_status("[FIXED]", "green", file_path)
+        else:
+            outcome = "skip"
+            with output_lock:
+                print_status("[SKIP]", "cyan", file_path)
+
+    return outcome
+
+
+def fix_files_parallel(
+    files: list[pathlib.Path],
+    header_generator: Callable[[int], list[str]],
+    language_name: str,
+    stats: LicenseHeaderStatistics,
+    cache_manager: LicenseHeaderCacheManager,
+) -> None:
+    output_lock = threading.Lock()
+
+    with ThreadPoolExecutor() as executor:
+        future_to_file = {
+            executor.submit(
+                fix_single_file, file_path, header_generator, language_name, cache_manager, output_lock
+            ): file_path
+            for file_path in files
+        }
+
+        for future in as_completed(future_to_file):
+            file_path = future_to_file[future]
+            try:
+                outcome = future.result()
+
+                stats.total += 1
+
+                if outcome == "error":
+                    stats.errors += 1
+                elif outcome == "skip":
+                    stats.record_fix(False)
+                elif outcome == "fixed":
+                    stats.record_fix(True)
+
+            except Exception as e:
+                with output_lock:
+                    print_status("[ERROR]", "yellow", file_path, str(e))
+                stats.total += 1
+                stats.errors += 1
+
+
 @check_license_headers.command()  # type: ignore[misc]
 def show_headers() -> None:
+    from datetime import datetime
+
+    current_year = datetime.now().year
     for config in get_language_configs():
+        header = config.header_generator(current_year)
         typer.echo(f"{config.name} License Header:")
-        typer.echo("".join(config.license_header[:2]) + "\n")
+        typer.echo("".join(header[:2]) + "\n")
 
 
 @check_license_headers.command()  # type: ignore[misc]
-def check() -> None:
+def check(no_cache: bool = typer.Option(False, "--no-cache", help="Disable caching and re-check all files")) -> None:
     stats = LicenseHeaderStatistics()
+
+    cache_manager = LicenseHeaderCacheManager(Files.devutils_license_headers_cache_file, enabled=not no_cache)
 
     for config in get_language_configs():
         files = config.collect_files()
         if files:
-            check_files(files, config.license_header, stats)
+            check_files_parallel(files, config.header_generator, config.name, stats, cache_manager)
+
+    cache_manager.save_cache()
 
     stats.print_summary("check")
 
@@ -262,13 +617,17 @@ def check() -> None:
 
 
 @check_license_headers.command()  # type: ignore[misc]
-def fix() -> None:
+def fix(no_cache: bool = typer.Option(False, "--no-cache", help="Disable caching and re-check all files")) -> None:
     stats = LicenseHeaderStatistics()
+
+    cache_manager = LicenseHeaderCacheManager(Files.devutils_license_headers_cache_file, enabled=not no_cache)
 
     for config in get_language_configs():
         files = config.collect_files()
         if files:
-            fix_files(files, config.license_header, stats)
+            fix_files_parallel(files, config.header_generator, config.name, stats, cache_manager)
+
+    cache_manager.save_cache()
 
     stats.print_summary("fix")
 
