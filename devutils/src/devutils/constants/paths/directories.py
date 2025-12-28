@@ -36,3 +36,9 @@ class Directories:
     devutils_root: Path = _ROOT_DIR / "devutils"
     devutils_source: Path = _ROOT_DIR / "devutils" / "src"
     devutils_cache: Path = _CAHCE_DIR / "devutils"
+
+    corelib_root: Path = _LIBS_DIR / "corelib"
+    corelib_source: Path = _LIBS_DIR / "corelib" / "src"
+    corelib_include: Path = _LIBS_DIR / "corelib" / "include"
+    corelib_cmake: Path = _LIBS_DIR / "corelib" / "cmake"
+    corelib_tests: Path = _LIBS_DIR / "corelib" / "tests"

@@ -4,6 +4,14 @@
 import pathlib
 
 
+def find_files_by_name(path: pathlib.Path, name: str) -> list[pathlib.Path]:
+    files = []
+    for file in path.rglob("*"):
+        if file.name == name:
+            files.append(file)
+    return sorted(files)
+
+
 def find_files_by_extensions(path: pathlib.Path, extensions: list[str]) -> list[pathlib.Path]:
     files: list[pathlib.Path] = []
     for extension in extensions:

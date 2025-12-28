@@ -24,6 +24,7 @@ from devutils.utils.file_checking import (
     format_file_path,
     print_status,
 )
+from devutils.utils.filesystem import find_files_by_name
 from devutils.utils.git import get_file_copyright_year
 
 check_license_headers: typer.Typer = typer.Typer()
@@ -112,12 +113,6 @@ class LicenseHeaderCacheManager:
         if entry["mtime"] != current_mtime:
             return None
 
-        status_map = {
-            "ok": FileStatus.OK,
-            "missing": IssueType.MISSING,
-            "incorrect": IssueType.INCORRECT,
-            "error": FileStatus.ERROR,
-        }
         cached_status = entry["status"]
 
         if cached_status == "ok":
@@ -176,6 +171,18 @@ class LicenseLanguageConfig(LanguageConfig):
 
 
 def get_language_configs() -> list[LicenseLanguageConfig]:
+    cmake_specific_files = [
+        Directories.root / "CMakeLists.txt",
+        Directories.libs / "CMakeLists.txt",
+        Directories.xheader_root / "CMakeLists.txt",
+        Directories.debug_root / "CMakeLists.txt",
+        Directories.corelib_root / "CMakeLists.txt",
+    ]
+
+    cmake_specific_files.extend(find_files_by_name(Directories.xheader_tests, "CMakeLists.txt"))
+    cmake_specific_files.extend(find_files_by_name(Directories.debug_tests, "CMakeLists.txt"))
+    cmake_specific_files.extend(find_files_by_name(Directories.corelib_tests, "CMakeLists.txt"))
+
     return [
         LicenseLanguageConfig(
             name="C/C++",
@@ -196,15 +203,13 @@ def get_language_configs() -> list[LicenseLanguageConfig]:
         LicenseLanguageConfig(
             name="CMake",
             extensions=Extensions.cmake_source,
-            search_dirs=[Directories.logenium_cmake, Directories.xheader_cmake, Directories.debug_cmake],
-            specific_files=[
-                Directories.root / "CMakeLists.txt",
-                Directories.libs / "CMakeLists.txt",
-                Directories.xheader_root / "CMakeLists.txt",
-                Directories.xheader_tests / "CMakeLists.txt",
-                Directories.debug_root / "CMakeLists.txt",
-                Directories.debug_tests / "CMakeLists.txt",
+            search_dirs=[
+                Directories.logenium_cmake,
+                Directories.xheader_cmake,
+                Directories.debug_cmake,
+                Directories.corelib_cmake,
             ],
+            specific_files=cmake_specific_files,
             header_generator=lh.generate_cmake_header,
         ),
         LicenseLanguageConfig(
