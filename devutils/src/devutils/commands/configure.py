@@ -107,10 +107,7 @@ def check_codegen_files() -> None:
         raise typer.Exit(1)
 
 
-@configure.command()  # type: ignore[misc]
-def run(
-    reconfigure: bool = typer.Option(False, "--reconfigure", help="Remove saved configuration and reconfigure"),
-) -> None:
+def run(reconfigure: bool = False) -> None:
     typer.echo("Configuring the project...")
     check_codegen_files()
 
@@ -204,6 +201,9 @@ def run(
 
 
 @configure.callback(invoke_without_command=True)  # type: ignore[misc]
-def main(ctx: typer.Context) -> None:
+def main(
+    ctx: typer.Context,
+    reconfigure: bool = typer.Option(False, "--reconfigure", help="Remove saved configuration and reconfigure"),
+) -> None:
     if ctx.invoked_subcommand is None:
-        run()
+        run(reconfigure=reconfigure)

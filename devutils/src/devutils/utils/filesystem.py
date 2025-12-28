@@ -4,12 +4,12 @@
 import pathlib
 
 
+def find_directories_by_name(path: pathlib.Path, name: str) -> list[pathlib.Path]:
+    return sorted(d for d in path.rglob(name) if d.is_dir())
+
+
 def find_files_by_name(path: pathlib.Path, name: str) -> list[pathlib.Path]:
-    files = []
-    for file in path.rglob("*"):
-        if file.name == name:
-            files.append(file)
-    return sorted(files)
+    return sorted(f for f in path.rglob(name) if f.is_file())
 
 
 def find_files_by_extensions(path: pathlib.Path, extensions: list[str]) -> list[pathlib.Path]:
