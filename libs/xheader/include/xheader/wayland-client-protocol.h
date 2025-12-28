@@ -1,5 +1,8 @@
-//SPDX-FileCopyrightText: 2025 Logenium Authors and Contributors
+// SPDX-FileCopyrightText: 2025 Logenium Authors and Contributors
 // SPDX-License-Identifier: BSD-3-Clause
+
+// SPDX-FileCopyrightText: 2025 Logenium Authors and Contributors
+//  SPDX-License-Identifier: BSD-3-Clause
 
 #ifndef LOGENIUM_XHEADER_INTERNAL_WAYLAND_CLIENT_PROTOCOL_H
 #define LOGENIUM_XHEADER_INTERNAL_WAYLAND_CLIENT_PROTOCOL_H
@@ -15,6 +18,12 @@ extern "C" {
 #include <wayland-client-protocol.h>  // IWYU pragma: export
 
 #else
+
+// Windows headers define 'interface' as a macro that expands to 'struct', which conflicts with
+// Wayland's use of 'interface' as a parameter name. Undefine it to prevent compilation errors.
+#ifdef interface
+#undef interface
+#endif
 
 #include <xheader/wayland-client-core.h>
 
@@ -95,8 +104,9 @@ static inline void wl_buffer_destroy(struct wl_buffer *wl_buffer) {}
 
 static inline struct wl_shm_pool *wl_shm_create_pool(struct wl_shm *wl_shm, int32_t fd, int32_t size) { return NULL; }
 
-static inline struct wl_buffer *wl_shm_pool_create_buffer(struct wl_shm_pool *wl_shm_pool, int32_t offset, int32_t width,
-                                                           int32_t height, int32_t stride, uint32_t format) {
+static inline struct wl_buffer *wl_shm_pool_create_buffer(struct wl_shm_pool *wl_shm_pool, int32_t offset,
+                                                          int32_t width, int32_t height, int32_t stride,
+                                                          uint32_t format) {
     return NULL;
 }
 

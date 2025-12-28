@@ -14,6 +14,12 @@
 
 #include "logenium/platform/linux/application.hxx"
 
+// Windows headers define 'interface' as a macro that expands to 'struct', which conflicts with
+// Wayland's use of 'interface' as a parameter name. Undefine it to prevent compilation errors.
+#ifdef interface
+#undef interface
+#endif
+
 namespace logenium {
 
 class WaylandApplication : public LinuxApplication {

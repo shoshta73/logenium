@@ -33,14 +33,13 @@ struct zxdg_toplevel_decoration_v1 {
 
 extern const struct wl_interface zxdg_decoration_manager_v1_interface;
 
-static inline struct zxdg_toplevel_decoration_v1 *
-zxdg_decoration_manager_v1_get_toplevel_decoration(struct zxdg_decoration_manager_v1 *zxdg_decoration_manager_v1,
-                                                    struct xdg_toplevel *toplevel) {
+static inline struct zxdg_toplevel_decoration_v1 *zxdg_decoration_manager_v1_get_toplevel_decoration(
+    struct zxdg_decoration_manager_v1 *zxdg_decoration_manager_v1, struct xdg_toplevel *toplevel) {
     return NULL;
 }
 
-static inline void zxdg_toplevel_decoration_v1_destroy(struct zxdg_toplevel_decoration_v1 *zxdg_toplevel_decoration_v1) {
-}
+static inline void zxdg_toplevel_decoration_v1_destroy(
+    struct zxdg_toplevel_decoration_v1 *zxdg_toplevel_decoration_v1) {}
 
 static inline void zxdg_toplevel_decoration_v1_set_mode(struct zxdg_toplevel_decoration_v1 *zxdg_toplevel_decoration_v1,
                                                         uint32_t mode) {}

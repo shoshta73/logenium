@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2025 Logenium Authors and Contributors
+# SPDX-License-Identifier: BSD-3-Clause
+
 add_executable(
         xheader_xcb_xproto_h_tests
         ${CMAKE_CURRENT_SOURCE_DIR}/xcb_create_window.cxx

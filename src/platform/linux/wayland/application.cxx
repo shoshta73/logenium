@@ -7,8 +7,6 @@
 #include <cstring>
 #include <memory>
 
-#include <wayland-client-protocol.h>
-
 #include <xheader/wayland-client-core.h>
 #include <xheader/wayland-client-protocol.h>
 #include <xheader/xdg-decoration-unstable-v1-client-protocol.h>

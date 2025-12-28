@@ -49,8 +49,8 @@ struct xdg_toplevel_listener {
     void (*close)(void *data, struct xdg_toplevel *xdg_toplevel);
 };
 
-static inline int xdg_wm_base_add_listener(struct xdg_wm_base *xdg_wm_base,
-                                            const struct xdg_wm_base_listener *listener, void *data) {
+static inline int xdg_wm_base_add_listener(struct xdg_wm_base *xdg_wm_base, const struct xdg_wm_base_listener *listener,
+                                           void *data) {
     return 0;
 }
 
@@ -60,12 +60,12 @@ static inline void xdg_wm_base_pong(struct xdg_wm_base *xdg_wm_base, uint32_t se
 }
 
 static inline struct xdg_surface *xdg_wm_base_get_xdg_surface(struct xdg_wm_base *xdg_wm_base,
-                                                               struct wl_surface *surface) {
+                                                              struct wl_surface *surface) {
     return NULL;
 }
 
-static inline int xdg_surface_add_listener(struct xdg_surface *xdg_surface,
-                                            const struct xdg_surface_listener *listener, void *data) {
+static inline int xdg_surface_add_listener(struct xdg_surface *xdg_surface, const struct xdg_surface_listener *listener,
+                                           void *data) {
     return 0;
 }
 
@@ -76,7 +76,7 @@ static inline void xdg_surface_ack_configure(struct xdg_surface *xdg_surface, ui
 static inline void xdg_surface_destroy(struct xdg_surface *xdg_surface) {}
 
 static inline int xdg_toplevel_add_listener(struct xdg_toplevel *xdg_toplevel,
-                                             const struct xdg_toplevel_listener *listener, void *data) {
+                                            const struct xdg_toplevel_listener *listener, void *data) {
     return 0;
 }
 

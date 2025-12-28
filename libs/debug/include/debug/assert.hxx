@@ -41,4 +41,14 @@ using Assert = detail::AssertImpl<Args...>;
 
 }  // namespace debug
 
+#ifdef __LOGENIUM_SOURCE__
+
+namespace logenium {
+
+using namespace ::debug;
+
+}
+
+#endif
+
 #endif  // LOGENIUM_DEBUG_ASSERT_HXX

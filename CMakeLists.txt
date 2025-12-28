@@ -88,6 +88,7 @@ target_compile_definitions(
         logenium
         PRIVATE
         __LOGENIUM_SOURCE__
+        $<$<PLATFORM_ID:Windows>:_CRT_SECURE_NO_WARNINGS>
 )
 
 if(LOGENIUM_BUILD_TESTS)

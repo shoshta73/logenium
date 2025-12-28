@@ -52,6 +52,13 @@ add_library(
         src/dlfcn/dlopen.c
         src/dlfcn/dlclose.c
 
+        src/sys/mman/memfd_create.c
+        src/sys/mman/mmap.c
+        src/sys/mman/munmap.c
+
+        src/unistd/ftruncate.c
+        src/unistd/close.c
+
         src/xcb/xcb/xcb_connect.c
         src/xcb/xcb/xcb_connection_has_error.c
         src/xcb/xcb/xcb_disconnect.c
@@ -66,6 +73,11 @@ add_library(
 
         src/internal/xdg-shell-protocol.c
         src/internal/xdg-decoration-unstable-v1-protocol.c
+
+        src/wayland-client-core/wl_display_connect.c
+        src/wayland-client-core/wl_display_roundtrip.c
+        src/wayland-client-core/wl_display_disconnect.c
+        src/wayland-client-core/wl_display_dispatch.c
 
         src/wayland-client-protocol/wl_registry_interface.c
         src/wayland-client-protocol/wl_compositor_interface.c
