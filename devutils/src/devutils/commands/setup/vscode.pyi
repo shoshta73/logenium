@@ -1,10 +1,10 @@
 # SPDX-FileCopyrightText: 2025 Logenium Authors and Contributors
 # SPDX-License-Identifier: BSD-3-Clause
 
-from _typeshed import Incomplete
+import typer
 
 from devutils.constants.paths import SettingsFiles as SettingsFiles
 
-vscode: Incomplete
+vscode: typer.Typer
 
-def settings(regenerate: bool = ...): ...
+def settings(regenerate: bool = ...) -> None: ...

@@ -5,11 +5,11 @@ import typer
 
 from devutils.constants.paths import SettingsFiles
 
-vscode = typer.Typer()
+vscode: typer.Typer = typer.Typer()
 
 
 @vscode.command()  # type: ignore[misc]
-def settings(regenerate: bool = typer.Option(False, "--regenerate", "-r", help="Regenerate the settings file")):
+def settings(regenerate: bool = typer.Option(False, "--regenerate", "-r", help="Regenerate the settings file")) -> None:
     if SettingsFiles.vscode_settings.exists():
         if regenerate:
             typer.echo(f"Removing settings file: {SettingsFiles.vscode_settings}")
