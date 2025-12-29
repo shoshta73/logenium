@@ -1,9 +1,18 @@
+# SPDX-FileCopyrightText: 2025 Logenium Authors and Contributors
+# SPDX-License-Identifier: BSD-3-Clause
+
+add_subdirectory(auto_release)
+add_subdirectory(defer)
 add_subdirectory(type_name)
 
+get_target_property(CORELIB_UTILITY_AUTO_RELEASE_SRCS corelib_auto_release_tests SOURCES)
+get_target_property(CORELIB_UTILITY_DEFER_SRCS corelib_defer_tests SOURCES)
 get_target_property(CORELIB_UTILITY_TYPE_NAME_SRCS corelib_type_name_tests SOURCES)
 
 add_executable(
         corelib_utility_tests
+        ${CORELIB_UTILITY_AUTO_RELEASE_SRCS}
+        ${CORELIB_UTILITY_DEFER_SRCS}
         ${CORELIB_UTILITY_TYPE_NAME_SRCS}
 )
 

@@ -2,15 +2,13 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 add_executable(
-        corelib_type_name_tests
+        corelib_auto_release_tests
 
-        ${CMAKE_CURRENT_SOURCE_DIR}/auto_release_type_name.cxx
-        ${CMAKE_CURRENT_SOURCE_DIR}/defer_type_name.cxx
-        ${CMAKE_CURRENT_SOURCE_DIR}/type_name.cxx
+        ${CMAKE_CURRENT_SOURCE_DIR}/auto_release.cxx
 )
 
 target_link_libraries(
-        corelib_type_name_tests
+        corelib_auto_release_tests
         PRIVATE
         logenium::corelib
         gtest
@@ -20,11 +18,11 @@ target_link_libraries(
 )
 
 target_compile_features(
-        corelib_type_name_tests
+        corelib_auto_release_tests
         PRIVATE
         cxx_std_23
 )
 
 gtest_discover_tests(
-        corelib_type_name_tests
+        corelib_auto_release_tests
 )

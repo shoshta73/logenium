@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: 2025 Logenium Authors and Contributors
 // SPDX-License-Identifier: BSD-3-Clause
 
-#ifndef LOGENIUM_CORELIB_TYPE_NAME_HXX
-#define LOGENIUM_CORELIB_TYPE_NAME_HXX
+#ifndef LOGENIUM_CORELIB_UTILITY_TYPE_NAME_HXX
+#define LOGENIUM_CORELIB_UTILITY_TYPE_NAME_HXX
 
 #include <string_view>
 #include <type_traits>
@@ -56,4 +56,4 @@ using namespace ::corelib;
 
 #endif  // __LOGENIUM_SOURCE__
 
-#endif  // LOGENIUM_CORELIB_TYPE_NAME_HXX
+#endif  // LOGENIUM_CORELIB_UTILITY_TYPE_NAME_HXX
