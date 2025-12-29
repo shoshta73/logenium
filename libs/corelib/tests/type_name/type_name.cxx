@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: 2025 Logenium Authors and Contributors
 // SPDX-License-Identifier: BSD-3-Clause
 
+#include <string_view>
+
 #include <gtest/gtest.h>
 
 #include <corelib/type_name.hxx>
@@ -28,13 +30,9 @@ TEST(TypeName, floating_point_types) {
     EXPECT_EQ(corelib::type_name<long double>(), "long double");
 }
 
-TEST(TypeName, boolean_type) {
-    EXPECT_EQ(corelib::type_name<bool>(), "bool");
-}
+TEST(TypeName, boolean_type) { EXPECT_EQ(corelib::type_name<bool>(), "bool"); }
 
-TEST(TypeName, void_type) {
-    EXPECT_EQ(corelib::type_name<void>(), "void");
-}
+TEST(TypeName, void_type) { EXPECT_EQ(corelib::type_name<void>(), "void"); }
 
 TEST(TypeName, pointer_types) {
     EXPECT_EQ(corelib::type_name<int *>(), "int *");
@@ -125,6 +123,6 @@ TEST(TypeName, array_types) {
 
     EXPECT_TRUE(char_array_name.find("char") != std::string_view::npos)
         << "Expected 'char' in array type: " << char_array_name;
-    EXPECT_TRUE(char_array_name.find("5") != std::string_view::npos)
+    EXPECT_TRUE(char_array_name.find('5') != std::string_view::npos)
         << "Expected '5' in array type: " << char_array_name;
 }

@@ -1,6 +1,9 @@
-#include <corelib/type_name.hxx>
+// SPDX-FileCopyrightText: 2025 Logenium Authors and Contributors
+// SPDX-License-Identifier: BSD-3-Clause
 
 #include <string_view>
+
+#include <corelib/type_name.hxx>
 
 namespace corelib {
 

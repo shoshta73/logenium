@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2025 Logenium Authors and Contributors
+// SPDX-License-Identifier: BSD-3-Clause
+
 #ifndef LOGENIUM_CORELIB_TYPE_NAME_HXX
 #define LOGENIUM_CORELIB_TYPE_NAME_HXX
 
