@@ -5,7 +5,7 @@
 
 #include <gtest/gtest.h>
 
-#include <corelib/type_name.hxx>
+#include <corelib/utility/type_name.hxx>
 
 TEST(TypeName, basic_integer_types) {
     EXPECT_EQ(corelib::type_name<int>(), "int");

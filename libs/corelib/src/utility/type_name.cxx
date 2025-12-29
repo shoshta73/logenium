@@ -3,7 +3,7 @@
 
 #include <string_view>
 
-#include <corelib/type_name.hxx>
+#include <corelib/utility/type_name.hxx>
 
 namespace corelib {
 

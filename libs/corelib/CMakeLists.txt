@@ -19,7 +19,7 @@ include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/options.cmake")
 add_library(
         corelib
 
-        src/type_name.cxx
+        src/utility/type_name.cxx
 )
 
 add_library(
