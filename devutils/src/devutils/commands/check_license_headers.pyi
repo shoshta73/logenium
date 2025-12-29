@@ -31,6 +31,7 @@ from devutils.utils.file_checking import (
 from devutils.utils.file_checking import (
     print_status as print_status,
 )
+from devutils.utils.filesystem import find_files_by_name as find_files_by_name
 from devutils.utils.git import get_file_copyright_year as get_file_copyright_year
 
 check_license_headers: typer.Typer

@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2025 Logenium Authors and Contributors
 # SPDX-License-Identifier: BSD-3-Clause
 
+import os
 import pathlib
 import sys
 import threading
@@ -196,6 +197,9 @@ def get_language_configs() -> list[LicenseLanguageConfig]:
                 Directories.debug_source,
                 Directories.debug_include,
                 Directories.debug_tests,
+                Directories.corelib_source,
+                Directories.corelib_include,
+                Directories.corelib_tests,
             ],
             specific_files=[],
             header_generator=lh.generate_cpp_header,
@@ -477,7 +481,7 @@ def check_files_parallel(
 ) -> None:
     output_lock = threading.Lock()
 
-    with ThreadPoolExecutor() as executor:
+    with ThreadPoolExecutor(max_workers=os.cpu_count()) as executor:
         future_to_file = {
             executor.submit(
                 check_single_file, file_path, header_generator, language_name, cache_manager, output_lock
@@ -551,7 +555,7 @@ def fix_files_parallel(
 ) -> None:
     output_lock = threading.Lock()
 
-    with ThreadPoolExecutor() as executor:
+    with ThreadPoolExecutor(max_workers=os.cpu_count()) as executor:
         future_to_file = {
             executor.submit(
                 fix_single_file, file_path, header_generator, language_name, cache_manager, output_lock

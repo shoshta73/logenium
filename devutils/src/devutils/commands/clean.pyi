@@ -6,6 +6,7 @@ from collections.abc import Callable as Callable
 import typer
 
 from devutils.constants.paths import Directories as Directories
+from devutils.utils.filesystem import find_directories_by_name as find_directories_by_name
 
 clean: typer.Typer
 

@@ -21,15 +21,22 @@ def handle_remove_readonly(func: Callable[[str], object], path: str, exc: BaseEx
 
 @clean.command()  # type: ignore[misc]
 def run() -> None:
-    if not Directories.build.exists() and not Directories.cache.exists():
-        typer.echo("Build directory does not exist. Nothing to clean.")
-        return
-
     typer.echo(f"Removing {Directories.build}...")
-    shutil.rmtree(Directories.build, onexc=handle_remove_readonly)
+    if not Directories.build.exists():
+        typer.echo("Build directory does not exist")
+    else:
+        shutil.rmtree(Directories.build, onexc=handle_remove_readonly)
 
     typer.echo(f"Removing {Directories.cache}...")
-    shutil.rmtree(Directories.cache, onexc=handle_remove_readonly)
+    if not Directories.cache.exists():
+        typer.echo("Cache directory does not exist")
+    else:
+        shutil.rmtree(Directories.cache, onexc=handle_remove_readonly)
+
+    if not Directories.vscode.exists():
+        typer.echo("VSCode directory does not exist")
+    else:
+        shutil.rmtree(Directories.vscode, onexc=handle_remove_readonly)
 
     pycaches = find_directories_by_name(Directories.root, "__pycache__")
     for pycache in pycaches:

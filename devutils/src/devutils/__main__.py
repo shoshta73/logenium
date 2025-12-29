@@ -3,7 +3,7 @@
 
 import typer
 
-from .commands import build, check_license_headers, clean, codegen, configure, format, lint, python
+from .commands import build, check_license_headers, clean, codegen, configure, format, lint, python, setup
 
 app = typer.Typer()
 
@@ -16,6 +16,7 @@ app.add_typer(configure, name="configure", help="Configure the project")
 app.add_typer(format, name="format", help="Format the project")
 app.add_typer(lint, name="lint", help="Lint the project")
 app.add_typer(python, name="python", help="Python commands")
+app.add_typer(setup, name="setup", help="Setup commands")
 
 
 def version_callback(value: bool) -> None:

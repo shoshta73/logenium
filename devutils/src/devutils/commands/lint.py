@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2025 Logenium Authors and Contributors
 # SPDX-License-Identifier: BSD-3-Clause
 
+import os
 import pathlib
 import subprocess
 import sys
@@ -179,6 +180,9 @@ def get_language_configs() -> list[LintLanguageConfig]:
                 Directories.debug_source,
                 Directories.debug_include,
                 Directories.debug_tests,
+                Directories.corelib_source,
+                Directories.corelib_include,
+                Directories.corelib_tests,
             ],
             specific_files=[],
             lint_steps=[
@@ -477,7 +481,7 @@ def check_files_parallel(
 
     output_lock = threading.Lock()
 
-    with ThreadPoolExecutor() as executor:
+    with ThreadPoolExecutor(max_workers=os.cpu_count()) as executor:
         future_to_file = {
             executor.submit(check_single_file, file_path, config, cache_manager, output_lock): file_path
             for file_path in files
@@ -580,7 +584,7 @@ def fix_files_parallel(
 ) -> None:
     output_lock = threading.Lock()
 
-    with ThreadPoolExecutor() as executor:
+    with ThreadPoolExecutor(max_workers=os.cpu_count()) as executor:
         future_to_file = {
             executor.submit(fix_single_file, file_path, config, cache_manager, output_lock): file_path
             for file_path in files

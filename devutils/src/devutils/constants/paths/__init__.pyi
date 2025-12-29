@@ -6,5 +6,6 @@ from .config_files import ConfigFiles as ConfigFiles
 from .directories import Directories as Directories
 from .files import Files as Files
 from .json_schemas import JsonSchemas as JsonSchemas
+from .settings_files import SettingsFiles as SettingsFiles
 
-__all__ = ["CodegenFiles", "ConfigFiles", "Directories", "Files", "JsonSchemas"]
+__all__ = ["CodegenFiles", "ConfigFiles", "Directories", "Files", "JsonSchemas", "SettingsFiles"]

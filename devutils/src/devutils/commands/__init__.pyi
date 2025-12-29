@@ -9,5 +9,6 @@ from .configure import configure as configure
 from .format import format as format
 from .lint import lint as lint
 from .python import python as python
+from .setup import setup as setup
 
-__all__ = ["build", "check_license_headers", "clean", "codegen", "configure", "format", "lint", "python"]
+__all__ = ["build", "check_license_headers", "clean", "codegen", "configure", "format", "lint", "python", "setup"]

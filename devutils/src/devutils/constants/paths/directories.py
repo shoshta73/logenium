@@ -8,6 +8,7 @@ _ROOT_DIR: Path = Path(__file__).parent.parent.parent.parent.parent.parent.resol
 _BUILD_DIR: Path = _ROOT_DIR / "build"
 _LIBS_DIR: Path = _ROOT_DIR / "libs"
 _CAHCE_DIR: Path = _ROOT_DIR / ".cache"
+_VSCODE_DIR: Path = _ROOT_DIR / ".vscode"
 
 
 @dataclass(frozen=True)
@@ -16,6 +17,7 @@ class Directories:
     build: Path = _BUILD_DIR
     libs: Path = _LIBS_DIR
     cache: Path = _CAHCE_DIR
+    vscode: Path = _VSCODE_DIR
 
     logenium_source: Path = _ROOT_DIR / "src"
     logenium_include: Path = _ROOT_DIR / "include"
