@@ -9,7 +9,7 @@ TEST(wl_array, struct_compiles) {
 #ifdef __linux__
     SUCCEED();
 #else
-    struct wl_array arr;
+    struct wl_array arr{};
     arr.size = 0;
     arr.alloc = 0;
     arr.data = nullptr;

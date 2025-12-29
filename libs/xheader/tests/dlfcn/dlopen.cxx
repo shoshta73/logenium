@@ -9,6 +9,6 @@ TEST(dlopen, returns_nullptr) {
 #ifdef __linux__
     SUCCEED();
 #else
-    ASSERT_EQ(NULL, dlopen(NULL, 0));
+    ASSERT_EQ(nullptr, dlopen(nullptr, 0));
 #endif
 }

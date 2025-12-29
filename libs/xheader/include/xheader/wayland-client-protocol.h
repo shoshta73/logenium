@@ -26,6 +26,7 @@ extern "C" {
 #endif
 
 #include <xheader/wayland-client-core.h>
+#include <xheader/wayland-util.h>
 
 #define WL_DISPLAY_GET_REGISTRY 1
 #define WL_REGISTRY_BIND 0
@@ -92,7 +93,7 @@ static inline void *wl_registry_bind(struct wl_registry *wl_registry, uint32_t n
     return (void *)id;
 }
 
-static inline struct wl_surface *wl_compositor_create_surface(struct wl_compositor *wl_compositor) { return NULL; }
+static inline struct wl_surface *wl_compositor_create_surface(struct wl_compositor *wl_compositor) { return nullptr; }
 
 static inline void wl_surface_attach(struct wl_surface *wl_surface, struct wl_buffer *buffer, int32_t x, int32_t y) {}
 
@@ -102,12 +103,14 @@ static inline void wl_surface_destroy(struct wl_surface *wl_surface) {}
 
 static inline void wl_buffer_destroy(struct wl_buffer *wl_buffer) {}
 
-static inline struct wl_shm_pool *wl_shm_create_pool(struct wl_shm *wl_shm, int32_t fd, int32_t size) { return NULL; }
+static inline struct wl_shm_pool *wl_shm_create_pool(struct wl_shm *wl_shm, int32_t fd, int32_t size) {
+    return nullptr;
+}
 
 static inline struct wl_buffer *wl_shm_pool_create_buffer(struct wl_shm_pool *wl_shm_pool, int32_t offset,
                                                           int32_t width, int32_t height, int32_t stride,
                                                           uint32_t format) {
-    return NULL;
+    return nullptr;
 }
 
 static inline void wl_shm_pool_destroy(struct wl_shm_pool *wl_shm_pool) {}

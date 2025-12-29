@@ -11,7 +11,7 @@ namespace logenium {
 class LinuxWindow : public Window {
   public:
     LinuxWindow();
-    ~LinuxWindow();
+    ~LinuxWindow() override;
 };
 
 }  // namespace logenium

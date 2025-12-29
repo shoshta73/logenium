@@ -74,8 +74,8 @@ LRESULT CALLBACK WindowsWindow::WindowProc(HWND hWnd, UINT msg, WPARAM wParam, L
     }
 }
 
-LRESULT WindowsWindow::HandleMessage(HWND pHwnd, UINT pMessage, WPARAM pWParam, LPARAM pLParam) {
-    switch (pMessage) {
+LRESULT WindowsWindow::HandleMessage(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+    switch (msg) {
         case WM_CLOSE: {
             Application::GetInstance().GetState().is_running = false;
             PostQuitMessage(0);
@@ -87,7 +87,7 @@ LRESULT WindowsWindow::HandleMessage(HWND pHwnd, UINT pMessage, WPARAM pWParam, 
             return 0;
         }
         default: {
-            return DefWindowProc(pHwnd, pMessage, pWParam, pLParam);
+            return DefWindowProc(hWnd, msg, wParam, lParam);
         }
     }
 }

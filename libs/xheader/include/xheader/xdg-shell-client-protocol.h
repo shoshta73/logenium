@@ -55,13 +55,13 @@ static inline int xdg_wm_base_add_listener(struct xdg_wm_base *xdg_wm_base, cons
 }
 
 static inline void xdg_wm_base_pong(struct xdg_wm_base *xdg_wm_base, uint32_t serial) {
-    wl_proxy_marshal_flags((struct wl_proxy *)xdg_wm_base, XDG_WM_BASE_PONG, NULL,
+    wl_proxy_marshal_flags((struct wl_proxy *)xdg_wm_base, XDG_WM_BASE_PONG, nullptr,
                            wl_proxy_get_version((struct wl_proxy *)xdg_wm_base), 0, serial);
 }
 
 static inline struct xdg_surface *xdg_wm_base_get_xdg_surface(struct xdg_wm_base *xdg_wm_base,
                                                               struct wl_surface *surface) {
-    return NULL;
+    return nullptr;
 }
 
 static inline int xdg_surface_add_listener(struct xdg_surface *xdg_surface, const struct xdg_surface_listener *listener,
@@ -69,7 +69,7 @@ static inline int xdg_surface_add_listener(struct xdg_surface *xdg_surface, cons
     return 0;
 }
 
-static inline struct xdg_toplevel *xdg_surface_get_toplevel(struct xdg_surface *xdg_surface) { return NULL; }
+static inline struct xdg_toplevel *xdg_surface_get_toplevel(struct xdg_surface *xdg_surface) { return nullptr; }
 
 static inline void xdg_surface_ack_configure(struct xdg_surface *xdg_surface, uint32_t serial) {}
 

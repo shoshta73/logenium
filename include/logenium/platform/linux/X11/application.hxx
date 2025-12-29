@@ -14,7 +14,7 @@ namespace logenium {
 class X11Application : public LinuxApplication {
   public:
     X11Application();
-    ~X11Application();
+    ~X11Application() override;
 
     void Run() final;
     [[nodiscard]] xcb_connection_t *GetConnection() const;

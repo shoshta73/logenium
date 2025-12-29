@@ -5,8 +5,7 @@
 
 #ifndef __linux__
 
-#include <stddef.h>
-
-void *dlopen(const char *__file, int __mode) { return NULL; }
+// NOLINTNEXTLINE(bugprone-reserved-identifier)
+void *dlopen(const char *__file, int __mode) { return nullptr; }
 
 #endif  // __linux__

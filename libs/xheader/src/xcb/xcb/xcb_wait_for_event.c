@@ -7,6 +7,6 @@
 
 #include <stddef.h>
 
-xcb_generic_event_t *xcb_wait_for_event(xcb_connection_t *c) { return NULL; }
+xcb_generic_event_t *xcb_wait_for_event(xcb_connection_t *c) { return nullptr; }
 
 #endif  // __linux__

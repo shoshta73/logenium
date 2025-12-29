@@ -4,8 +4,11 @@
 #ifndef LOGENIUM_PLATFORM_LINUX_WAYLAND_WINDOW_HXX
 #define LOGENIUM_PLATFORM_LINUX_WAYLAND_WINDOW_HXX
 
+#include <cstdint>
+
 #include <xheader/wayland-client-protocol.h>
 #include <xheader/wayland-client.h>
+#include <xheader/wayland-util.h>
 #include <xheader/xdg-decoration-unstable-v1-client-protocol.h>
 #include <xheader/xdg-shell-client-protocol.h>
 
@@ -16,7 +19,7 @@ namespace logenium {
 class WaylandWindow : public LinuxWindow {
   public:
     WaylandWindow();
-    ~WaylandWindow();
+    ~WaylandWindow() override;
 
   private:
     static void XdgSurfaceConfigure(void *data, struct xdg_surface *xdg_surface, uint32_t serial);

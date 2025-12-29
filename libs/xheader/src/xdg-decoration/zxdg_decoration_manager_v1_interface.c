@@ -5,13 +5,15 @@
 
 #ifndef __linux__
 
+#include <xheader/wayland-util.h>
+
 const struct wl_interface zxdg_decoration_manager_v1_interface = {
     .name = "zxdg_decoration_manager_v1",
     .version = 1,
     .method_count = 0,
-    .methods = NULL,
+    .methods = nullptr,
     .event_count = 0,
-    .events = NULL,
+    .events = nullptr,
 };
 
 #endif

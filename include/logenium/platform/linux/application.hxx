@@ -13,7 +13,7 @@ namespace logenium {
 class LinuxApplication : public Application {
   public:
     LinuxApplication();
-    ~LinuxApplication();
+    ~LinuxApplication() override;
 
     static std::unique_ptr<LinuxApplication> Create();
 };

@@ -195,7 +195,7 @@ TEST(AutoRelease, pointer_type) {
     bool released = false;
 
     {
-        corelib::AutoRelease<int *, nullptr> resource(ptr, [&released](int *p) {
+        corelib::AutoRelease<int *, nullptr> resource(ptr, [&released](const int *p) {
             released = true;
             delete p;
         });
@@ -251,7 +251,7 @@ TEST(AutoRelease, multiple_resources_different_types) {
         corelib::AutoRelease<int> int_resource(42, [&int_release_count](int) { int_release_count++; });
 
         int *ptr = new int(100);
-        corelib::AutoRelease<int *, nullptr> ptr_resource(ptr, [&ptr_release_count](int *p) {
+        corelib::AutoRelease<int *, nullptr> ptr_resource(ptr, [&ptr_release_count](const int *p) {
             ptr_release_count++;
             delete p;
         });

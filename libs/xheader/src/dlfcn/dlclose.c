@@ -5,6 +5,7 @@
 
 #ifndef __linux__
 
+// NOLINTNEXTLINE(bugprone-reserved-identifier)
 int dlclose(void *__handle) { return 0; }
 
 #endif  // __linux__

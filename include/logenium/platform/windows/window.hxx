@@ -13,14 +13,14 @@ namespace logenium {
 class WindowsWindow : public Window {
   public:
     WindowsWindow();
-    ~WindowsWindow();
+    ~WindowsWindow() override;
 
     static WNDCLASSEX &GetWindowClass();
     static const char *GetWindowClassName();
     static LRESULT CALLBACK WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
   private:
-    LRESULT HandleMessage(HWND pHwnd, UINT pMessage, WPARAM pWParam, LPARAM pLParam);
+    LRESULT HandleMessage(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 };
 
 }  // namespace logenium

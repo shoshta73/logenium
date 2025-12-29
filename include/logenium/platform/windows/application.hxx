@@ -11,7 +11,7 @@ namespace logenium {
 class WindowsApplication : public Application {
   public:
     WindowsApplication();
-    ~WindowsApplication();
+    ~WindowsApplication() override;
 
     void Run() final;
 

@@ -40,7 +40,7 @@ int wl_display_dispatch(struct wl_display *display);
 static inline struct wl_proxy *wl_proxy_marshal_flags(struct wl_proxy *proxy, uint32_t opcode,
                                                       const struct wl_interface *interface, uint32_t version,
                                                       uint32_t flags, ...) {
-    return NULL;
+    return nullptr;
 }
 
 static inline int wl_proxy_add_listener(struct wl_proxy *proxy, void (**implementation)(void), void *data) { return 0; }

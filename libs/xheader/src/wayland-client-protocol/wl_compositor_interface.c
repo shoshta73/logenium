@@ -5,13 +5,15 @@
 
 #ifndef __linux__
 
+#include <xheader/wayland-util.h>
+
 const struct wl_interface wl_compositor_interface = {
     .name = "wl_compositor",
     .version = 4,
     .method_count = 0,
-    .methods = NULL,
+    .methods = nullptr,
     .event_count = 0,
-    .events = NULL,
+    .events = nullptr,
 };
 
 #endif

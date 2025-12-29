@@ -16,6 +16,7 @@ extern "C" {
 
 #else
 
+#include <xheader/wayland-util.h>
 #include <xheader/xdg-shell-client-protocol.h>
 
 enum zxdg_toplevel_decoration_v1_mode {
@@ -35,7 +36,7 @@ extern const struct wl_interface zxdg_decoration_manager_v1_interface;
 
 static inline struct zxdg_toplevel_decoration_v1 *zxdg_decoration_manager_v1_get_toplevel_decoration(
     struct zxdg_decoration_manager_v1 *zxdg_decoration_manager_v1, struct xdg_toplevel *toplevel) {
-    return NULL;
+    return nullptr;
 }
 
 static inline void zxdg_toplevel_decoration_v1_destroy(

@@ -5,8 +5,8 @@
 
 namespace logenium {
 
-LinuxWindow::LinuxWindow() {}
+LinuxWindow::LinuxWindow() = default;
 
-LinuxWindow::~LinuxWindow() {}
+LinuxWindow::~LinuxWindow() = default;
 
 }  // namespace logenium

@@ -39,7 +39,7 @@ constexpr std::string_view type_name() {
 }
 
 template <typename T>
-inline constexpr std::string_view type_name(T &&pValue) {
+inline constexpr std::string_view type_name(T &&value) {
     using Type = std::remove_reference_t<T>;
     return type_name<Type>();
 }

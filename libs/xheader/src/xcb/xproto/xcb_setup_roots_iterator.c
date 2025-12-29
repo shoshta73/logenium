@@ -5,6 +5,6 @@
 
 #ifndef __linux__
 
-xcb_screen_iterator_t xcb_setup_roots_iterator(const xcb_setup_t *R) { return (xcb_screen_iterator_t){0}; }
+xcb_screen_iterator_t xcb_setup_roots_iterator(const xcb_setup_t *R) { return (xcb_screen_iterator_t){nullptr}; }
 
 #endif  // __linux__

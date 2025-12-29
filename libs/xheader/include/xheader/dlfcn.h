@@ -21,9 +21,11 @@ extern "C" {
 #define RTLD_LOCAL 0x00000
 
 // TODO: Implement no throw marker
+// NOLINTNEXTLINE(bugprone-reserved-identifier)
 void *dlopen(const char *__file, int __mode);
 
 // TODO: Implement no throw marker
+// NOLINTNEXTLINE(bugprone-reserved-identifier)
 int dlclose(void *__handle);
 
 #endif  // __linux__

@@ -5,6 +5,6 @@
 
 #ifndef __linux__
 
-struct wl_display *wl_display_connect(const char *name) { return NULL; }
+struct wl_display *wl_display_connect(const char *name) { return nullptr; }
 
 #endif

@@ -25,7 +25,7 @@ namespace logenium {
 class WaylandApplication : public LinuxApplication {
   public:
     WaylandApplication();
-    ~WaylandApplication();
+    ~WaylandApplication() override;
 
     void Run() final;
 

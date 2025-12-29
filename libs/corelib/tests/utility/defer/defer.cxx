@@ -152,7 +152,7 @@ TEST(Defer, complex_cleanup_operations) {
         int *data;
         bool *destroyed;
 
-        Resource(bool *d) : data(new int(42)), destroyed(d) {}
+        explicit Resource(bool *d) : data(new int(42)), destroyed(d) {}
 
         ~Resource() {
             if (destroyed) {
@@ -162,11 +162,9 @@ TEST(Defer, complex_cleanup_operations) {
     };
 
     bool resource_destroyed = false;
-    int *leaked_data = nullptr;
 
     {
         Resource res(&resource_destroyed);
-        leaked_data = res.data;
 
         corelib::Defer defer([data = res.data]() { delete data; });
 
