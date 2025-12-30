@@ -1,13 +1,13 @@
 // SPDX-FileCopyrightText: 2025 Logenium Authors and Contributors
 // SPDX-License-Identifier: BSD-3-Clause
 
+#include "../common.hxx"
+
 #include <type_traits>
 
 #include <gtest/gtest.h>
 
 #include <corelib/casting/cast.hxx>
-
-#include "../common.hxx"
 
 namespace corelib {
 

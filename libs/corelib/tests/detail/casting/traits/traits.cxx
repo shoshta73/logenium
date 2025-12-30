@@ -48,37 +48,25 @@ TEST(SimplifyTypeTest, GetSimplifiedValueConst) {
     EXPECT_EQ(result, 42);
 }
 
-TEST(IsSimpleTypeTest, BasicType) {
-    static_assert(IsSimpleType<int>::value, "int should be a simple type");
-}
+TEST(IsSimpleTypeTest, BasicType) { static_assert(IsSimpleType<int>::value, "int should be a simple type"); }
 
-TEST(IsSimpleTypeTest, PointerType) {
-    static_assert(IsSimpleType<int *>::value, "int* should be a simple type");
-}
+TEST(IsSimpleTypeTest, PointerType) { static_assert(IsSimpleType<int *>::value, "int* should be a simple type"); }
 
 TEST(IsSimpleTypeTest, ConstType) {
     static_assert(IsSimpleType<const int>::value, "const int should be a simple type");
 }
 
-TEST(IsNullableTest, PointerType) {
-    static_assert(IsNullable<int *>, "pointer should be nullable");
-}
+TEST(IsNullableTest, PointerType) { static_assert(IsNullable<int *>, "pointer should be nullable"); }
 
-TEST(IsNullableTest, ConstPointerType) {
-    static_assert(IsNullable<const int *>, "const pointer should be nullable");
-}
+TEST(IsNullableTest, ConstPointerType) { static_assert(IsNullable<const int *>, "const pointer should be nullable"); }
 
 TEST(IsNullableTest, UniquePtrType) {
     static_assert(IsNullable<std::unique_ptr<int>>, "unique_ptr should be nullable");
 }
 
-TEST(IsNullableTest, NonNullableType) {
-    static_assert(!IsNullable<int>, "int should not be nullable");
-}
+TEST(IsNullableTest, NonNullableType) { static_assert(!IsNullable<int>, "int should not be nullable"); }
 
-TEST(IsNullableTest, ReferenceType) {
-    static_assert(!IsNullable<int &>, "reference should not be nullable");
-}
+TEST(IsNullableTest, ReferenceType) { static_assert(!IsNullable<int &>, "reference should not be nullable"); }
 
 TEST(ValueIsPresentTest, NonNullableType) {
     int x = 42;
