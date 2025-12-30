@@ -15,9 +15,11 @@ IncludeBlocks: Regroup
 IncludeCategories:
   # Project headers
   - Regex: '^(<|")logenium/'
-    Priority: 7
+    Priority: 8
 
   # Project libraries
+  - Regex: '^(<|")(corelib)/'
+    Priority: 7
   - Regex: '^(<|")debug.hxx'
     Priority: 6
   - Regex: '^(<|")(corelib|debug)/'

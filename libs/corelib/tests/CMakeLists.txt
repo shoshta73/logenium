@@ -1,6 +1,5 @@
 # SPDX-FileCopyrightText: 2025 Logenium Authors and Contributors
 # SPDX-License-Identifier: BSD-3-Clause
-
 file(GLOB_RECURSE CORELIB_TESTS_SOURCES CONFIGURE_DEPENDS *.cxx)
 
 add_executable(

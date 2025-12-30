@@ -6,33 +6,40 @@
 
 #include <memory>
 
+#include <debug/assert.hxx>
+
 #include <corelib/casting/cast.hxx>
 #include <corelib/detail/casting/cast.hxx>
 #include <corelib/detail/casting/traits.hxx>
+#include <corelib/utility/type_name.hxx>
 
 namespace corelib {
 
 template <typename To, typename From>
 inline decltype(auto) dyn_cast(const From &Val) {
-    assert(detail::isPresent(Val) && "dyn_cast on a non-existent value");
+    debug::Assert(detail::isPresent(Val), "dyn_cast<{}>(const {} &) called on a non-existent value", type_name<To>(),
+                  type_name<From>());
     return detail::CastInfo<To, const From>::DoCastIfPossible(Val);
 }
 
 template <typename To, typename From>
 inline decltype(auto) dyn_cast(From &Val) {
-    assert(detail::isPresent(Val) && "dyn_cast on a non-existent value");
+    debug::Assert(detail::isPresent(Val), "dyn_cast<{}>({} &) called on a non-existent value", type_name<To>(),
+                  type_name<From>());
     return detail::CastInfo<To, From>::DoCastIfPossible(Val);
 }
 
 template <typename To, typename From>
 inline decltype(auto) dyn_cast(From *Val) {
-    assert(detail::isPresent(Val) && "dyn_cast on a non-existent value");
+    debug::Assert(detail::isPresent(Val), "dyn_cast<{}>({}*) called on a non-existent value", type_name<To>(),
+                  type_name<From>());
     return detail::CastInfo<To, From *>::DoCastIfPossible(Val);
 }
 
 template <typename To, typename From>
 inline decltype(auto) dyn_cast(std::unique_ptr<From> &Val) {
-    assert(detail::isPresent(Val) && "dyn_cast on a non-existent value");
+    debug::Assert(detail::isPresent(Val), "dyn_cast<{}>(std::unique_ptr<{}> &&) called on a non-existent value",
+                  type_name<To>(), type_name<From>());
     return detail::CastInfo<To, std::unique_ptr<From>>::DoCastIfPossible(Val);
 }
 

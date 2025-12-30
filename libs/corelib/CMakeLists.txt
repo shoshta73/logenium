@@ -38,6 +38,12 @@ target_compile_features(
         cxx_std_23
 )
 
+target_link_libraries(
+        corelib
+        PUBLIC
+        logenium::debug
+)
+
 if(LOGENIUM_BUILD_TESTS AND LOGENIUM_CORELIB_BUILD_TESTS)
         log_info("Building corelib tests")
         add_subdirectory(tests)

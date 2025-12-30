@@ -8,6 +8,8 @@
 #include <optional>
 #include <type_traits>
 
+#include <debug/assert.hxx>
+
 #include <corelib/detail/casting/adapters.hxx>
 #include <corelib/detail/casting/isa.hxx>
 #include <corelib/detail/casting/traits.hxx>
@@ -89,7 +91,9 @@ struct CastIsPossible {
 template <typename To, typename From>
 struct CastIsPossible<To, std::optional<From>> {
     static inline bool IsPossible(const std::optional<From> &f) {
-        assert(f && "CastIsPossible::IsPossible called on a nullopt!");
+        debug::Assert(f.has_value(),
+                      "CastIsPossible<{}, std::optional<{}>>::IsPossible(const std::optional<{}>) called on a nullopt!",
+                      type_name<To>(), type_name<From>(), type_name<From>());
         return detail::IsaImplWrap<To, const From, typename detail::SimplifyType<const From>::SimpleType>::Check(*f);
     }
 };
