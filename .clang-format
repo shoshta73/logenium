@@ -15,19 +15,23 @@ IncludeBlocks: Regroup
 IncludeCategories:
   # Project headers
   - Regex: '^(<|")logenium/'
-    Priority: 8
+    Priority: 9
 
   # Project libraries
   - Regex: '^(<|")(corelib)/'
-    Priority: 7
+    Priority: 8
   - Regex: '^(<|")debug.hxx'
-    Priority: 6
+    Priority: 7
   - Regex: '^(<|")(corelib|debug)/'
-    Priority: 6
+    Priority: 7
   - Regex: '^(<|")xheader/'
-    Priority: 5
+    Priority: 6
 
   # 3rd party headers
+  - Regex: '^(<|")fmt/'
+    Priority: 5
+
+  # Test headers
   - Regex: '^(<|")(gtest|gmock)/'
     Priority: 4
 

@@ -13,8 +13,8 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 log_info("Project ${PROJECT_NAME} version ${PROJECT_VERSION}")
 log_info("Building in ${CMAKE_BUILD_TYPE} mode")
 
-include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/dependencies.cmake")
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/options.cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/dependencies.cmake")
 
 add_library(
         corelib
