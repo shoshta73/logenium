@@ -18,15 +18,19 @@ def settings(regenerate: bool = typer.Option(False, "--regenerate", "-r", help="
             typer.echo(f"Settings file already exists: {SettingsFiles.vscode_settings}")
             raise typer.Exit(0)
 
+    if not SettingsFiles.vscode_settings.parent.exists():
+        typer.echo(f"Creating directory: {SettingsFiles.vscode_settings.parent}")
+        SettingsFiles.vscode_settings.parent.mkdir(parents=True)
+
     typer.echo(f"Creating settings file: {SettingsFiles.vscode_settings}")
     with open(SettingsFiles.vscode_settings, "w") as f:
         f.write(
             """{
   "yaml.schemas": {
-    "devutils/data/schemas/config.schema.json": [
+    "devutils/data/schemas/r2/config.schema.json": [
       "config.yaml"
     ],
-    "devutils/data/schemas/codegen.schema.json": [
+    "devutils/data/schemas/r1/codegen.schema.json": [
       "**/codegen/*.yaml"
     ]
   }

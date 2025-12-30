@@ -2,9 +2,16 @@
 	"$schema": "http://json-schema.org/draft-07/schema#",
 	"$id": "logenium-devutils-schemas-config-r1",
 	"title": "Configure Command Configuration",
-	"description": "Configuration schema for project build settings",
+	"description": "Configuration schema for project build settings (revision 1)",
 	"type": "object",
-	"required": ["revision", "enable_testing", "enable_xheader_testing", "enable_debug_testing", "enable_corelib_testing", "build_mode"],
+	"required": [
+		"revision",
+		"enable_testing",
+		"enable_xheader_testing",
+		"enable_debug_testing",
+		"enable_corelib_testing",
+		"build_mode"
+	],
 	"properties": {
 		"revision": {
 			"type": "integer",

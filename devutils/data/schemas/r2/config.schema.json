@@ -1,0 +1,98 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"$id": "logenium-devutils-schemas-config-r2",
+	"title": "Configure Command Configuration",
+	"description": "Configuration schema for project build settings (revision 2)",
+	"type": "object",
+	"required": [
+		"revision",
+		"enable_testing",
+		"build_mode",
+		"logenium",
+		"xheader",
+		"debug",
+		"corelib"
+	],
+	"properties": {
+		"revision": {
+			"type": "integer",
+			"description": "Configuration file revision number",
+			"const": 2
+		},
+		"enable_testing": {
+			"type": "boolean",
+			"description": "Whether to enable testing globally"
+		},
+		"build_mode": {
+			"type": "string",
+			"description": "CMake build mode",
+			"enum": ["Debug", "Release", "RelWithDebInfo", "MinSizeRel"]
+		},
+		"logenium": {
+			"type": "object",
+			"description": "Logenium-specific settings",
+			"required": ["enable_testing"],
+			"properties": {
+				"enable_testing": {
+					"type": "boolean",
+					"description": "Whether to enable logenium tests"
+				}
+			},
+			"additionalProperties": false
+		},
+		"xheader": {
+			"type": "object",
+			"description": "xheader library settings",
+			"required": ["enable_testing"],
+			"properties": {
+				"enable_testing": {
+					"type": "boolean",
+					"description": "Whether to enable xheader library tests"
+				}
+			},
+			"additionalProperties": false
+		},
+		"debug": {
+			"type": "object",
+			"description": "debug library settings",
+			"required": [
+				"use_fast_stacktrace",
+				"enable_testing",
+				"use_fmtlib",
+				"enable_color_logs"
+			],
+			"properties": {
+				"use_fast_stacktrace": {
+					"type": "boolean",
+					"description": "Whether to use fast stacktrace (not reversed printing in assert)"
+				},
+				"use_fmtlib": {
+					"type": "boolean",
+					"description": "Whether to use fmtlib for debug logging"
+				},
+				"enable_color_logs": {
+					"type": "boolean",
+					"description": "Whether to use color logs"
+				},
+				"enable_testing": {
+					"type": "boolean",
+					"description": "Whether to enable debug library tests"
+				}
+			},
+			"additionalProperties": false
+		},
+		"corelib": {
+			"type": "object",
+			"description": "corelib library settings",
+			"required": ["enable_testing"],
+			"properties": {
+				"enable_testing": {
+					"type": "boolean",
+					"description": "Whether to enable corelib library tests"
+				}
+			},
+			"additionalProperties": false
+		}
+	},
+	"additionalProperties": false
+}
