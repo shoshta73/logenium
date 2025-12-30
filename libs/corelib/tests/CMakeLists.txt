@@ -1,13 +1,11 @@
 # SPDX-FileCopyrightText: 2025 Logenium Authors and Contributors
 # SPDX-License-Identifier: BSD-3-Clause
 
-add_subdirectory(utility)
-
-get_target_property(CORELIB_UTILITY_SRCS corelib_utility_tests SOURCES)
+file(GLOB_RECURSE CORELIB_TESTS_SOURCES CONFIGURE_DEPENDS *.cxx)
 
 add_executable(
         corelib_tests
-        ${CORELIB_UTILITY_SRCS}
+        ${CORELIB_TESTS_SOURCES}
 )
 
 target_link_libraries(
