@@ -42,10 +42,8 @@ add_subdirectory(libs)
 log_info("Project ${PROJECT_NAME} version ${PROJECT_VERSION}")
 log_info("Building in ${CMAKE_BUILD_TYPE} mode")
 
-add_executable(
-        logenium
-
-        src/main.cxx
+add_library(
+        logeniumlib
 
         src/application.cxx
         src/window.cxx
@@ -64,25 +62,56 @@ add_executable(
 )
 
 target_compile_features(
-        logenium
-        PRIVATE
+        logeniumlib
+        PUBLIC
         cxx_std_23
         c_std_23
 )
 
 target_include_directories(
-        logenium
+        logeniumlib
+        PUBLIC
+        include
+)
+
+target_include_directories(
+        logeniumlib
         PRIVATE
         src
-        include
+)
+
+target_link_libraries(
+        logeniumlib
+        PUBLIC
+        xheader
+        logenium::debug
+        corelib
+)
+
+target_compile_definitions(
+        logeniumlib
+        PRIVATE
+        __LOGENIUM_SOURCE__
+        $<$<PLATFORM_ID:Windows>:_CRT_SECURE_NO_WARNINGS>
+)
+
+add_executable(
+        logenium
+
+        src/main.cxx
 )
 
 target_link_libraries(
         logenium
         PRIVATE
-        xheader
-        logenium::debug
-        corelib
+        logeniumlib
+)
+
+target_compile_features(
+        logenium
+        PRIVATE
+        cxx_std_23
+        c_std_23
 )
 
 target_compile_definitions(
@@ -105,11 +134,18 @@ if(LOGENIUM_BUILD_TESTS)
                 get_target_property(CORELIB_TESTS_SRCS corelib_tests SOURCES)
         endif()
 
+        add_subdirectory(tests)
+
+        if(TARGET logenium_tests)
+                get_target_property(LOGENIUM_TESTS_SRCS logenium_tests SOURCES)
+        endif()
+
         add_executable(
                 all_logenium_tests
                 ${XHEADER_TESTS_SRCS}
                 ${DEBUG_TESTS_SRCS}
                 ${CORELIB_TESTS_SRCS}
+                ${LOGENIUM_TESTS_SRCS}
         )
 
         target_link_libraries(
@@ -118,6 +154,7 @@ if(LOGENIUM_BUILD_TESTS)
                 xheader
                 logenium::debug
                 corelib
+                logeniumlib
                 gtest
                 gmock
                 gtest_main
@@ -129,6 +166,12 @@ if(LOGENIUM_BUILD_TESTS)
                 PRIVATE
                 cxx_std_23
                 c_std_23
+        )
+
+        target_compile_definitions(
+                all_logenium_tests
+                PRIVATE
+                __LOGENIUM_SOURCE__
         )
 
         gtest_discover_tests(
