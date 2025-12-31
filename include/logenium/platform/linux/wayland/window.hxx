@@ -13,6 +13,7 @@
 #include <xheader/xdg-shell-client-protocol.h>
 
 #include "logenium/platform/linux/window.hxx"
+#include "logenium/window.hxx"
 
 namespace logenium {
 
@@ -20,6 +21,8 @@ class WaylandWindow : public LinuxWindow {
   public:
     WaylandWindow();
     ~WaylandWindow() override;
+
+    static bool classof(const Window *win);
 
   private:
     static void XdgSurfaceConfigure(void *data, struct xdg_surface *xdg_surface, uint32_t serial);

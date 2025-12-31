@@ -14,11 +14,13 @@
 
 #include <debug/assert.hxx>
 
+#include "logenium/application.hxx"
+#include "logenium/platform/linux/application.hxx"
 #include "logenium/platform/linux/wayland/window.hxx"
 
 namespace logenium {
 
-WaylandApplication::WaylandApplication() {
+WaylandApplication::WaylandApplication() : LinuxApplication(ApplicationKind::AK_LinuxWayland) {
     auto wl_display = wl_display_connect(nullptr);
     Assert(wl_display != nullptr, "failed to connect to Wayland display");
     display = wl_display;
@@ -54,6 +56,8 @@ xdg_wm_base *WaylandApplication::GetXdgWmBase() { return xdg_wm_base; }
 wl_shm *WaylandApplication::GetShm() { return shm; }
 
 zxdg_decoration_manager_v1 *WaylandApplication::GetDecorationManager() { return decoration_manager; }
+
+bool WaylandApplication::classof(const Application *app) { return app->GetKind() == ApplicationKind::AK_LinuxWayland; }
 
 void WaylandApplication::RegisterWindowClass() {}
 

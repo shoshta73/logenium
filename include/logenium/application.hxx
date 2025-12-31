@@ -5,6 +5,7 @@
 #define LOGENIUM_APPLICATION_HXX
 
 #include <cstddef>
+#include <cstdint>
 #include <memory>
 
 #include <xheader/windows.h>
@@ -15,10 +16,23 @@ namespace logenium {
 
 class Application {
   public:
+    enum class ApplicationKind : std::uint8_t {
+        AK_Windows,
+        AK_Linux,
+        AK_LinuxWayland,
+        AK_LinuxX11,
+    };
+
+    [[nodiscard]] ApplicationKind GetKind() const;
+
+  private:
+    const ApplicationKind kind;
+
+  public:
     struct NativeHandle {
-        constexpr NativeHandle() : handle(nullptr) {}
+        NativeHandle() : handle(nullptr) {}
         NativeHandle(void *handle) : handle(handle) {}
-        constexpr NativeHandle(std::nullptr_t) : handle(nullptr) {}
+        NativeHandle(std::nullptr_t) : handle(nullptr) {}
         NativeHandle(HMODULE handle) : handle(static_cast<void *>(handle)) {}
 
         operator void *() const { return handle; }
@@ -32,7 +46,6 @@ class Application {
         bool is_running{false};
     };
 
-    Application();
     virtual ~Application();
 
     virtual void Run() = 0;
@@ -43,6 +56,8 @@ class Application {
     static std::unique_ptr<Application> Create();
 
   protected:
+    Application(ApplicationKind kind);
+
     NativeHandle native_handle{nullptr};
     State state{};
     std::shared_ptr<Window> window;

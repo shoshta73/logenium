@@ -3,10 +3,17 @@
 
 #include "logenium/platform/linux/window.hxx"
 
+#include "logenium/window.hxx"
+
 namespace logenium {
 
-LinuxWindow::LinuxWindow() = default;
+LinuxWindow::LinuxWindow(WindowKind kind) : Window(kind) {}
 
 LinuxWindow::~LinuxWindow() = default;
+
+bool LinuxWindow::classof(const Window *win) {
+    auto kind = win->GetKind();
+    return kind >= WindowKind::WK_Linux && kind <= WindowKind::WK_LinuxX11;
+}
 
 }  // namespace logenium

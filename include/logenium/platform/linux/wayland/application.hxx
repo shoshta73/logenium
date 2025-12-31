@@ -12,6 +12,7 @@
 #include <xheader/xdg-decoration-unstable-v1-client-protocol.h>
 #include <xheader/xdg-shell-client-protocol.h>
 
+#include "logenium/application.hxx"
 #include "logenium/platform/linux/application.hxx"
 
 // Windows headers define 'interface' as a macro that expands to 'struct', which conflicts with
@@ -33,6 +34,8 @@ class WaylandApplication : public LinuxApplication {
     xdg_wm_base *GetXdgWmBase();
     wl_shm *GetShm();
     zxdg_decoration_manager_v1 *GetDecorationManager();
+
+    static bool classof(const Application *app);
 
   private:
     void RegisterWindowClass() final;

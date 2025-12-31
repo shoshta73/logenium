@@ -15,7 +15,11 @@ class LinuxApplication : public Application {
     LinuxApplication();
     ~LinuxApplication() override;
 
+    static bool classof(const Application *app);
     static std::unique_ptr<LinuxApplication> Create();
+
+  protected:
+    LinuxApplication(ApplicationKind kind);
 };
 
 }  // namespace logenium

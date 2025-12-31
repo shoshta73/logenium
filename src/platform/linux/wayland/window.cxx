@@ -3,36 +3,43 @@
 
 #include "logenium/platform/linux/wayland/window.hxx"
 
+#include <cstdint>
 #include <cstring>
 
 #include <xheader/fcntl.h>
 #include <xheader/sys/mman.h>
 #include <xheader/unistd.h>
 #include <xheader/wayland-client-protocol.h>
+#include <xheader/wayland-util.h>
 #include <xheader/xdg-decoration-unstable-v1-client-protocol.h>
 #include <xheader/xdg-shell-client-protocol.h>
 
 #include <debug/assert.hxx>
 
+#include <corelib/casting/cast.hxx>
+#include <corelib/casting/isa.hxx>
+
 #include "logenium/application.hxx"
 #include "logenium/platform/linux/wayland/application.hxx"
+#include "logenium/platform/linux/window.hxx"
+#include "logenium/window.hxx"
 
 namespace logenium {
 
-WaylandWindow::WaylandWindow() {
-    auto *app = dynamic_cast<WaylandApplication *>(&Application::GetInstance());
-    Assert(app != nullptr, "Application is not WaylandApplication");
+WaylandWindow::WaylandWindow() : LinuxWindow(WindowKind::WK_LinuxWayland) {
+    Assert(isa<WaylandApplication>(Application::GetInstance()), "Application is not WaylandApplication");
+    auto &app = cast<WaylandApplication>(Application::GetInstance());
 
-    surface = wl_compositor_create_surface(app->GetCompositor());
-    xdg_surface = xdg_wm_base_get_xdg_surface(app->GetXdgWmBase(), surface);
+    surface = wl_compositor_create_surface(app.GetCompositor());
+    xdg_surface = xdg_wm_base_get_xdg_surface(app.GetXdgWmBase(), surface);
     xdg_surface_add_listener(xdg_surface, &xdg_surface_listener, this);
 
     xdg_toplevel = xdg_surface_get_toplevel(xdg_surface);
     xdg_toplevel_add_listener(xdg_toplevel, &xdg_toplevel_listener, this);
     xdg_toplevel_set_title(xdg_toplevel, "Logenium");
 
-    if (app->GetDecorationManager() != nullptr) {
-        decoration = zxdg_decoration_manager_v1_get_toplevel_decoration(app->GetDecorationManager(), xdg_toplevel);
+    if (app.GetDecorationManager() != nullptr) {
+        decoration = zxdg_decoration_manager_v1_get_toplevel_decoration(app.GetDecorationManager(), xdg_toplevel);
         zxdg_toplevel_decoration_v1_set_mode(decoration, ZXDG_TOPLEVEL_DECORATION_V1_MODE_SERVER_SIDE);
     }
 
@@ -50,6 +57,8 @@ WaylandWindow::~WaylandWindow() {
     xdg_surface_destroy(xdg_surface);
     wl_surface_destroy(surface);
 }
+
+bool WaylandWindow::classof(const Window *win) { return win->GetKind() == WindowKind::WK_LinuxWayland; }
 
 void WaylandWindow::XdgSurfaceConfigure(void *data, struct xdg_surface *xdg_surface, uint32_t serial) {
     auto *self = static_cast<WaylandWindow *>(data);
@@ -76,8 +85,7 @@ void WaylandWindow::XdgToplevelClose(void *data, struct xdg_toplevel *xdg_toplev
 }
 
 void WaylandWindow::CreateBuffer() {
-    auto *app = dynamic_cast<WaylandApplication *>(&Application::GetInstance());
-    Assert(app != nullptr, "Application is not WaylandApplication");
+    auto &app = cast<WaylandApplication>(Application::GetInstance());
 
     int stride = width * 4;
     int size = stride * height;
@@ -93,7 +101,7 @@ void WaylandWindow::CreateBuffer() {
 
     std::memset(data, 0x80, size);
 
-    struct wl_shm_pool *pool = wl_shm_create_pool(app->GetShm(), fd, size);
+    struct wl_shm_pool *pool = wl_shm_create_pool(app.GetShm(), fd, size);
     buffer = wl_shm_pool_create_buffer(pool, 0, width, height, stride, WL_SHM_FORMAT_XRGB8888);
     wl_shm_pool_destroy(pool);
 

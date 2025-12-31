@@ -15,10 +15,23 @@ namespace logenium {
 
 class Window {
   public:
+    enum class WindowKind : std::uint8_t {
+        WK_Windows,
+        WK_Linux,
+        WK_LinuxWayland,
+        WK_LinuxX11,
+    };
+
+    [[nodiscard]] WindowKind GetKind() const;
+
+  private:
+    const WindowKind kind;
+
+  public:
     struct NativeHandle {
-        constexpr NativeHandle() : handle(nullptr) {}
+        NativeHandle() : handle(nullptr) {}
         NativeHandle(void *handle) : handle(handle) {}
-        constexpr NativeHandle(std::nullptr_t) : handle(nullptr) {}
+        NativeHandle(std::nullptr_t) : handle(nullptr) {}
         NativeHandle(HWND handle) : handle(static_cast<void *>(handle)) {}
         NativeHandle(xcb_window_t handle) : handle(std::bit_cast<void *>(static_cast<std::uintptr_t>(handle))) {}
 
@@ -30,12 +43,13 @@ class Window {
         void *handle;
     };
 
-    Window() = default;
     virtual ~Window() = default;
 
     NativeHandle &GetNativeHandle();
 
   protected:
+    Window(WindowKind kind);
+
     NativeHandle native_handle{nullptr};
 };
 

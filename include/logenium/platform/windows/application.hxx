@@ -15,6 +15,8 @@ class WindowsApplication : public Application {
 
     void Run() final;
 
+    static bool classof(const Application *app);
+
   private:
     void RegisterWindowClass() final;
     void UnregisterWindowClass() final;

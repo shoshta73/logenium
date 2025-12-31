@@ -8,16 +8,22 @@
 
 #include <debug/assert.hxx>
 
+#include <corelib/casting/cast.hxx>
+#include <corelib/casting/isa.hxx>
+
 #include "logenium/application.hxx"
 #include "logenium/platform/linux/X11/application.hxx"
+#include "logenium/platform/linux/window.hxx"
+#include "logenium/window.hxx"
 
 namespace logenium {
 
-X11Window::X11Window() {
-    auto *app = dynamic_cast<X11Application *>(&Application::GetInstance());
-    Assert(app != nullptr, "Application is not an X11Application");
-    auto connection = app->GetConnection();
-    auto screen = app->GetScreen();
+X11Window::X11Window() : LinuxWindow(WindowKind::WK_LinuxX11) {
+    Assert(isa<X11Application>(Application::GetInstance()), "Application is not X11Application");
+    auto &app = cast<X11Application>(Application::GetInstance());
+
+    auto connection = app.GetConnection();
+    auto screen = app.GetScreen();
     auto window = xcb_generate_id(connection);
     Assert(window != -1, "xcb_generate_id failed");
     native_handle = window;
@@ -30,11 +36,12 @@ X11Window::X11Window() {
 }
 
 X11Window::~X11Window() {
-    auto *app = dynamic_cast<X11Application *>(&Application::GetInstance());
-    Assert(app != nullptr, "Application is not an X11Application");
-    auto connection = app->GetConnection();
+    auto &app = cast<X11Application>(Application::GetInstance());
+    auto connection = app.GetConnection();
     xcb_destroy_window(connection, native_handle);
     xcb_flush(connection);
 }
+
+bool X11Window::classof(const Window *win) { return win->GetKind() == WindowKind::WK_LinuxX11; }
 
 }  // namespace logenium

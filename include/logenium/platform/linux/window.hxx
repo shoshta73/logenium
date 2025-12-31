@@ -10,8 +10,12 @@ namespace logenium {
 
 class LinuxWindow : public Window {
   public:
-    LinuxWindow();
     ~LinuxWindow() override;
+
+    static bool classof(const Window *win);
+
+  protected:
+    LinuxWindow(WindowKind kind);
 };
 
 }  // namespace logenium

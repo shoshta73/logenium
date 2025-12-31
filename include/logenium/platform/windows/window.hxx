@@ -19,6 +19,8 @@ class WindowsWindow : public Window {
     static const char *GetWindowClassName();
     static LRESULT CALLBACK WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
+    static bool classof(const Window *win);
+
   private:
     LRESULT HandleMessage(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 };

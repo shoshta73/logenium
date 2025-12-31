@@ -14,7 +14,9 @@ namespace logenium {
 
 class Application *Application::instance = nullptr;
 
-Application::Application() {
+Application::ApplicationKind Application::GetKind() const { return kind; };
+
+Application::Application(ApplicationKind kind) : kind(kind) {
     Assert(instance == nullptr, "Application is already initialized");
     instance = this;
 }

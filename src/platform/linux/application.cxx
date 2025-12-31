@@ -11,12 +11,13 @@
 
 #include <debug/assert.hxx>
 
+#include "logenium/application.hxx"
 #include "logenium/platform/linux/X11/application.hxx"
 #include "logenium/platform/linux/wayland/application.hxx"
 
 namespace logenium {
 
-LinuxApplication::LinuxApplication() {
+LinuxApplication::LinuxApplication(ApplicationKind kind) : Application(kind) {
     auto handle = dlopen(nullptr, RTLD_NOW);
     Assert(handle != nullptr, "Failed to self load");
     native_handle = handle;
@@ -25,6 +26,11 @@ LinuxApplication::LinuxApplication() {
 LinuxApplication::~LinuxApplication() {
     auto res = dlclose(native_handle);
     Assert(res == 0, "Failed to self close");
+}
+
+bool LinuxApplication::classof(const Application *app) {
+    auto kind = app->GetKind();
+    return kind >= ApplicationKind::AK_Linux && kind <= ApplicationKind::AK_LinuxX11;
 }
 
 std::unique_ptr<LinuxApplication> LinuxApplication::Create() {

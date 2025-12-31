@@ -9,11 +9,12 @@
 
 #include <debug/assert.hxx>
 
+#include "logenium/application.hxx"
 #include "logenium/platform/windows/window.hxx"
 
 namespace logenium {
 
-WindowsApplication::WindowsApplication() {
+WindowsApplication::WindowsApplication() : Application(ApplicationKind::AK_Windows) {
     auto handle = GetModuleHandle(nullptr);
     Assert(handle, "Failed to get module handle");
     native_handle = handle;
@@ -52,6 +53,8 @@ void WindowsApplication::Run() {
         }
     }
 }
+
+bool WindowsApplication::classof(const Application *app) { return app->GetKind() == ApplicationKind::AK_Windows; }
 
 void WindowsApplication::RegisterWindowClass() {
     auto window_class = WindowsWindow::GetWindowClass();

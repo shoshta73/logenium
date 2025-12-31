@@ -11,11 +11,13 @@
 
 #include <debug/assert.hxx>
 
+#include "logenium/application.hxx"
 #include "logenium/platform/linux/X11/window.hxx"
+#include "logenium/platform/linux/application.hxx"
 
 namespace logenium {
 
-X11Application::X11Application() {
+X11Application::X11Application() : LinuxApplication(ApplicationKind::AK_LinuxX11) {
     connection = xcb_connect(nullptr, nullptr);
     auto err = xcb_connection_has_error(connection);
     Assert(err == 0, "xcb_connect failed with error {}", err);
@@ -51,6 +53,8 @@ void X11Application::Run() {
 xcb_connection_t *X11Application::GetConnection() const { return connection; }
 
 xcb_screen_t *X11Application::GetScreen() const { return screen; }
+
+bool X11Application::classof(const Application *app) { return app->GetKind() == ApplicationKind::AK_LinuxX11; }
 
 void X11Application::RegisterWindowClass() {}
 

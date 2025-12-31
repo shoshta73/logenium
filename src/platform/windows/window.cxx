@@ -8,6 +8,7 @@
 #include <debug/assert.hxx>
 
 #include "logenium/application.hxx"
+#include "logenium/window.hxx"
 
 namespace {
 
@@ -18,7 +19,7 @@ constexpr auto kWindowName = "Logenium";
 
 namespace logenium {
 
-WindowsWindow::WindowsWindow() {
+WindowsWindow::WindowsWindow() : Window(WindowKind::WK_Windows) {
     auto handle = CreateWindowEx(WS_EX_OVERLAPPEDWINDOW, GetWindowClassName(), kWindowName, WS_OVERLAPPEDWINDOW, 0, 0,
                                  CW_USEDEFAULT, CW_USEDEFAULT, nullptr, nullptr,
                                  Application::GetInstance().GetNativeHandle(), this);
@@ -73,6 +74,8 @@ LRESULT CALLBACK WindowsWindow::WindowProc(HWND hWnd, UINT msg, WPARAM wParam, L
         return self->HandleMessage(hWnd, msg, wParam, lParam);
     }
 }
+
+bool WindowsWindow::classof(const Window *win) { return win->GetKind() == WindowKind::WK_Windows; }
 
 LRESULT WindowsWindow::HandleMessage(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     switch (msg) {

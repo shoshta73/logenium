@@ -7,6 +7,7 @@
 #include <xheader/xcb/xcb.h>
 #include <xheader/xcb/xproto.h>
 
+#include "logenium/application.hxx"
 #include "logenium/platform/linux/application.hxx"
 
 namespace logenium {
@@ -19,6 +20,8 @@ class X11Application : public LinuxApplication {
     void Run() final;
     [[nodiscard]] xcb_connection_t *GetConnection() const;
     [[nodiscard]] xcb_screen_t *GetScreen() const;
+
+    static bool classof(const Application *app);
 
   private:
     xcb_connection_t *connection;
