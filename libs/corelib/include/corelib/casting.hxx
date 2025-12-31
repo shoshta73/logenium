@@ -113,6 +113,67 @@
  * @endcode
  */
 
+/**
+ * @defgroup casting_detail Internal Implementation
+ * @ingroup casting
+ * @brief Internal implementation details of the casting module
+ *
+ * This group contains the internal implementation machinery that powers the
+ * public casting APIs. These components use advanced template metaprogramming
+ * techniques including SFINAE, CRTP, type traits, and recursive type
+ * simplification.
+ *
+ * **Note**: This group documents internal implementation details. Most users
+ * should use the public API (isa, cast, dyn_cast, etc.) instead of directly
+ * using these internal components.
+ *
+ * ## Architecture
+ *
+ * The implementation is organized into several layers:
+ *
+ * ### Type System (`detail/casting/traits.hxx`)
+ * - `SimplifyType<T>`: Recursive type unwrapping (removes const, references, pointers)
+ * - `IsNullable<T>`: Detects nullable types (pointers, unique_ptr, optional)
+ * - `ValueIsPresent<T>`: Presence checking for nullable types
+ * - `isPresent()`, `unwrapValue()`: Helper functions for value handling
+ * - `SelfType<T>`: CRTP helper for type customization
+ *
+ * ### Forwarding (`detail/casting/forwarding.hxx`)
+ * - `NullableValueCastFailed<To>`: Default failure handler
+ * - `DefaultDoCastIfPossible<To, From>`: CRTP base for conditional casting
+ * - `ForwardToPointerCast<To, From>`: Reference-to-pointer forwarding
+ * - `ConstStrippingForwardingCast<To, From>`: Const-aware forwarding
+ *
+ * ### Type Checking (`detail/casting/isa.hxx`)
+ * - `IsaImpl<To, From>`: Core ISA implementation using classof()
+ * - `IsaImplConst<To, From>`: Const and pointer handling
+ * - `IsaImplWrap<To, From>`: Type simplification wrapper
+ *
+ * ### Type-Specific Adapters (`detail/casting/adapters.hxx`)
+ * - `UniquePtrCast<To, From>`: unique_ptr casting with ownership transfer
+ * - `OptionalValueCast<To, From>`: Optional-returning casts
+ * - `ValueFromPointerCast<To, From>`: Pointer-to-value casting
+ *
+ * ### Cast Infrastructure (`detail/casting/cast.hxx`)
+ * - `CastRetty<To, From>`: Return type calculation
+ * - `CastIsPossible<To, From>`: Cast possibility checking
+ * - `CastConvertVal<To, From>`: Cast conversion
+ * - `CastInfo<To, From>`: Main cast orchestrator
+ *
+ * ### Predicate Functors (`detail/casting/predicates.hxx`)
+ * - `IsaCheckPredicate<T>`: ISA predicate implementation
+ * - `IsaAndPresentCheckPredicate<T>`: Null-safe ISA predicate
+ * - `StaticCastFunc<T>`, `CastFunc<T>`, `DynCastFunc<T>`: Cast functors
+ *
+ * ## Design Patterns
+ *
+ * - **CRTP (Curiously Recurring Template Pattern)**: Used for customization points
+ * - **SFINAE (Substitution Failure Is Not An Error)**: For conditional compilation
+ * - **Type Traits**: Compile-time type introspection
+ * - **Recursive Templates**: For type simplification
+ * - **Template Specialization**: For type-specific behavior
+ */
+
 #include <corelib/casting/cast.hxx>        // IWYU pragma: export
 #include <corelib/casting/dyn_cast.hxx>    // IWYU pragma: export
 #include <corelib/casting/isa.hxx>         // IWYU pragma: export
