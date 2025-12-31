@@ -180,6 +180,7 @@ def get_language_configs() -> list[LicenseLanguageConfig]:
         Directories.corelib_root / "CMakeLists.txt",
     ]
 
+    cmake_specific_files.extend(find_files_by_name(Directories.logenium_tests, "CMakeLists.txt"))
     cmake_specific_files.extend(find_files_by_name(Directories.xheader_tests, "CMakeLists.txt"))
     cmake_specific_files.extend(find_files_by_name(Directories.debug_tests, "CMakeLists.txt"))
     cmake_specific_files.extend(find_files_by_name(Directories.corelib_tests, "CMakeLists.txt"))
@@ -191,6 +192,7 @@ def get_language_configs() -> list[LicenseLanguageConfig]:
             search_dirs=[
                 Directories.logenium_source,
                 Directories.logenium_include,
+                Directories.logenium_tests,
                 Directories.xheader_source,
                 Directories.xheader_include,
                 Directories.xheader_tests,

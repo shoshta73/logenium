@@ -22,6 +22,7 @@ class Directories:
     logenium_source: Path = _ROOT_DIR / "src"
     logenium_include: Path = _ROOT_DIR / "include"
     logenium_cmake: Path = _ROOT_DIR / "cmake"
+    logenium_tests: Path = _ROOT_DIR / "tests"
 
     xheader_root: Path = _LIBS_DIR / "xheader"
     xheader_source: Path = _LIBS_DIR / "xheader" / "src"

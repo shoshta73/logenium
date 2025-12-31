@@ -37,6 +37,7 @@ def get_language_configs() -> list[FormatLanguageConfig]:
             search_dirs=[
                 Directories.logenium_source,
                 Directories.logenium_include,
+                Directories.logenium_tests,
                 Directories.xheader_source,
                 Directories.xheader_include,
                 Directories.xheader_tests,
