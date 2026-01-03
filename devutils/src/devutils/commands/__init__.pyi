@@ -6,9 +6,21 @@ from .check_license_headers import check_license_headers as check_license_header
 from .clean import clean as clean
 from .codegen import codegen as codegen
 from .configure import configure as configure
+from .docs import docs as docs
 from .format import format as format
 from .lint import lint as lint
 from .python import python as python
 from .setup import setup as setup
 
-__all__ = ["build", "check_license_headers", "clean", "codegen", "configure", "format", "lint", "python", "setup"]
+__all__ = [
+    "build",
+    "check_license_headers",
+    "clean",
+    "codegen",
+    "configure",
+    "docs",
+    "format",
+    "lint",
+    "python",
+    "setup",
+]

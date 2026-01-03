@@ -45,3 +45,9 @@ class Directories:
     corelib_include: Path = _LIBS_DIR / "corelib" / "include"
     corelib_cmake: Path = _LIBS_DIR / "corelib" / "cmake"
     corelib_tests: Path = _LIBS_DIR / "corelib" / "tests"
+    corelib_docs: Path = _LIBS_DIR / "corelib" / "docs"
+
+
+DOCS_DIRS: list[Path] = [
+    Directories.corelib_docs,
+]

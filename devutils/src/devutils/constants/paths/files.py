@@ -13,3 +13,9 @@ class Files:
     devutils_lint_cache_file: Path = _Directories.devutils_cache / "lint_cache.yaml"
     devutils_license_headers_cache_file: Path = _Directories.devutils_cache / "license_headers_cache.yaml"
     devutils_pyproject_toml: Path = _Directories.devutils_root / "pyproject.toml"
+    corelib_doxygen_config: Path = _Directories.corelib_root / "Doxyfile"
+
+
+DOXYGEN_CONFIGS: dict[str, Path] = {
+    "corelib": Files.corelib_doxygen_config,
+}

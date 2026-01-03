@@ -8,7 +8,7 @@ from collections.abc import Callable
 
 import typer
 
-from devutils.constants.paths import Directories
+from devutils.constants.paths import Directories, directories
 from devutils.utils.filesystem import find_directories_by_name
 
 clean: typer.Typer = typer.Typer()
@@ -52,6 +52,11 @@ def run() -> None:
     for ruff_cache in ruff_caches:
         typer.echo(f"Removing {ruff_cache}...")
         shutil.rmtree(ruff_cache, onexc=handle_remove_readonly)
+
+    for docs_dir in directories.DOCS_DIRS:
+        if docs_dir.exists():
+            typer.echo(f"Removing {docs_dir}...")
+            shutil.rmtree(docs_dir, onexc=handle_remove_readonly)
 
     typer.echo("Done!")
 

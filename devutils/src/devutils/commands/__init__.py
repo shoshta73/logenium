@@ -1,3 +1,4 @@
+
 # SPDX-FileCopyrightText: 2025 Logenium Authors and Contributors
 # SPDX-License-Identifier: BSD-3-Clause
 
@@ -6,6 +7,7 @@ from .check_license_headers import check_license_headers
 from .clean import clean
 from .codegen import codegen
 from .configure import configure
+from .docs import docs
 from .format import format
 from .lint import lint
 from .python import python
@@ -17,6 +19,7 @@ __all__ = [
     "clean",
     "codegen",
     "configure",
+    "docs",
     "format",
     "lint",
     "python",
