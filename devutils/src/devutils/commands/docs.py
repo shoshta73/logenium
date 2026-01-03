@@ -8,6 +8,7 @@ import sys
 import typer
 
 from devutils.constants.paths.files import DOXYGEN_CONFIGS
+from devutils.utils.filesystem import find_files_by_extensions
 
 docs: typer.Typer = typer.Typer()
 
@@ -20,7 +21,7 @@ def check_doxygen_is_available() -> bool:
 
 
 @docs.command()  # type: ignore[misc]
-def build() -> None:
+def build(ci: bool = typer.Option(False, "--ci", help="Ci mode, removes unnecessary files")) -> None:
     if not check_doxygen_is_available():
         sys.exit(1)
 
@@ -48,6 +49,13 @@ def build() -> None:
             if result.stderr:
                 typer.echo(result.stderr)
             sys.exit(1)
+
+        if ci:
+            docs_dir = config_path.parent / "docs"
+            temp_files = find_files_by_extensions(docs_dir, [".map", ".md5"])
+            for file in temp_files:
+                typer.echo(typer.style(f"Removing {file}...", fg="cyan", bold=True))
+                file.unlink()
 
     typer.echo(typer.style("\nDocumentation built successfully!", fg="green", bold=True))
 
