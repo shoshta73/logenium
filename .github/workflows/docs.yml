@@ -1,0 +1,110 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# SPDX-FileCopyrightText: 2026 Logenium contributors
+
+name: Docs
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "libs/corelib/include/**"
+      - "libs/corelib/src/**"
+      - "**/Doxyfile"
+      - ".github/workflows/docs.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Create venv
+        run: |
+          uv venv
+
+      - name: Install dependencies (pip)
+        run: |
+          uv pip install -r requirements.txt
+
+      - name: Install dependencies (doxygen)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y doxygen
+
+      - name: Install dependencies (graphviz)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y graphviz
+
+      - name: Build docs
+        run: uv run devutils docs build --ci
+
+      - name: Clone Storage Repo
+        env:
+          GH_TOKEN: ${{ secrets.DOCS_DEPLOY_TOKEN }}
+        run: |
+          git clone https://${{ secrets.DOCS_DEPLOY_TOKEN }}@github.com/${{ github.repository_owner }}/logenium-docs.git
+
+      - name: Deploy docs to storage
+        env:
+          GH_TOKEN: ${{ secrets.DOCS_DEPLOY_TOKEN }}
+        run: |
+          cd logenium-docs
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin https://${{ secrets.DOCS_DEPLOY_TOKEN }}@github.com/${{ github.repository_owner }}/logenium-docs.git
+
+          # Process each subproject with a Doxyfile
+          for doxyfile in ../libs/*/Doxyfile; do
+            if [ -f "$doxyfile" ]; then
+              subproject=$(basename $(dirname "$doxyfile"))
+              cmake_file=$(dirname "$doxyfile")/CMakeLists.txt
+
+              # Extract version from CMakeLists.txt
+              version=$(grep -E "^\s*VERSION\s+" "$cmake_file" | sed -E 's/.*VERSION\s+([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
+
+              if [ -z "$version" ]; then
+                echo "Warning: Could not extract version for $subproject"
+                continue
+              fi
+
+              echo "Processing $subproject version $version"
+
+              # Create versioned directory structure
+              mkdir -p "v$version/$subproject"
+
+              # Copy docs from subproject/docs to v<version>/subproject
+              if [ -d "../libs/$subproject/docs" ]; then
+                rm -rf "v$version/$subproject"
+                cp -r "../libs/$subproject/docs/"* "v$version/$subproject/"
+                git add "v$version/$subproject"
+              else
+                echo "Warning: docs directory not found for $subproject"
+              fi
+            fi
+          done
+
+          # Commit and push if there are changes
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Update docs"
+            git push
+          fi
