@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: 2025 Logenium Authors and Contributors
 // SPDX-License-Identifier: BSD-3-Clause
 
+#include "logenium/application.hxx"
+
 #include <cstdint>
 #include <memory>
 
@@ -8,7 +10,6 @@
 
 #include <corelib/casting.hxx>
 
-#include "logenium/application.hxx"
 #include "logenium/platform/linux/X11/application.hxx"
 #include "logenium/platform/linux/application.hxx"
 #include "logenium/platform/linux/wayland/application.hxx"

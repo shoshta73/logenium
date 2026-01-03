@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: 2025 Logenium Authors and Contributors
 // SPDX-License-Identifier: BSD-3-Clause
 
+#include "logenium/platform/linux/X11/window.hxx"
+
 #include <bit>
 #include <cstdint>
 #include <memory>
@@ -9,7 +11,6 @@
 
 #include <corelib/casting.hxx>
 
-#include "logenium/platform/linux/X11/window.hxx"
 #include "logenium/platform/linux/wayland/window.hxx"
 #include "logenium/platform/linux/window.hxx"
 #include "logenium/platform/windows/window.hxx"
