@@ -43,15 +43,16 @@ jobs:
         run: |
           uv pip install -r requirements.txt
 
-      - name: Install dependencies (doxygen)
+      - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y doxygen
+          sudo apt-get install -y doxygen graphviz libwayland-dev wayland-protocols
 
-      - name: Install dependencies (graphviz)
+      # We are configuring the project to get compile_commands.json file
+      - name: Configure project
         run: |
-          sudo apt-get update
-          sudo apt-get install -y graphviz
+          uv run devutils codegen wayland
+          cmake -S . -B build -G Ninja -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DLOGENIUM_BUILD_TESTS=ON -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++
 
       - name: Build docs
         run: uv run devutils docs build --ci
