@@ -313,13 +313,7 @@ def has_correct_license_header(
     cache_manager: LicenseHeaderCacheManager | None = None,
 ) -> HeaderCheckResult:
     try:
-        cached_year = cache_manager.get_cached_year(file_path) if cache_manager else None
-        if cached_year is not None:
-            year = cached_year
-        else:
-            year = get_file_copyright_year(file_path)
-            if cache_manager:
-                cache_manager.cache_year(file_path, year)
+        year = get_file_copyright_year(file_path)
 
         expected_header = header_generator(year)
 
@@ -381,7 +375,20 @@ def fix_header(
             if header_correct:
                 return False
 
-        content_after_header = lines[header_offset:]
+        has_existing_header = False
+        header_start_idx = header_offset
+
+        for i in range(header_offset, min(header_offset + 5, len(lines))):
+            if "SPDX-FileCopyrightText:" in lines[i]:
+                has_existing_header = True
+                header_start_idx = i
+                break
+
+        if has_existing_header:
+            skip_lines = header_start_idx - header_offset + len(expected_header)
+            content_after_header = lines[header_offset + skip_lines :]
+        else:
+            content_after_header = lines[header_offset:]
 
         with open(file_path, "w", encoding="utf-8") as f:
             if shebang_line:
