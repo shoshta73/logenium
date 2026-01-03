@@ -19,6 +19,7 @@ include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/dependencies.cmake")
 add_library(
         corelib
 
+        src/extensible-rtti/base.cxx
         src/utility/type_name.cxx
 )
 
