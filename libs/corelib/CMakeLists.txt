@@ -3,7 +3,7 @@
 
 project(
         corelib
-        VERSION 0.0.1
+        VERSION 0.1.0
         DESCRIPTION "Core library for Logenium"
         LANGUAGES CXX
 )
@@ -19,6 +19,7 @@ include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/dependencies.cmake")
 add_library(
         corelib
 
+        src/extensible-rtti/base.cxx
         src/utility/type_name.cxx
 )
 
