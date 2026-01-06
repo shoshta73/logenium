@@ -24,6 +24,15 @@ FetchContent_Declare(
         GIT_PROGRESS   ON
 )
 
+log_info("Declaring tracy (v0.13.0, shallow, progress)")
+FetchContent_Declare(
+        tracy
+        GIT_REPOSITORY https://github.com/wolfpld/tracy.git
+        GIT_TAG        v0.13.0
+        GIT_SHALLOW    ON
+        GIT_PROGRESS   ON
+)
+
 log_info("Fetching dependencies")
 log_info("Fetching googletest (v1.17.0, shallow, progress)")
 FetchContent_MakeAvailable(googletest)
@@ -32,5 +41,8 @@ if(LOGENIUM_DEBUG_USE_FMTLIB)
         log_info("Fetching fmtlib (v12.1.0, shallow, progress)")
         FetchContent_MakeAvailable(fmtlib)
 endif()
+
+log_info("Fetching tracy (v0.13.0, shallow, progress)")
+FetchContent_MakeAvailable(tracy)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)

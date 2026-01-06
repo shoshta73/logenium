@@ -56,6 +56,7 @@ target_link_libraries(
         PUBLIC
         xheader
         $<$<PLATFORM_ID:Linux>:stdc++exp>
+        TracyClient
 )
 
 if (LOGENIUM_DEBUG_USE_FAST_STACKTRACE)
