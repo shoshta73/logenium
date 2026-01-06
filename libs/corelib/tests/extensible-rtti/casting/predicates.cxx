@@ -69,8 +69,7 @@ TEST(CastingPredicatesTest, CastToBasicUsage) {
     TestNode *objects[] = {&node1, &node2};
 
     std::vector<TestNode *> nodes;
-    std::transform(std::begin(objects), std::end(objects), std::back_inserter(nodes),
-                   corelib::CastTo<TestNode>);
+    std::transform(std::begin(objects), std::end(objects), std::back_inserter(nodes), corelib::CastTo<TestNode>);
 
     EXPECT_EQ(nodes.size(), 2);
     EXPECT_EQ(nodes[0]->value, 42);

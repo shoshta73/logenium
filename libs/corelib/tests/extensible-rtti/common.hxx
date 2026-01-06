@@ -61,7 +61,10 @@ class TestList : public Extends<TestList, TestContainer> {
 class TestTree : public Extends<TestTree, TestContainer, TestNode> {
   public:
     int depth;
-    TestTree(int c, int v, int d) : depth(d) { capacity = c; value = v; }
+    TestTree(int c, int v, int d) : depth(d) {
+        capacity = c;
+        value = v;
+    }
 
   private:
     static char ID;
