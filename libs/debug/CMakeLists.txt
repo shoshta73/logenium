@@ -3,7 +3,7 @@
 
 project(
         debug
-        VERSION 0.1.0
+        VERSION 0.1.1
         LANGUAGES CXX
         DESCRIPTION "Debug library for logenium"
 )

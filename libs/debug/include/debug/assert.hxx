@@ -12,7 +12,8 @@
 #include <string>
 #include <utility>
 
-#include <debug/breakpoint_if_debugging.hxx>
+#include <debug/breakpoint.hxx>
+#include <debug/is_debugger_present.hxx>
 
 #if (__LOGENIUM_DEBUG_USE_FMTLIB__ && __LOGENIUM_DEBUG_USE_COLOR_LOGS__)
 
