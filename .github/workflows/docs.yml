@@ -56,7 +56,7 @@ jobs:
       - name: Configure project
         run: |
           uv run devutils codegen wayland
-          cmake -S . -B build -G Ninja -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DLOGENIUM_BUILD_TESTS=ON -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++
+          cmake -S . -B build -G Ninja -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DLOGENIUM_BUILD_TESTS=ON -DCMAKE_C_COMPILER=clang-21 -DCMAKE_CXX_COMPILER=clang++-21
 
       - name: Build docs
         run: uv run devutils docs build --ci
