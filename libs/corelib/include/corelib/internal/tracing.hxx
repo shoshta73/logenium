@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Logenium Authors and Contributors
+// SPDX-License-Identifier: BSD-3-Clause
+
 #ifndef LOGENIUM_CORELIB_INTERNAL_TRACING_HXX
 #define LOGENIUM_CORELIB_INTERNAL_TRACING_HXX
 

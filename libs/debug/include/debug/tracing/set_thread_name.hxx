@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Logenium Authors and Contributors
+// SPDX-License-Identifier: BSD-3-Clause
+
 /**
  * @file
  * @brief Thread naming utilities for profiling and debugging

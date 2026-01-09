@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Logenium Authors and Contributors
+// SPDX-License-Identifier: BSD-3-Clause
+
 #include <string_view>
 
 #include <common/TracySystem.hpp>
