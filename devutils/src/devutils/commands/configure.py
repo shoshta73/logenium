@@ -278,71 +278,11 @@ def run(
         corelib_enable_tracing = config_r2["corelib"]["enable_tracing"]
 
     else:
-        # debug library options
-        debug_use_fast_stacktrace = typer.confirm(
-            "Do you want to use fast stacktrace (not reversed printing in assert)?"
-        )
-        if debug_use_fast_stacktrace:
-            typer.echo("Fast stacktrace is enabled (not reversed printing in assert)")
-        else:
-            typer.echo("Fast stacktrace is disabled (reversed printing in assert)")
-
-        debug_use_fmtlib = typer.confirm("Do you want to use fmtlib for debug logging?")
-        debug_use_color_logs = False
-        if debug_use_fmtlib:
-            typer.echo("Fmtlib is enabled")
-            debug_use_color_logs = typer.confirm("Do you want to use color logs?")
-            if debug_use_color_logs:
-                typer.echo("Color logs are enabled")
-            else:
-                typer.echo("Color logs are disabled")
-        else:
-            typer.echo("Fmtlib is disabled")
-
-        # corelib library options
-        corelib_enable_tracing = typer.confirm("Do you want to enable tracing?")
-        if corelib_enable_tracing:
-            typer.echo("Tracing is enabled")
-        else:
-            typer.echo("Tracing is disabled")
-
-        enable_testing = typer.confirm("Do you want to enable testing?")
-        enable_logenium_testing = False
-        enable_xheader_testing = False
-        enable_debug_testing = False
-        enable_corelib_testing = False
-
-        if enable_testing:
-            typer.echo("Testing is enabled")
-
-            enable_logenium_testing = typer.confirm("Do you want to enable logenium testing?")
-            if enable_logenium_testing:
-                typer.echo("Logenium testing is enabled")
-            else:
-                typer.echo("Logenium testing is disabled")
-
-            enable_xheader_testing = typer.confirm("Do you want to enable xheader testing?")
-            if enable_xheader_testing:
-                typer.echo("Xheader testing is enabled")
-            else:
-                typer.echo("Xheader testing is disabled")
-
-            enable_debug_testing = typer.confirm("Do you want to enable debug testing?")
-            if enable_debug_testing:
-                typer.echo("Debug testing is enabled")
-            else:
-                typer.echo("Debug testing is disabled")
-
-            enable_corelib_testing = typer.confirm("Do you want to enable corelib testing?")
-            if enable_corelib_testing:
-                typer.echo("Corelib testing is enabled")
-            else:
-                typer.echo("Corelib testing is disabled")
-
-        else:
-            typer.echo("Testing is disabled")
-
-        mode_input: str = cast(str, typer.prompt("In What mode do you want to build?"))
+        # === Build Mode ===
+        typer.echo("")
+        typer.echo(typer.style("=== Build Mode ===", fg="cyan", bold=True))
+        typer.echo("Available modes: Debug, Release, RelWithDebInfo, MinSizeRel")
+        mode_input: str = cast(str, typer.prompt("Select build mode"))
         mode_map = {
             "debug": "Debug",
             "release": "Release",
@@ -355,6 +295,73 @@ def run(
             mode = "Release"
         else:
             mode = mode_map[mode_input.lower()]
+        typer.echo(f"  -> Build mode: {mode}")
+
+        # === Debug Library Configuration ===
+        typer.echo("")
+        typer.echo(typer.style("=== Debug Library Configuration ===", fg="cyan", bold=True))
+        typer.echo("The debug library provides Assert, Breakpoint, and profiling utilities.")
+        typer.echo("")
+
+        debug_use_fast_stacktrace = typer.confirm(
+            "[debug] Use fast stacktrace? (prints stack in execution order instead of reversed)"
+        )
+        typer.echo(f"  -> Fast stacktrace: {'enabled' if debug_use_fast_stacktrace else 'disabled'}")
+
+        debug_use_fmtlib = typer.confirm(
+            "[debug] Use fmtlib for formatting? (enables fmt::format/fmt::println instead of std::format)"
+        )
+        debug_use_color_logs = False
+        if debug_use_fmtlib:
+            typer.echo(f"  -> fmtlib: enabled")
+            debug_use_color_logs = typer.confirm(
+                "[debug] Enable colored log output? (requires fmtlib, adds colored 'Assertion failed' messages)"
+            )
+            typer.echo(f"  -> Color logs: {'enabled' if debug_use_color_logs else 'disabled'}")
+        else:
+            typer.echo(f"  -> fmtlib: disabled (color logs also disabled)")
+
+        # === Corelib Configuration ===
+        typer.echo("")
+        typer.echo(typer.style("=== Corelib Configuration ===", fg="cyan", bold=True))
+        typer.echo("The corelib library provides casting utilities, RTTI, and type traits.")
+        typer.echo("")
+
+        corelib_enable_tracing = typer.confirm(
+            "[corelib] Enable Tracy profiling instrumentation? (adds CRLB_ZONE_SCOPED to corelib functions)"
+        )
+        typer.echo(f"  -> Tracing: {'enabled' if corelib_enable_tracing else 'disabled'}")
+
+        # === Testing Configuration ===
+        typer.echo("")
+        typer.echo(typer.style("=== Testing Configuration ===", fg="cyan", bold=True))
+        typer.echo("Configure which test suites to build (uses GoogleTest).")
+        typer.echo("")
+
+        enable_testing = typer.confirm("[testing] Enable test builds?")
+        enable_logenium_testing = False
+        enable_xheader_testing = False
+        enable_debug_testing = False
+        enable_corelib_testing = False
+
+        if enable_testing:
+            typer.echo(f"  -> Testing: enabled")
+            typer.echo("")
+
+            enable_logenium_testing = typer.confirm("[testing] Build logenium tests? (Application/Window tests)")
+            typer.echo(f"  -> Logenium tests: {'enabled' if enable_logenium_testing else 'disabled'}")
+
+            enable_xheader_testing = typer.confirm("[testing] Build xheader tests? (Platform abstraction tests)")
+            typer.echo(f"  -> Xheader tests: {'enabled' if enable_xheader_testing else 'disabled'}")
+
+            enable_debug_testing = typer.confirm("[testing] Build debug library tests? (Assert/Breakpoint tests)")
+            typer.echo(f"  -> Debug tests: {'enabled' if enable_debug_testing else 'disabled'}")
+
+            enable_corelib_testing = typer.confirm("[testing] Build corelib tests? (Casting/RTTI/utility tests)")
+            typer.echo(f"  -> Corelib tests: {'enabled' if enable_corelib_testing else 'disabled'}")
+
+        else:
+            typer.echo(f"  -> Testing: disabled (all test suites skipped)")
 
         new_config: ConfigurationR2 = {
             "revision": 2,
