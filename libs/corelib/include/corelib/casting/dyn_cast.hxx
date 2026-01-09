@@ -11,6 +11,7 @@
 #include <corelib/casting/cast.hxx>
 #include <corelib/detail/casting/cast.hxx>
 #include <corelib/detail/casting/traits.hxx>
+#include <corelib/internal/tracing.hxx>
 #include <corelib/utility/type_name.hxx>
 
 namespace corelib {
@@ -71,6 +72,7 @@ namespace corelib {
  */
 template <typename To, typename From>
 inline decltype(auto) dyn_cast(const From &Val) {
+    CRLB_ZONE_SCOPED;
     debug::Assert(detail::isPresent(Val), "dyn_cast<{}>(const {} &) called on a non-existent value", type_name<To>(),
                   type_name<From>());
     return detail::CastInfo<To, const From>::DoCastIfPossible(Val);
@@ -79,6 +81,7 @@ inline decltype(auto) dyn_cast(const From &Val) {
 /// @copydoc dyn_cast(const From &)
 template <typename To, typename From>
 inline decltype(auto) dyn_cast(From &Val) {
+    CRLB_ZONE_SCOPED;
     debug::Assert(detail::isPresent(Val), "dyn_cast<{}>({} &) called on a non-existent value", type_name<To>(),
                   type_name<From>());
     return detail::CastInfo<To, From>::DoCastIfPossible(Val);
@@ -87,6 +90,7 @@ inline decltype(auto) dyn_cast(From &Val) {
 /// @copydoc dyn_cast(const From &)
 template <typename To, typename From>
 inline decltype(auto) dyn_cast(From *Val) {
+    CRLB_ZONE_SCOPED;
     debug::Assert(detail::isPresent(Val), "dyn_cast<{}>({}*) called on a non-existent value", type_name<To>(),
                   type_name<From>());
     return detail::CastInfo<To, From *>::DoCastIfPossible(Val);
@@ -95,6 +99,7 @@ inline decltype(auto) dyn_cast(From *Val) {
 /// @copydoc dyn_cast(const From &)
 template <typename To, typename From>
 inline decltype(auto) dyn_cast(std::unique_ptr<From> &Val) {
+    CRLB_ZONE_SCOPED;
     debug::Assert(detail::isPresent(Val), "dyn_cast<{}>(std::unique_ptr<{}> &&) called on a non-existent value",
                   type_name<To>(), type_name<From>());
     return detail::CastInfo<To, std::unique_ptr<From>>::DoCastIfPossible(Val);
@@ -141,6 +146,7 @@ inline decltype(auto) dyn_cast(std::unique_ptr<From> &Val) {
  */
 template <class X, class Y>
 auto dyn_cast_if_present(const Y &Val) {
+    CRLB_ZONE_SCOPED;
     if (!detail::isPresent(Val)) return detail::CastInfo<X, const Y>::CastFailed();
     return detail::CastInfo<X, const Y>::DoCastIfPossible(detail::unwrapValue(Val));
 }
@@ -148,6 +154,7 @@ auto dyn_cast_if_present(const Y &Val) {
 /// @copydoc dyn_cast_if_present(const Y &)
 template <class X, class Y>
 auto dyn_cast_if_present(Y &Val) {
+    CRLB_ZONE_SCOPED;
     if (!detail::isPresent(Val)) return detail::CastInfo<X, Y>::CastFailed();
     return detail::CastInfo<X, Y>::DoCastIfPossible(detail::unwrapValue(Val));
 }
@@ -155,6 +162,7 @@ auto dyn_cast_if_present(Y &Val) {
 /// @copydoc dyn_cast_if_present(const Y &)
 template <class X, class Y>
 auto dyn_cast_if_present(Y *Val) {
+    CRLB_ZONE_SCOPED;
     if (!detail::isPresent(Val)) return detail::CastInfo<X, Y *>::CastFailed();
     return detail::CastInfo<X, Y *>::DoCastIfPossible(detail::unwrapValue(Val));
 }
@@ -243,6 +251,7 @@ auto dyn_cast_or_null(Y *Val) {
  */
 template <class X, class Y>
 inline typename detail::CastInfo<X, std::unique_ptr<Y>>::CastResultType unique_dyn_cast(std::unique_ptr<Y> &Val) {
+    CRLB_ZONE_SCOPED;
     if (!isa<X>(Val)) return nullptr;
     return cast<X>(std::move(Val));
 }
@@ -289,6 +298,7 @@ inline auto unique_dyn_cast(std::unique_ptr<Y> &&Val) {
 template <class X, class Y>
 inline typename detail::CastInfo<X, std::unique_ptr<Y>>::CastResultType unique_dyn_cast_or_null(
     std::unique_ptr<Y> &Val) {
+    CRLB_ZONE_SCOPED;
     if (!Val) return nullptr;
     return unique_dyn_cast<X, Y>(Val);
 }

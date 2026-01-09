@@ -20,6 +20,10 @@ class LibraryConfig(TypedDict):
     enable_testing: bool
 
 
+class CorelibLibraryConfig(LibraryConfig):
+    enable_tracing: bool
+
+
 class DebugLibraryConfig(LibraryConfig):
     use_fast_stacktrace: bool
     use_fmtlib: bool
@@ -42,7 +46,7 @@ class ConfigurationR2(TypedDict):
     logenium: LibraryConfig
     xheader: LibraryConfig
     debug: DebugLibraryConfig
-    corelib: LibraryConfig
+    corelib: CorelibLibraryConfig
 
 
 def load_schema_r1() -> object:
@@ -162,7 +166,7 @@ def migrate_r1_to_r2(config_r1: ConfigurationR1) -> ConfigurationR2:
             "enable_color_logs": False,
             "enable_testing": config_r1["enable_debug_testing"],
         },
-        "corelib": {"enable_testing": config_r1["enable_corelib_testing"]},
+        "corelib": {"enable_testing": config_r1["enable_corelib_testing"], "enable_tracing": False},
     }
     return config_r2
 
@@ -263,11 +267,18 @@ def run(
         enable_debug_testing = config_r2["debug"]["enable_testing"]
         enable_corelib_testing = config_r2["corelib"]["enable_testing"]
         mode = config_r2["build_mode"]
+
+        # debug library options
         debug_use_fast_stacktrace = config_r2["debug"]["use_fast_stacktrace"]
         debug_use_fmtlib = config_r2["debug"]["use_fmtlib"]
         debug_use_color_logs = config_r2["debug"]["enable_color_logs"]
 
+        # corelib libr options
+
+        corelib_enable_tracing = config_r2["corelib"]["enable_tracing"]
+
     else:
+        # debug library options
         debug_use_fast_stacktrace = typer.confirm(
             "Do you want to use fast stacktrace (not reversed printing in assert)?"
         )
@@ -287,6 +298,13 @@ def run(
                 typer.echo("Color logs are disabled")
         else:
             typer.echo("Fmtlib is disabled")
+
+        # corelib library options
+        corelib_enable_tracing = typer.confirm("Do you want to enable tracing?")
+        if corelib_enable_tracing:
+            typer.echo("Tracing is enabled")
+        else:
+            typer.echo("Tracing is disabled")
 
         enable_testing = typer.confirm("Do you want to enable testing?")
         enable_logenium_testing = False
@@ -350,7 +368,7 @@ def run(
                 "enable_color_logs": debug_use_color_logs,
                 "enable_testing": enable_debug_testing,
             },
-            "corelib": {"enable_testing": enable_corelib_testing},
+            "corelib": {"enable_testing": enable_corelib_testing, "enable_tracing": corelib_enable_tracing},
         }
         save_configuration_r2(new_config)
         typer.echo(f"Configuration saved to {ConfigFiles.config.relative_to(Directories.root)}")
@@ -368,6 +386,9 @@ def run(
     # debug library options
     command_line.extend(["-DLOGENIUM_DEBUG_USE_FMTLIB=" + ("ON" if debug_use_fmtlib else "OFF")])
     command_line.extend(["-DLOGENIUM_DEBUG_USE_COLOR_LOGS=" + ("ON" if debug_use_color_logs else "OFF")])
+
+    # corelib library options
+    command_line.extend(["-DLOGENIUM_CORELIB_ENABLE_TRACING=" + ("ON" if corelib_enable_tracing else "OFF")])
 
     # test options
     command_line.extend([f"-DLOGENIUM_BUILD_TESTS={'ON' if enable_testing else 'OFF'}"])

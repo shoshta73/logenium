@@ -3,7 +3,7 @@
 
 project(
         corelib
-        VERSION 0.1.0
+        VERSION 0.2.0
         DESCRIPTION "Core library for Logenium"
         LANGUAGES CXX
 )
@@ -15,6 +15,9 @@ log_info("Building in ${CMAKE_BUILD_TYPE} mode")
 
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/options.cmake")
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/dependencies.cmake")
+
+log_info("Provided options:")
+log_info("  LOGENIUM_CORELIB_ENABLE_TRACING: ${LOGENIUM_CORELIB_ENABLE_TRACING}")
 
 add_library(
         corelib
@@ -44,6 +47,24 @@ target_link_libraries(
         PUBLIC
         logenium::debug
 )
+
+if (LOGENIUM_CORELIB_ENABLE_TRACING)
+        log_info("Enabling tracing")
+        log_info("Defining __LOGENIUM_CORELIB_ENABLE_TRACING__ to 1")
+        target_compile_definitions(
+                corelib
+                PUBLIC
+                __LOGENIUM_CORELIB_ENABLE_TRACING__=1
+        )
+else()
+        log_info("Not enabling tracing")
+        log_info("Defining __LOGENIUM_CORELIB_ENABLE_TRACING__ to 0")
+        target_compile_definitions(
+                corelib
+                PUBLIC
+                __LOGENIUM_CORELIB_ENABLE_TRACING__=0
+        )
+endif()
 
 if(LOGENIUM_BUILD_TESTS AND LOGENIUM_CORELIB_BUILD_TESTS)
         log_info("Building corelib tests")

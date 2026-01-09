@@ -6,6 +6,7 @@
 
 #include <corelib/detail/casting/cast.hxx>
 #include <corelib/detail/casting/traits.hxx>
+#include <corelib/internal/tracing.hxx>
 
 namespace corelib {
 
@@ -61,6 +62,7 @@ namespace corelib {
  */
 template <typename... To, typename From>
 inline bool isa(const From &Val) {
+    CRLB_ZONE_SCOPED;
     return (detail::CastInfo<To, const From>::IsPossible(Val) || ...);
 }
 
@@ -111,6 +113,7 @@ inline bool isa(const From &Val) {
  */
 template <typename... X, class Y>
 inline bool isa_and_present(const Y &Val) {
+    CRLB_ZONE_SCOPED;
     if (!detail::isPresent(Val)) return false;
     return isa<X...>(Val);
 }

@@ -12,6 +12,7 @@
 #include <corelib/detail/casting/adapters.hxx>
 #include <corelib/detail/casting/cast.hxx>
 #include <corelib/detail/casting/traits.hxx>
+#include <corelib/internal/tracing.hxx>
 #include <corelib/utility/type_name.hxx>
 
 namespace corelib {
@@ -72,6 +73,7 @@ namespace corelib {
  */
 template <typename To, typename From>
 inline decltype(auto) cast(const From &Val) {
+    CRLB_ZONE_SCOPED;
     debug::Assert(isa<To>(Val), "cast<{}>(const {} &) arguments of incompatible type!", type_name<To>(),
                   type_name<From>());
     return detail::CastInfo<To, const From>::DoCast(Val);
@@ -80,6 +82,7 @@ inline decltype(auto) cast(const From &Val) {
 /// @copydoc cast(const From &)
 template <typename To, typename From>
 inline decltype(auto) cast(From &Val) {
+    CRLB_ZONE_SCOPED;
     debug::Assert(isa<To>(Val), "cast<{}>({} &) arguments of incompatible type!", type_name<To>(), type_name<From>());
     return detail::CastInfo<To, From>::DoCast(Val);
 }
@@ -87,6 +90,7 @@ inline decltype(auto) cast(From &Val) {
 /// @copydoc cast(const From &)
 template <typename To, typename From>
 inline decltype(auto) cast(From *Val) {
+    CRLB_ZONE_SCOPED;
     debug::Assert(isa<To>(Val), "cast<{}>({}*) arguments of incompatible type!", type_name<To>(), type_name<From>());
     return detail::CastInfo<To, From *>::DoCast(Val);
 }
@@ -94,6 +98,7 @@ inline decltype(auto) cast(From *Val) {
 /// @copydoc cast(const From &)
 template <typename To, typename From>
 inline decltype(auto) cast(std::unique_ptr<From> &&Val) {
+    CRLB_ZONE_SCOPED;
     debug::Assert(isa<To>(Val), "cast<{}>(std::unique_ptr<{}> &&) arguments of incompatible type!", type_name<To>(),
                   type_name<From>());
     return detail::CastInfo<To, std::unique_ptr<From>>::DoCast(std::move(Val));
@@ -149,6 +154,7 @@ inline decltype(auto) cast(std::unique_ptr<From> &&Val) {
  */
 template <class X, class Y>
 inline auto cast_if_present(const Y &Val) {
+    CRLB_ZONE_SCOPED;
     if (!detail::isPresent(Val)) return detail::CastInfo<X, const Y>::CastFailed();
     debug::Assert(isa<X>(Val), "cast_if_present<{}>(const {} &) arguments of incompatible type!", type_name<X>(),
                   type_name<Y>());
@@ -158,6 +164,7 @@ inline auto cast_if_present(const Y &Val) {
 /// @copydoc cast_if_present(const Y &)
 template <class X, class Y>
 inline auto cast_if_present(Y &Val) {
+    CRLB_ZONE_SCOPED;
     if (!detail::isPresent(Val)) return detail::CastInfo<X, Y>::CastFailed();
     debug::Assert(isa<X>(Val), "cast_if_present<{}>({} &) arguments of incompatible type!", type_name<X>(),
                   type_name<Y>());
@@ -167,6 +174,7 @@ inline auto cast_if_present(Y &Val) {
 /// @copydoc cast_if_present(const Y &)
 template <class X, class Y>
 inline auto cast_if_present(Y *Val) {
+    CRLB_ZONE_SCOPED;
     if (!detail::isPresent(Val)) return detail::CastInfo<X, Y *>::CastFailed();
     debug::Assert(isa<X>(Val), "cast_if_present<{}>({}*) arguments of incompatible type!", type_name<X>(),
                   type_name<Y>());
@@ -176,6 +184,7 @@ inline auto cast_if_present(Y *Val) {
 /// @copydoc cast_if_present(const Y &)
 template <class X, class Y>
 inline auto cast_if_present(std::unique_ptr<Y> &&Val) {
+    CRLB_ZONE_SCOPED;
     if (!detail::isPresent(Val)) return detail::UniquePtrCast<X, Y>::CastFailed();
     return detail::UniquePtrCast<X, Y>::DoCast(std::move(Val));
 }

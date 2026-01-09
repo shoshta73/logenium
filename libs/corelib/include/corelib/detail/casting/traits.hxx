@@ -8,6 +8,7 @@
 #include <optional>
 #include <type_traits>
 
+#include <corelib/internal/tracing.hxx>
 #include <corelib/type_traits/add_const_past_pointer.hxx>
 #include <corelib/type_traits/add_lvalue_reference_if_not_pointer.hxx>
 
@@ -119,6 +120,7 @@ struct SimplifyType<const From> {
     using RetType = add_lvalue_reference_if_not_pointer_t<SimpleType>;
 
     static RetType GetSimplifiedValue(const From &Val) {
+        CRLB_ZONE_SCOPED;
         return SimplifyType<From>::GetSimplifiedValue(const_cast<From &>(Val));
     }
 };
@@ -257,8 +259,14 @@ constexpr bool IsNullable = std::is_pointer_v<T> || std::is_constructible_v<T, s
 template <typename T, typename Enable = void>
 struct ValueIsPresent {
     using UnwrappedType = T;
-    static inline bool IsPresent(const T &t) { return true; }
-    static inline decltype(auto) UnwrapValue(T &t) { return t; }
+    static inline bool IsPresent(const T &t) {
+        CRLB_ZONE_SCOPED;
+        return true;
+    }
+    static inline decltype(auto) UnwrapValue(T &t) {
+        CRLB_ZONE_SCOPED;
+        return t;
+    }
 };
 
 /**
@@ -298,8 +306,14 @@ struct ValueIsPresent {
 template <typename T>
 struct ValueIsPresent<std::optional<T>> {
     using UnwrappedType = T;
-    static inline bool IsPresent(const std::optional<T> &t) { return t.has_value(); }
-    static inline decltype(auto) UnwrapValue(std::optional<T> &t) { return *t; }
+    static inline bool IsPresent(const std::optional<T> &t) {
+        CRLB_ZONE_SCOPED;
+        return t.has_value();
+    }
+    static inline decltype(auto) UnwrapValue(std::optional<T> &t) {
+        CRLB_ZONE_SCOPED;
+        return *t;
+    }
 };
 
 /**
@@ -348,8 +362,14 @@ struct ValueIsPresent<std::optional<T>> {
 template <typename T>
 struct ValueIsPresent<T, std::enable_if_t<detail::IsNullable<T>>> {
     using UnwrappedType = T;
-    static inline bool IsPresent(const T &t) { return t != T(nullptr); }
-    static inline decltype(auto) UnwrapValue(T &t) { return t; }
+    static inline bool IsPresent(const T &t) {
+        CRLB_ZONE_SCOPED;
+        return t != T(nullptr);
+    }
+    static inline decltype(auto) UnwrapValue(T &t) {
+        CRLB_ZONE_SCOPED;
+        return t;
+    }
 };
 
 /**
@@ -395,6 +415,7 @@ struct ValueIsPresent<T, std::enable_if_t<detail::IsNullable<T>>> {
  */
 template <typename T>
 inline bool isPresent(const T &t) {
+    CRLB_ZONE_SCOPED;
     return ValueIsPresent<typename SimplifyType<T>::SimpleType>::IsPresent(
         SimplifyType<T>::GetSimplifiedValue(const_cast<T &>(t)));
 }
@@ -435,6 +456,7 @@ inline bool isPresent(const T &t) {
  */
 template <typename T>
 inline decltype(auto) unwrapValue(T &t) {
+    CRLB_ZONE_SCOPED;
     return ValueIsPresent<T>::UnwrapValue(t);
 }
 

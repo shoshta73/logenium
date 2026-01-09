@@ -10,6 +10,7 @@
 #include <debug/assert.hxx>
 
 #include <corelib/detail/casting/traits.hxx>
+#include <corelib/internal/tracing.hxx>
 #include <corelib/utility/type_name.hxx>
 
 namespace corelib::detail {
@@ -65,7 +66,10 @@ namespace corelib::detail {
  */
 template <typename To, typename From, typename Enabler = void>
 struct IsaImpl {
-    static inline bool Check(const From &Val) { return To::classof(&Val); }
+    static inline bool Check(const From &Val) {
+        CRLB_ZONE_SCOPED;
+        return To::classof(&Val);
+    }
 };
 
 /**
@@ -97,7 +101,10 @@ struct IsaImpl {
  */
 template <typename To, typename From>
 struct IsaImpl<To, From, std::enable_if_t<std::is_base_of_v<To, From>>> {
-    static inline bool Check(const From &) { return true; }
+    static inline bool Check(const From &) {
+        CRLB_ZONE_SCOPED;
+        return true;
+    }
 };
 
 // =============================================================================
@@ -149,7 +156,10 @@ struct IsaImpl<To, From, std::enable_if_t<std::is_base_of_v<To, From>>> {
  */
 template <typename To, typename From>
 struct IsaImplConst {
-    static inline bool Check(const From &Val) { return IsaImpl<To, From>::Check(Val); }
+    static inline bool Check(const From &Val) {
+        CRLB_ZONE_SCOPED;
+        return IsaImpl<To, From>::Check(Val);
+    }
 };
 
 /**
@@ -164,7 +174,10 @@ struct IsaImplConst {
  */
 template <typename To, typename From>
 struct IsaImplConst<To, const From> {
-    static inline bool Check(const From &Val) { return IsaImpl<To, From>::Check(Val); }
+    static inline bool Check(const From &Val) {
+        CRLB_ZONE_SCOPED;
+        return IsaImpl<To, From>::Check(Val);
+    }
 };
 
 /**
@@ -182,6 +195,7 @@ struct IsaImplConst<To, const From> {
 template <typename To, typename From>
 struct IsaImplConst<To, const std::unique_ptr<From>> {
     static inline bool Check(const std::unique_ptr<From> &Val) {
+        CRLB_ZONE_SCOPED;
         debug::Assert(Val.get(), "isa<{}>(const std::unique_ptr<{}> &) called on a null pointer", type_name<To>(),
                       type_name<From>());
         return IsaImplConst<To, From>::Check(*Val);
@@ -203,6 +217,7 @@ struct IsaImplConst<To, const std::unique_ptr<From>> {
 template <typename To, typename From>
 struct IsaImplConst<To, From *> {
     static inline bool Check(const From *Val) {
+        CRLB_ZONE_SCOPED;
         debug::Assert(Val, "isa<{}>({}*) called on a null pointer", type_name<To>(), type_name<From>());
         return IsaImpl<To, From>::Check(*Val);
     }
@@ -222,6 +237,7 @@ struct IsaImplConst<To, From *> {
 template <typename To, typename From>
 struct IsaImplConst<To, From *const> {
     static inline bool Check(const From *Val) {
+        CRLB_ZONE_SCOPED;
         debug::Assert(Val, "isa<{}>(const {}*) called on a null pointer", type_name<To>(), type_name<From>());
         return IsaImpl<To, From>::Check(*Val);
     }
@@ -241,6 +257,7 @@ struct IsaImplConst<To, From *const> {
 template <typename To, typename From>
 struct IsaImplConst<To, const From *> {
     static inline bool Check(const From *Val) {
+        CRLB_ZONE_SCOPED;
         debug::Assert(Val, "isa<{}>(const {} *) called on a null pointer", type_name<To>(), type_name<From>());
         return IsaImpl<To, From>::Check(*Val);
     }
@@ -260,6 +277,7 @@ struct IsaImplConst<To, const From *> {
 template <typename To, typename From>
 struct IsaImplConst<To, const From *const> {
     static inline bool Check(const From *Val) {
+        CRLB_ZONE_SCOPED;
         debug::Assert(Val, "isa<{}>(const {} *) called on a null pointer", type_name<To>(), type_name<From>());
         return IsaImpl<To, From>::Check(*Val);
     }
@@ -307,6 +325,7 @@ struct IsaImplConst<To, const From *const> {
 template <typename To, typename From, typename SimpleFrom>
 struct IsaImplWrap {
     static bool Check(const From &Val) {
+        CRLB_ZONE_SCOPED;
         return IsaImplWrap<To, SimpleFrom, typename SimplifyType<SimpleFrom>::SimpleType>::Check(
             SimplifyType<const From>::GetSimplifiedValue(Val));
     }
@@ -343,7 +362,10 @@ struct IsaImplWrap {
  */
 template <typename To, typename FromTy>
 struct IsaImplWrap<To, FromTy, FromTy> {
-    static bool Check(const FromTy &Val) { return IsaImplConst<To, FromTy>::Check(Val); }
+    static bool Check(const FromTy &Val) {
+        CRLB_ZONE_SCOPED;
+        return IsaImplConst<To, FromTy>::Check(Val);
+    }
 };
 
 }  // namespace corelib::detail

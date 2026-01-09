@@ -6,6 +6,8 @@
 
 #include <utility>
 
+#include <corelib/internal/tracing.hxx>
+
 namespace corelib {
 
 /**
@@ -59,7 +61,10 @@ struct Defer {
     /**
      * @brief Destructor that executes the stored functor.
      */
-    ~Defer() { functor(); }
+    ~Defer() {
+        CRLB_ZONE_SCOPED;
+        functor();
+    }
 
   private:
     /**

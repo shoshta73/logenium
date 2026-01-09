@@ -4,6 +4,8 @@
 #ifndef LOGEIUM_CORELIB_EXTENSIBLE_RTTI_BASE_HXX
 #define LOGEIUM_CORELIB_EXTENSIBLE_RTTI_BASE_HXX
 
+#include <corelib/internal/tracing.hxx>
+
 namespace corelib::rtti {
 
 /**
@@ -59,7 +61,10 @@ class Base {
      *
      * @return Pointer to the static ID variable for Base
      */
-    static const void *TypeID() { return &ID; }
+    static const void *TypeID() {
+        CRLB_ZONE_SCOPED;
+        return &ID;
+    }
 
     /**
      * @brief Returns the dynamic type identifier for the actual object type.
@@ -94,7 +99,10 @@ class Base {
      * }
      * @endcode
      */
-    virtual bool IsA(const void *const TID) const { return TID == TypeID(); };
+    virtual bool IsA(const void *const TID) const {
+        CRLB_ZONE_SCOPED;
+        return TID == TypeID();
+    };
 
   private:
     /**

@@ -4,6 +4,8 @@
 #ifndef LOGEIUM_CORELIB_EXTENSIBLE_RTTI_EXTENDS_HXX
 #define LOGEIUM_CORELIB_EXTENSIBLE_RTTI_EXTENDS_HXX
 
+#include <corelib/internal/tracing.hxx>
+
 namespace corelib::rtti {
 
 /**
@@ -83,7 +85,10 @@ class Extends : public ParentType, public ParentTypes... {
      *
      * @return Pointer to ThisType::ID
      */
-    static const void *TypeID() { return &ThisType::ID; }
+    static const void *TypeID() {
+        CRLB_ZONE_SCOPED;
+        return &ThisType::ID;
+    }
 
     /**
      * @brief Returns the dynamic type identifier for this object.
@@ -93,7 +98,10 @@ class Extends : public ParentType, public ParentTypes... {
      *
      * @return Pointer to ThisType::ID
      */
-    [[nodiscard]] const void *DynamicTypeID() const override { return &ThisType::ID; }
+    [[nodiscard]] const void *DynamicTypeID() const override {
+        CRLB_ZONE_SCOPED;
+        return &ThisType::ID;
+    }
 
     /**
      * @brief Template-based type checking.
@@ -118,6 +126,7 @@ class Extends : public ParentType, public ParentTypes... {
      */
     template <typename QueryType>
     [[nodiscard]] bool IsA() const {
+        CRLB_ZONE_SCOPED;
         return IsA(QueryType::TypeID());
     }
 
@@ -140,6 +149,7 @@ class Extends : public ParentType, public ParentTypes... {
      * types in multiple inheritance scenarios.
      */
     bool IsA(const void *const TID) const override {
+        CRLB_ZONE_SCOPED;
         return TID == TypeID() || ParentType::IsA(TID) || (ParentTypes::IsA(TID) || ...);
     }
 
@@ -169,6 +179,7 @@ class Extends : public ParentType, public ParentTypes... {
      */
     template <typename Type>
     static bool classof(const Type *R) {
+        CRLB_ZONE_SCOPED;
         return R->template IsA<ThisType>();
     }
 };

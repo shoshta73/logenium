@@ -10,6 +10,7 @@
 
 #include <corelib/detail/casting/forwarding.hxx>
 #include <corelib/detail/casting/traits.hxx>
+#include <corelib/internal/tracing.hxx>
 
 namespace corelib::detail {
 
@@ -84,12 +85,17 @@ struct UniquePtrCast : CastIsPossible<To, From *> {
     using CastResultType = std::unique_ptr<std::remove_reference_t<typename CastRetty<To, From>::ret_type>>;
 
     static inline CastResultType DoCast(std::unique_ptr<From> &&f) {
+        CRLB_ZONE_SCOPED;
         return CastResultType((typename CastResultType::element_type *)f.release());
     }
 
-    static inline CastResultType CastFailed() { return CastResultType(nullptr); }
+    static inline CastResultType CastFailed() {
+        CRLB_ZONE_SCOPED;
+        return CastResultType(nullptr);
+    }
 
     static inline CastResultType DoCastIfPossible(std::unique_ptr<From> &f) {
+        CRLB_ZONE_SCOPED;
         if (!Self::IsPossible(f.get())) return CastFailed();
         return DoCast(std::move(f));
     }
@@ -150,9 +156,15 @@ template <typename To, typename From, typename Derived = void>
 struct OptionalValueCast
     : public CastIsPossible<To, From>,
       public DefaultDoCastIfPossible<std::optional<To>, From, SelfType<Derived, OptionalValueCast<To, From>>> {
-    static inline std::optional<To> CastFailed() { return std::optional<To>{}; }
+    static inline std::optional<To> CastFailed() {
+        CRLB_ZONE_SCOPED;
+        return std::optional<To>{};
+    }
 
-    static inline std::optional<To> DoCast(const From &f) { return To(f); }
+    static inline std::optional<To> DoCast(const From &f) {
+        CRLB_ZONE_SCOPED;
+        return To(f);
+    }
 };
 
 // =============================================================================
@@ -220,7 +232,10 @@ struct ValueFromPointerCast
     : public CastIsPossible<To, From *>,
       public NullableValueCastFailed<To>,
       public DefaultDoCastIfPossible<To, From *, SelfType<Derived, ValueFromPointerCast<To, From>>> {
-    static inline To DoCast(From *f) { return To(f); }
+    static inline To DoCast(From *f) {
+        CRLB_ZONE_SCOPED;
+        return To(f);
+    }
 };
 
 }  // namespace corelib::detail

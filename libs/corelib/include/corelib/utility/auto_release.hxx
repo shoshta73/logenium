@@ -8,6 +8,8 @@
 #include <functional>
 #include <memory>
 
+#include <corelib/internal/tracing.hxx>
+
 namespace corelib {
 
 /**
@@ -72,6 +74,7 @@ class AutoRelease {
      * Calls the releaser function if obj != InvalidValue and releaser is set.
      */
     ~AutoRelease() {
+        CRLB_ZONE_SCOPED;
         if ((obj != InvalidValue) && releaser) {
             releaser(obj);
         }
@@ -92,7 +95,10 @@ class AutoRelease {
      *
      * @param other The AutoRelease to move from (left in valid but unspecified state)
      */
-    AutoRelease(AutoRelease &&other) noexcept : AutoRelease() { Swap(other); }
+    AutoRelease(AutoRelease &&other) noexcept : AutoRelease() {
+        CRLB_ZONE_SCOPED;
+        Swap(other);
+    }
 
     /**
      * @brief Move assignment operator that transfers ownership from another AutoRelease.
@@ -103,6 +109,7 @@ class AutoRelease {
      * @return Reference to this object
      */
     auto operator=(AutoRelease &&other) noexcept -> AutoRelease & {
+        CRLB_ZONE_SCOPED;
         AutoRelease new_obj{std::move(other)};
         Swap(new_obj);
 
@@ -115,6 +122,7 @@ class AutoRelease {
      * @param other The AutoRelease to swap with
      */
     void Swap(AutoRelease &other) noexcept {
+        CRLB_ZONE_SCOPED;
         std::ranges::swap(obj, other.obj);
         std::ranges::swap(releaser, other.releaser);
     }
@@ -127,6 +135,7 @@ class AutoRelease {
      * @param obj The new resource value to manage
      */
     void Reset(T obj) {
+        CRLB_ZONE_SCOPED;
         if ((this->obj != InvalidValue) && releaser) {
             releaser(this->obj);
         }

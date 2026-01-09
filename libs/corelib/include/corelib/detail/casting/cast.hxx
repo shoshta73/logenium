@@ -10,6 +10,7 @@
 
 #include <debug/assert.hxx>
 
+#include "corelib/internal/tracing.hxx"
 #include <corelib/detail/casting/adapters.hxx>
 #include <corelib/detail/casting/isa.hxx>
 #include <corelib/detail/casting/traits.hxx>
@@ -277,6 +278,7 @@ struct CastRetty {
 template <typename To, typename From, typename Enable>
 struct CastIsPossible {
     static inline bool IsPossible(const From &f) {
+        CRLB_ZONE_SCOPED;
         return detail::IsaImplWrap<To, const From, typename detail::SimplifyType<const From>::SimpleType>::Check(f);
     }
 };
@@ -301,6 +303,7 @@ struct CastIsPossible {
 template <typename To, typename From>
 struct CastIsPossible<To, std::optional<From>> {
     static inline bool IsPossible(const std::optional<From> &f) {
+        CRLB_ZONE_SCOPED;
         debug::Assert(f.has_value(),
                       "CastIsPossible<{}, std::optional<{}>>::IsPossible(const std::optional<{}>) called on a nullopt!",
                       type_name<To>(), type_name<From>(), type_name<From>());
@@ -326,7 +329,10 @@ struct CastIsPossible<To, std::optional<From>> {
  */
 template <typename To, typename From>
 struct CastIsPossible<To, From, std::enable_if_t<std::is_base_of_v<To, From>>> {
-    static inline bool IsPossible(const From &) { return true; }
+    static inline bool IsPossible(const From &) {
+        CRLB_ZONE_SCOPED;
+        return true;
+    }
 };
 
 // =============================================================================
@@ -362,6 +368,7 @@ struct CastIsPossible<To, From, std::enable_if_t<std::is_base_of_v<To, From>>> {
 template <class To, class From, class SimpleFrom>
 struct CastConvertVal {
     static typename CastRetty<To, From>::ret_type Convert(const From &Val) {
+        CRLB_ZONE_SCOPED;
         return CastConvertVal<To, SimpleFrom, typename SimplifyType<SimpleFrom>::SimpleType>::Convert(
             SimplifyType<From>::GetSimplifiedValue(const_cast<From &>(Val)));
     }
@@ -387,6 +394,7 @@ struct CastConvertVal {
 template <class To, class FromTy>
 struct CastConvertVal<To, FromTy, FromTy> {
     static typename CastRetty<To, FromTy>::ret_type Convert(const FromTy &Val) {
+        CRLB_ZONE_SCOPED;
         return *(std::remove_reference_t<typename CastRetty<To, FromTy>::ret_type> *)&const_cast<FromTy &>(Val);
     }
 };
@@ -409,6 +417,7 @@ struct CastConvertVal<To, FromTy, FromTy> {
 template <class To, class FromTy>
 struct CastConvertVal<To, FromTy *, FromTy *> {
     static typename CastRetty<To, FromTy *>::ret_type Convert(const FromTy *Val) {
+        CRLB_ZONE_SCOPED;
         return (typename CastRetty<To, FromTy *>::ret_type) const_cast<FromTy *>(Val);
     }
 };
@@ -480,12 +489,14 @@ struct CastInfo : CastIsPossible<To, From> {
     using CastReturnType = typename CastRetty<To, From>::ret_type;
 
     static inline CastReturnType DoCast(const From &f) {
+        CRLB_ZONE_SCOPED;
         return CastConvertVal<To, From, typename SimplifyType<From>::SimpleType>::Convert(const_cast<From &>(f));
     }
 
     static inline CastReturnType CastFailed() { return CastReturnType(nullptr); }
 
     static inline CastReturnType DoCastIfPossible(const From &f) {
+        CRLB_ZONE_SCOPED;
         if (!Self::IsPossible(f)) return CastFailed();
         return DoCast(f);
     }
@@ -525,16 +536,22 @@ struct CastInfo<To, From, std::enable_if_t<!IsSimpleType<From>::value>> {
     using SimplifiedSelf = CastInfo<To, SimpleFrom>;
 
     static inline bool IsPossible(From &f) {
+        CRLB_ZONE_SCOPED;
         return SimplifiedSelf::IsPossible(SimplifyType<From>::GetSimplifiedValue(f));
     }
 
     static inline decltype(auto) DoCast(From &f) {
+        CRLB_ZONE_SCOPED;
         return SimplifiedSelf::DoCast(SimplifyType<From>::GetSimplifiedValue(f));
     }
 
-    static inline decltype(auto) CastFailed() { return SimplifiedSelf::CastFailed(); }
+    static inline decltype(auto) CastFailed() {
+        CRLB_ZONE_SCOPED;
+        return SimplifiedSelf::CastFailed();
+    }
 
     static inline decltype(auto) DoCastIfPossible(From &f) {
+        CRLB_ZONE_SCOPED;
         return SimplifiedSelf::DoCastIfPossible(SimplifyType<From>::GetSimplifiedValue(f));
     }
 };
