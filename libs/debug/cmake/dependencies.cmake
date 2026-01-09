@@ -42,6 +42,11 @@ if(LOGENIUM_DEBUG_USE_FMTLIB)
         FetchContent_MakeAvailable(fmtlib)
 endif()
 
+if(CMAKE_BUILD_TYPE STREQUAL "Release" OR "MinSizeRel")
+        log_info("Disabling tracy (not in debug mode)")
+        set(TRACY_ENABLE OFF)
+endif()
+
 log_info("Fetching tracy (v0.13.0, shallow, progress)")
 FetchContent_MakeAvailable(tracy)
 

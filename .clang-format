@@ -28,7 +28,9 @@ IncludeCategories:
     Priority: 6
 
   # 3rd party headers
-  - Regex: '^(<|")fmt/'
+  - Regex: '^(<|")common/TracySystem\.hpp'
+    Priority: 5
+  - Regex: '^(<|")(fmt|tracy)/'
     Priority: 5
 
   # Test headers

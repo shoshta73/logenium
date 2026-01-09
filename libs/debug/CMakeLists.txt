@@ -3,7 +3,7 @@
 
 project(
         debug
-        VERSION 0.1.1
+        VERSION 0.2.0
         LANGUAGES CXX
         DESCRIPTION "Debug library for logenium"
 )
@@ -33,6 +33,7 @@ add_library(
         src/breakpoint_if_debugging.cxx
         src/breakpoint.cxx
         src/is_debugger_present.cxx
+        src/tracing/set_thread_name.cxx
 )
 
 add_library(
