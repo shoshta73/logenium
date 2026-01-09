@@ -23,6 +23,9 @@ configure: typer.Typer
 class LibraryConfig(TypedDict):
     enable_testing: bool
 
+class CorelibLibraryConfig(LibraryConfig):
+    enable_tracing: bool
+
 class DebugLibraryConfig(LibraryConfig):
     use_fast_stacktrace: bool
     use_fmtlib: bool
@@ -43,7 +46,7 @@ class ConfigurationR2(TypedDict):
     logenium: LibraryConfig
     xheader: LibraryConfig
     debug: DebugLibraryConfig
-    corelib: LibraryConfig
+    corelib: CorelibLibraryConfig
 
 def load_schema_r1() -> object: ...
 def load_schema_r2() -> object: ...

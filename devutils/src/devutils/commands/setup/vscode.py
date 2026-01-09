@@ -3,7 +3,7 @@
 
 import typer
 
-from devutils.constants.paths import SettingsFiles
+from devutils.constants.paths import ConfigFiles, SettingsFiles
 
 vscode: typer.Typer = typer.Typer()
 
@@ -36,3 +36,88 @@ def settings(regenerate: bool = typer.Option(False, "--regenerate", "-r", help="
   }
 }"""
         )
+
+
+@vscode.command()  # type: ignore[misc]
+def bookmarks(
+    regenerate: bool = typer.Option(False, "--regenerate", "-r", help="Regenerate the bookmarks file"),
+) -> None:
+    if ConfigFiles.vscode_bookmarks.exists():
+        if regenerate:
+            typer.echo(f"Removing bookmarks file: {ConfigFiles.vscode_bookmarks}")
+            ConfigFiles.vscode_bookmarks.unlink()
+        else:
+            typer.echo(f"Bookmarks file already exists: {ConfigFiles.vscode_bookmarks}")
+            raise typer.Exit(0)
+
+    if not ConfigFiles.vscode_bookmarks.parent.exists():
+        typer.echo(f"Creating directory: {ConfigFiles.vscode_bookmarks.parent}")
+        ConfigFiles.vscode_bookmarks.parent.mkdir(parents=True)
+
+    typer.echo(f"Creating bookmarks file: {ConfigFiles.vscode_bookmarks}")
+    with open(ConfigFiles.vscode_bookmarks, "w") as f:
+        f.write("""{
+  "files": [
+    {
+      "path": "libs/debug/CMakeLists.txt",
+      "bookmarks": [
+        {
+          "line": 5,
+          "column": 21,
+          "label": ""
+        }
+      ]
+    },
+    {
+      "path": "libs/debug/Doxyfile",
+      "bookmarks": [
+        {
+          "line": 50,
+          "column": 2,
+          "label": ""
+        }
+      ]
+    },
+    {
+      "path": "libs/corelib/Doxyfile",
+      "bookmarks": [
+        {
+          "line": 50,
+          "column": 1,
+          "label": ""
+        }
+      ]
+    },
+    {
+      "path": "libs/corelib/CMakeLists.txt",
+      "bookmarks": [
+        {
+          "line": 5,
+          "column": 21,
+          "label": ""
+        }
+      ]
+    },
+    {
+      "path": "libs/xheader/CMakeLists.txt",
+      "bookmarks": [
+        {
+          "line": 6,
+          "column": 12,
+          "label": ""
+        }
+      ]
+    },
+    {
+      "path": "CMakeLists.txt",
+      "bookmarks": [
+        {
+          "line": 23,
+          "column": 17,
+          "label": ""
+        }
+      ]
+    }
+  ]
+}
+""")

@@ -313,13 +313,13 @@ def run(
         )
         debug_use_color_logs = False
         if debug_use_fmtlib:
-            typer.echo(f"  -> fmtlib: enabled")
+            typer.echo("  -> fmtlib: enabled")
             debug_use_color_logs = typer.confirm(
                 "[debug] Enable colored log output? (requires fmtlib, adds colored 'Assertion failed' messages)"
             )
             typer.echo(f"  -> Color logs: {'enabled' if debug_use_color_logs else 'disabled'}")
         else:
-            typer.echo(f"  -> fmtlib: disabled (color logs also disabled)")
+            typer.echo("  -> fmtlib: disabled (color logs also disabled)")
 
         # === Corelib Configuration ===
         typer.echo("")
@@ -345,7 +345,7 @@ def run(
         enable_corelib_testing = False
 
         if enable_testing:
-            typer.echo(f"  -> Testing: enabled")
+            typer.echo("  -> Testing: enabled")
             typer.echo("")
 
             enable_logenium_testing = typer.confirm("[testing] Build logenium tests? (Application/Window tests)")
@@ -361,7 +361,7 @@ def run(
             typer.echo(f"  -> Corelib tests: {'enabled' if enable_corelib_testing else 'disabled'}")
 
         else:
-            typer.echo(f"  -> Testing: disabled (all test suites skipped)")
+            typer.echo("  -> Testing: disabled (all test suites skipped)")
 
         new_config: ConfigurationR2 = {
             "revision": 2,
