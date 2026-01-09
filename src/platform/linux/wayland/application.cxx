@@ -12,6 +12,7 @@
 #include <xheader/xdg-decoration-unstable-v1-client-protocol.h>
 #include <xheader/xdg-shell-client-protocol.h>
 
+#include "debug/tracing/macros.hxx"
 #include <debug/assert.hxx>
 
 #include "logenium/application.hxx"
@@ -21,6 +22,7 @@
 namespace logenium {
 
 WaylandApplication::WaylandApplication() : LinuxApplication(ApplicationKind::AK_LinuxWayland) {
+    ZoneScoped;
     auto wl_display = wl_display_connect(nullptr);
     Assert(wl_display != nullptr, "failed to connect to Wayland display");
     display = wl_display;
@@ -36,6 +38,7 @@ WaylandApplication::WaylandApplication() : LinuxApplication(ApplicationKind::AK_
 }
 
 WaylandApplication::~WaylandApplication() {
+    ZoneScoped;
     if (state.is_running) {
         state.is_running = false;
     }
@@ -44,6 +47,7 @@ WaylandApplication::~WaylandApplication() {
 }
 
 void WaylandApplication::Run() {
+    ZoneScoped;
     while (state.is_running) {
         wl_display_dispatch(display);
     }
@@ -65,6 +69,7 @@ void WaylandApplication::UnregisterWindowClass() {}
 
 void WaylandApplication::RegistryGlobal(void *data, struct wl_registry *registry, std::uint32_t id,
                                         const char *interface, std::uint32_t version) {
+    ZoneScoped;
     auto self = static_cast<WaylandApplication *>(data);
     Assert(self != nullptr, "invalid self");
 
@@ -83,6 +88,9 @@ void WaylandApplication::RegistryGlobal(void *data, struct wl_registry *registry
 
 void WaylandApplication::RegistryRemove(void *data, struct wl_registry *registry, uint32_t id) {}
 
-void WaylandApplication::XDGPing(void *data, struct xdg_wm_base *wm, uint32_t serial) { xdg_wm_base_pong(wm, serial); }
+void WaylandApplication::XDGPing(void *data, struct xdg_wm_base *wm, uint32_t serial) {
+    ZoneScoped;
+    xdg_wm_base_pong(wm, serial);
+}
 
 }  // namespace logenium

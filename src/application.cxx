@@ -6,6 +6,7 @@
 #include <memory>
 
 #include <debug/assert.hxx>
+#include <debug/tracing/macros.hxx>
 
 #include "logenium/platform/linux/application.hxx"    // IWYU pragma: keep
 #include "logenium/platform/windows/application.hxx"  // IWYU pragma: keep
@@ -17,11 +18,15 @@ class Application *Application::instance = nullptr;
 Application::ApplicationKind Application::GetKind() const { return kind; };
 
 Application::Application(ApplicationKind kind) : kind(kind) {
+    ZoneScoped;
     Assert(instance == nullptr, "Application is already initialized");
     instance = this;
 }
 
-Application::~Application() { instance = nullptr; }
+Application::~Application() {
+    ZoneScoped;
+    instance = nullptr;
+}
 
 Application::NativeHandle &Application::GetNativeHandle() { return native_handle; }
 
@@ -33,6 +38,8 @@ Application &Application::GetInstance() {
 }
 
 std::unique_ptr<Application> Application::Create() {
+    ZoneScoped;
+
 #if defined(_WIN32)
 
     return std::make_unique<WindowsApplication>();

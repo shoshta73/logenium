@@ -9,6 +9,7 @@
 #include <xheader/xcb/xcb.h>
 #include <xheader/xcb/xproto.h>
 
+#include "debug/tracing/macros.hxx"
 #include <debug/assert.hxx>
 
 #include "logenium/application.hxx"
@@ -18,6 +19,7 @@
 namespace logenium {
 
 X11Application::X11Application() : LinuxApplication(ApplicationKind::AK_LinuxX11) {
+    ZoneScoped;
     connection = xcb_connect(nullptr, nullptr);
     auto err = xcb_connection_has_error(connection);
     Assert(err == 0, "xcb_connect failed with error {}", err);
@@ -31,6 +33,7 @@ X11Application::X11Application() : LinuxApplication(ApplicationKind::AK_LinuxX11
 }
 
 X11Application::~X11Application() {
+    ZoneScoped;
     if (state.is_running) {
         state.is_running = false;
     }
@@ -39,6 +42,7 @@ X11Application::~X11Application() {
 }
 
 void X11Application::Run() {
+    ZoneScoped;
     while (state.is_running) {
         xcb_generic_event_t *event = xcb_wait_for_event(connection);
 

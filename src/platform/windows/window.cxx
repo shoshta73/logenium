@@ -5,6 +5,7 @@
 
 #include <xheader/windows.h>
 
+#include "debug/tracing/macros.hxx"
 #include <debug/assert.hxx>
 
 #include "logenium/application.hxx"
@@ -20,6 +21,7 @@ constexpr auto kWindowName = "Logenium";
 namespace logenium {
 
 WindowsWindow::WindowsWindow() : Window(WindowKind::WK_Windows) {
+    ZoneScoped;
     auto handle = CreateWindowEx(WS_EX_OVERLAPPEDWINDOW, GetWindowClassName(), kWindowName, WS_OVERLAPPEDWINDOW, 0, 0,
                                  CW_USEDEFAULT, CW_USEDEFAULT, nullptr, nullptr,
                                  Application::GetInstance().GetNativeHandle(), this);
@@ -30,11 +32,13 @@ WindowsWindow::WindowsWindow() : Window(WindowKind::WK_Windows) {
 }
 
 WindowsWindow::~WindowsWindow() {
+    ZoneScoped;
     DestroyWindow(native_handle);
     native_handle = nullptr;
 }
 
 WNDCLASSEX &WindowsWindow::GetWindowClass() {
+    ZoneScoped;
     auto application_handle = Application::GetInstance().GetNativeHandle();
     static WNDCLASSEX window_class{
         .cbSize = sizeof(WNDCLASSEX),
@@ -57,12 +61,13 @@ WNDCLASSEX &WindowsWindow::GetWindowClass() {
 const char *WindowsWindow::GetWindowClassName() { return kLogeniumWindowClassName; }
 
 LRESULT CALLBACK WindowsWindow::WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+    ZoneScoped;
     WindowsWindow *self = nullptr;
 
     if (msg == WM_NCCREATE) {
         auto create_struct = reinterpret_cast<CREATESTRUCT *>(lParam);
         self = reinterpret_cast<WindowsWindow *>(create_struct->lpCreateParams);
-        Assert(self == nullptr, "Failed to get window pointer");
+        Assert(self != nullptr, "Failed to get window pointer");
 
         SetWindowLongPtr(hWnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(self));
         return DefWindowProc(hWnd, msg, wParam, lParam);
@@ -78,6 +83,7 @@ LRESULT CALLBACK WindowsWindow::WindowProc(HWND hWnd, UINT msg, WPARAM wParam, L
 bool WindowsWindow::classof(const Window *win) { return win->GetKind() == WindowKind::WK_Windows; }
 
 LRESULT WindowsWindow::HandleMessage(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+    ZoneScoped;
     switch (msg) {
         case WM_CLOSE: {
             Application::GetInstance().GetState().is_running = false;

@@ -3,13 +3,15 @@
 
 #include "logenium/platform/linux/window.hxx"
 
+#include <debug/tracing/macros.hxx>
+
 #include "logenium/window.hxx"
 
 namespace logenium {
 
-LinuxWindow::LinuxWindow(WindowKind kind) : Window(kind) {}
+LinuxWindow::LinuxWindow(WindowKind kind) : Window(kind) { ZoneScoped; }
 
-LinuxWindow::~LinuxWindow() = default;
+LinuxWindow::~LinuxWindow() { ZoneScoped; }
 
 bool LinuxWindow::classof(const Window *win) {
     auto kind = win->GetKind();

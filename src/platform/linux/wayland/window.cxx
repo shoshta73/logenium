@@ -14,6 +14,7 @@
 #include <xheader/xdg-decoration-unstable-v1-client-protocol.h>
 #include <xheader/xdg-shell-client-protocol.h>
 
+#include "debug/tracing/macros.hxx"
 #include <debug/assert.hxx>
 
 #include <corelib/casting/cast.hxx>
@@ -27,6 +28,7 @@
 namespace logenium {
 
 WaylandWindow::WaylandWindow() : LinuxWindow(WindowKind::WK_LinuxWayland) {
+    ZoneScoped;
     Assert(isa<WaylandApplication>(Application::GetInstance()), "Application is not WaylandApplication");
     auto &app = cast<WaylandApplication>(Application::GetInstance());
 
@@ -47,6 +49,7 @@ WaylandWindow::WaylandWindow() : LinuxWindow(WindowKind::WK_LinuxWayland) {
 }
 
 WaylandWindow::~WaylandWindow() {
+    ZoneScoped;
     if (buffer != nullptr) {
         wl_buffer_destroy(buffer);
     }
@@ -61,6 +64,7 @@ WaylandWindow::~WaylandWindow() {
 bool WaylandWindow::classof(const Window *win) { return win->GetKind() == WindowKind::WK_LinuxWayland; }
 
 void WaylandWindow::XdgSurfaceConfigure(void *data, struct xdg_surface *xdg_surface, uint32_t serial) {
+    ZoneScoped;
     auto *self = static_cast<WaylandWindow *>(data);
     xdg_surface_ack_configure(xdg_surface, serial);
 
@@ -72,6 +76,7 @@ void WaylandWindow::XdgSurfaceConfigure(void *data, struct xdg_surface *xdg_surf
 
 void WaylandWindow::XdgToplevelConfigure(void *data, struct xdg_toplevel *xdg_toplevel, int32_t width, int32_t height,
                                          struct wl_array *states) {
+    ZoneScoped;
     auto *self = static_cast<WaylandWindow *>(data);
     if (width > 0 && height > 0) {
         self->width = width;
@@ -80,11 +85,13 @@ void WaylandWindow::XdgToplevelConfigure(void *data, struct xdg_toplevel *xdg_to
 }
 
 void WaylandWindow::XdgToplevelClose(void *data, struct xdg_toplevel *xdg_toplevel) {
+    ZoneScoped;
     auto &app = Application::GetInstance();
     app.GetState().is_running = false;
 }
 
 void WaylandWindow::CreateBuffer() {
+    ZoneScoped;
     auto &app = cast<WaylandApplication>(Application::GetInstance());
 
     int stride = width * 4;

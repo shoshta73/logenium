@@ -9,6 +9,7 @@
 
 #include <xheader/dlfcn.h>
 
+#include "debug/tracing/macros.hxx"
 #include <debug/assert.hxx>
 
 #include "logenium/application.hxx"
@@ -18,12 +19,14 @@
 namespace logenium {
 
 LinuxApplication::LinuxApplication(ApplicationKind kind) : Application(kind) {
+    ZoneScoped;
     auto handle = dlopen(nullptr, RTLD_NOW);
     Assert(handle != nullptr, "Failed to self load");
     native_handle = handle;
 }
 
 LinuxApplication::~LinuxApplication() {
+    ZoneScoped;
     auto res = dlclose(native_handle);
     Assert(res == 0, "Failed to self close");
 }
@@ -34,6 +37,7 @@ bool LinuxApplication::classof(const Application *app) {
 }
 
 std::unique_ptr<LinuxApplication> LinuxApplication::Create() {
+    ZoneScoped;
     const char *session_type = std::getenv("XDG_SESSION_TYPE");
     Assert(session_type != nullptr, "Failed to get XDG_SESSION_TYPE");
 

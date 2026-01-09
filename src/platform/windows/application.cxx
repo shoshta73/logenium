@@ -7,6 +7,7 @@
 
 #include <xheader/windows.h>
 
+#include "debug/tracing/macros.hxx"
 #include <debug/assert.hxx>
 
 #include "logenium/application.hxx"
@@ -15,6 +16,7 @@
 namespace logenium {
 
 WindowsApplication::WindowsApplication() : Application(ApplicationKind::AK_Windows) {
+    ZoneScoped;
     auto handle = GetModuleHandle(nullptr);
     Assert(handle, "Failed to get module handle");
     native_handle = handle;
@@ -27,6 +29,7 @@ WindowsApplication::WindowsApplication() : Application(ApplicationKind::AK_Windo
 }
 
 WindowsApplication::~WindowsApplication() {
+    ZoneScoped;
     if (state.is_running) {
         state.is_running = false;
     }
@@ -37,6 +40,8 @@ WindowsApplication::~WindowsApplication() {
 }
 
 void WindowsApplication::Run() {
+    ZoneScoped;
+
     while (state.is_running) {
         MSG msg;
         switch (GetMessage(&msg, nullptr, 0, 0)) {
@@ -57,11 +62,13 @@ void WindowsApplication::Run() {
 bool WindowsApplication::classof(const Application *app) { return app->GetKind() == ApplicationKind::AK_Windows; }
 
 void WindowsApplication::RegisterWindowClass() {
+    ZoneScoped;
     auto window_class = WindowsWindow::GetWindowClass();
     Assert(RegisterClassEx(&window_class), "Failed to register window class");
 }
 
 void WindowsApplication::UnregisterWindowClass() {
+    ZoneScoped;
     Assert(UnregisterClass(WindowsWindow::GetWindowClassName(), native_handle), "Failed to unregister window class");
 }
 

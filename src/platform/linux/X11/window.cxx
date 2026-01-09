@@ -7,6 +7,7 @@
 #include <xheader/xcb/xproto.h>
 
 #include <debug/assert.hxx>
+#include <debug/tracing/macros.hxx>
 
 #include <corelib/casting/cast.hxx>
 #include <corelib/casting/isa.hxx>
@@ -19,6 +20,7 @@
 namespace logenium {
 
 X11Window::X11Window() : LinuxWindow(WindowKind::WK_LinuxX11) {
+    ZoneScoped;
     Assert(isa<X11Application>(Application::GetInstance()), "Application is not X11Application");
     auto &app = cast<X11Application>(Application::GetInstance());
 
@@ -36,6 +38,7 @@ X11Window::X11Window() : LinuxWindow(WindowKind::WK_LinuxX11) {
 }
 
 X11Window::~X11Window() {
+    ZoneScoped;
     auto &app = cast<X11Application>(Application::GetInstance());
     auto connection = app.GetConnection();
     xcb_destroy_window(connection, native_handle);
