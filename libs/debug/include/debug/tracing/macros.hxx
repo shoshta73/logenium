@@ -12,18 +12,39 @@
 
 #include <tracy/Tracy.hpp>
 
-// Save Tracy's original macros before redefining them
+#ifdef NDEBUG
+
+// Release builds: Override Tracy's macros with no-ops for zero overhead
 #ifdef ZoneScoped
-#define __tray_zone_scoped ZoneScoped
 #undef ZoneScoped
 #endif
 
 #ifdef ZoneScopedN
-#define __tray_zone_scoped_named ZoneScopedN
 #undef ZoneScopedN
 #endif
 
-#ifndef NDEBUG
+/**
+ * @brief No-op in release builds
+ * @ingroup tracing
+ *
+ * In release builds (NDEBUG defined), this macro expands to nothing.
+ */
+#define ZoneScoped
+
+/**
+ * @brief No-op in release builds
+ * @ingroup tracing
+ *
+ * In release builds (NDEBUG defined), this macro expands to nothing.
+ *
+ * @param name Ignored in release builds
+ */
+#define ZoneScopedN(name)
+
+#else
+
+// Debug builds: Use Tracy's ZoneScoped and ZoneScopedN macros directly.
+// Tracy.hpp already defines these macros, so we just document them here.
 
 /**
  * @brief Mark the current scope as a profiling zone
@@ -56,7 +77,6 @@
  * }
  * @endcode
  */
-#define ZoneScoped __tray_zone_scoped
 
 /**
  * @brief Mark the current scope as a profiling zone with a custom name
@@ -95,27 +115,6 @@
  * }
  * @endcode
  */
-#define ZoneScopedN(name) __tray_zone_scoped_named(name)
-
-#else
-
-/**
- * @brief No-op in release builds
- * @ingroup tracing
- *
- * In release builds (NDEBUG defined), this macro expands to nothing.
- */
-#define ZoneScoped
-
-/**
- * @brief No-op in release builds
- * @ingroup tracing
- *
- * In release builds (NDEBUG defined), this macro expands to nothing.
- *
- * @param name Ignored in release builds
- */
-#define ZoneScopedN(name)
 
 #endif
 
