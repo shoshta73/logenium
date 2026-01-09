@@ -10,7 +10,7 @@
 #ifndef LOGENIUM_DEBUG_TRACING_MACROS_HXX
 #define LOGENIUM_DEBUG_TRACING_MACROS_HXX
 
-#include <tracy/Tracy.hpp>
+#include <tracy/Tracy.hpp>  // IWYU pragma: export
 
 #ifdef NDEBUG
 
