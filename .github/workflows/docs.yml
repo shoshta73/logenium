@@ -82,24 +82,16 @@ jobs:
               subproject=$(basename $(dirname "$doxyfile"))
               cmake_file=$(dirname "$doxyfile")/CMakeLists.txt
 
-              # Extract version from CMakeLists.txt
-              version=$(grep -E "^\s*VERSION\s+" "$cmake_file" | sed -E 's/.*VERSION\s+([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
-
-              if [ -z "$version" ]; then
-                echo "Warning: Could not extract version for $subproject"
-                continue
-              fi
-
-              echo "Processing $subproject version $version"
+              echo "Processing $subproject"
 
               # Create versioned directory structure
-              mkdir -p "v$version/$subproject"
+              mkdir -p "$subproject"
 
               # Copy docs from subproject/docs to v<version>/subproject
               if [ -d "../libs/$subproject/docs" ]; then
-                rm -rf "v$version/$subproject"
-                cp -r "../libs/$subproject/docs/"* "v$version/$subproject/"
-                git add "v$version/$subproject"
+                rm -rf "$subproject"
+                cp -r "../libs/$subproject/docs/"* "$subproject/"
+                git add "$subproject"
               else
                 echo "Warning: docs directory not found for $subproject"
               fi
