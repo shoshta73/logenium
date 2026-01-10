@@ -101,9 +101,13 @@ corelib:
 
    **Dependencies**: TracyClient (v0.13.0, always linked via FetchContent), fmt::fmt (v12.1.0, optional via `LOGENIUM_DEBUG_USE_FMTLIB`).
 
-3. **logging** (C++23, `libs/logging/`): Header-only logging utility with compile-time format string validation. Simple wrapper around format string validation and output to stdout. Supports two backends: C++20 standard library (std::format/std::println) or fmtlib (fmt::format/fmt::println). Template-based design using CTAD (Class Template Argument Deduction) for automatic type deduction. Source location tracking accepted but not currently utilized.
+3. **logging** (C++23, `libs/logging/`): Header-only logging utility with compile-time format string validation and level-based logging. Outputs to stdout with format: `[Level] message (file:line in function)`. Supports two backends: C++20 standard library (std::format/std::println) or fmtlib (fmt::format/fmt::println). Template-based design using CTAD (Class Template Argument Deduction) for automatic type deduction. Source location tracking captured and displayed in output.
 
-   **Usage**: `logging::log("Hello, {}!", "world")`, `logging::log("Value: {}", 42)`, `logging::log("Multiple: {}, {}, {}", 1, 2.5, "three")`. Include: `<logging/logging.hxx>`.
+   **Level enum**: Logging severity levels enumeration with `corelib::u8` underlying type. Values (ordered by severity): `Ignore`, `Trace3`, `Trace2`, `Trace1`, `Trace`, `Debug`, `Info`, `Warn`, `Error`, `Fatal`. Custom std::formatter provided with two modes: normal (`{}` outputs name only) and debug (`{:d}` outputs name and underlying value). Namespace alias `log::Level` available. Include: `<logging/level.hxx>`.
+
+   **Level-specific logging**: Type aliases for each severity level: `logging::trace3`, `logging::trace2`, `logging::trace1`, `logging::trace`, `logging::debug`, `logging::info`, `logging::warn`, `logging::error`, `logging::fatal`. Default `logging::log` uses `Info` level. Each outputs with format: `[Level] message (file:line in function)`.
+
+   **Usage**: `logging::log("Hello, {}!", "world")` (Info level), `logging::debug("Debug: {}", value)` (Debug level), `logging::error("Error: {}", msg)` (Error level), `std::format("{}", logging::Level::Info)` (outputs "Info"), `std::format("{:d}", logging::Level::Error)` (outputs "logging::Level( Error, 8 )"). Include: `<logging/logging.hxx>`, `<logging/level.hxx>`.
 
    **CMake Options**:
    - `LOGENIUM_LOGGING_USE_FMTLIB` (ON): Use fmtlib instead of standard library for formatting. Links fmt::fmt (v12.1.0 via FetchContent). Sets `__LOGENIUM_LOGGING_USE_FMTLIB__`.
@@ -115,7 +119,7 @@ corelib:
 
    **tracing integration**: Optional profiling instrumentation via `CRLB_ZONE_SCOPED` macro (defined in `<corelib/internal/tracing.hxx>`). When `__LOGENIUM_CORELIB_ENABLE_TRACING__` is enabled, expands to `ZoneScoped` for Tracy profiling; otherwise becomes a no-op. Applied to non-trivial runtime functions in extensible-rtti (TypeID, DynamicTypeID, IsA, classof methods) and utility (Defer/AutoRelease destructors, move operations, Swap, Reset). Casting functions and type traits already instrumented. Not applied to constexpr functions (type_name) or simple getters.
 
-   **types**: Platform-independent type aliases for integer and floating-point types using concise naming convention. Fixed-width integer types: `u8`, `u16`, `u32`, `u64` (unsigned, using std::uint*_t), `i8`, `i16`, `i32`, `i64` (signed, using std::int*_t), `s8`, `s16`, `s32`, `s64` (signed aliases for i* types). Floating-point types: `f32` (float), `f64` (double). All types provide explicit bit-width in name for clarity and portability. Include: `<corelib/types.hxx>` (all types) or `<corelib/types/int.hxx>`, `<corelib/types/float.hxx>` (specific).
+   **types**: Platform-independent type aliases for integer and floating-point types using concise naming convention. Fixed-width integer types: `u8`, `u16`, `u32`, `u64` (unsigned, using std::uint*_t), `i8`, `i16`, `i32`, `i64` (signed, using std::int*_t), `s8`, `s16`, `s32`, `s64` (signed aliases for i* types). Floating-point types: `f32` (float), `f64` (double). All types provide explicit bit-width in name for clarity and portability. Constants: `{u,i,s}{8,16,32,64}_{min,max}` (integer min/max values, constexpr), `{f32,f64}_{min,max}` (floating-point normalized min/max values, constexpr). Note: For floating-point types, `*_min` is the smallest positive normalized value, not the most negative (use `-*_max` for that). Include: `<corelib/types.hxx>` (all types) or `<corelib/types/int.hxx>`, `<corelib/types/float.hxx>` (specific).
 
    **utility**: Type utilities including `type_name<T>()` for compile-time type name extraction using compiler intrinsics (`__PRETTY_FUNCTION__` for GCC/Clang, `__FUNCSIG__` for MSVC). Template overload returns type as `std::string_view`, value overload uses forwarding reference to preserve cv-qualifiers. MSVC specializations normalize `__int64` types to "long long". RAII utilities including `Defer<Functor>` for scope-exit execution (executes functor in destructor, supports move semantics) and `AutoRelease<T, InvalidValue>` for automatic resource management with custom releasers (non-copyable, move-only, with Reset/Get/operators, calls releaser on destruction if value != InvalidValue). Include: `<corelib/utility.hxx>` (all utilities) or `<corelib/utility/type_name.hxx>`, `<corelib/utility/defer.hxx>`, `<corelib/utility/auto_release.hxx>` (specific).
 
@@ -297,12 +301,18 @@ See `libs/xheader/CMakeLists.txt` for full list.
 - **libs/corelib/tests/types/**: Type alias tests
   - `type_name_int.cxx` (type_name with integer aliases: u8/u16/u32/u64, i8/i16/i32/i64, s8/s16/s32/s64, value overloads, const/pointer/reference types, constexpr evaluation, alias equivalence)
   - `type_name_float.cxx` (type_name with floating-point aliases: f32/f64, value overloads, const/pointer/reference types, rvalue references, constexpr evaluation)
+  - `int_constants.cxx` (integer constants: u8/u16/u32/u64/i8/i16/i32/i64/s8/s16/s32/s64 min/max values, constexpr evaluation, std::numeric_limits equivalence, arithmetic operations, range verification)
+  - `float_constants.cxx` (floating-point constants: f32/f64 min/max values, constexpr evaluation, std::numeric_limits equivalence, normal/finite properties, precision comparison, negative ranges, denorm comparison)
 
 - **libs/corelib/tests/extensible-rtti/**: Extensible RTTI tests
   - `common.hxx`/`common.cxx`: Shared test hierarchy (TestNode, TestContainer, TestElement, TestList, TestTree)
   - **base/**: `base.cxx` (Base class TypeID, DynamicTypeID, IsA methods)
   - **extends/**: `single_inheritance.cxx` (single parent scenarios), `multiple_inheritance.cxx` (multi-parent scenarios)
   - **casting/**: `isa.cxx` (isa integration), `cast.cxx` (cast integration), `dyn_cast.cxx` (dyn_cast integration), `predicates.cxx` (predicate functors)
+
+- **libs/logging/tests/**: Logging library tests
+  - `logging.cxx` (basic logging, multiple arguments, format validation, custom formatting, stdout capture)
+  - **level/**: `level.cxx` (Level enum values, underlying type, ordering, std::formatter normal/debug modes, format specifiers, namespace alias), `type_name_level.cxx` (type_name with Level enum, const/pointer/reference types, value overload, constexpr evaluation)
 
 - **tests/**: Logenium framework tests (85 tests)
   - **application/**: `application.cxx` (42 Application tests using mock implementations)
@@ -311,8 +321,8 @@ See `libs/xheader/CMakeLists.txt` for full list.
 **Coverage**:
 - xheader: Windows API, dlfcn stubs
 - debug: Assert, Breakpoint, IsDebuggerPresent
-- logging: Basic logging (string, int, float, bool), multiple arguments, format validation, custom formatting (hex, oct, width, alignment, precision), std::string/const char*, rvalue references, pointers, characters, numeric types, stdout output capture
-- corelib/types: type_name with type aliases (unsigned types u8/u16/u32/u64, signed types i8/i16/i32/i64/s8/s16/s32/s64, floating-point types f32/f64), value overloads, const qualification, pointers, references, rvalue references, constexpr evaluation, alias equivalence (s* == i*)
+- logging: Basic logging (string, int, float, bool), multiple arguments, format validation, custom formatting (hex, oct, width, alignment, precision), std::string/const char*, rvalue references, pointers, characters, numeric types, stdout output capture; Level enum (all enum values, underlying type u8, ordering, std::formatter normal/debug modes, invalid format specifiers, namespace alias, type_name integration with const/pointer/reference types)
+- corelib/types: type_name with type aliases (unsigned types u8/u16/u32/u64, signed types i8/i16/i32/i64/s8/s16/s32/s64, floating-point types f32/f64), value overloads, const qualification, pointers, references, rvalue references, constexpr evaluation, alias equivalence (s* == i*); min/max constants (integer: u8/u16/u32/u64/i8/i16/i32/i64/s8/s16/s32/s64_min/max with value/limits verification, floating-point: f32/f64_min/max with normalization/finite properties, constexpr evaluation, arithmetic operations)
 - corelib/utility: type_name (template/value overloads, cv-qualifiers, constexpr evaluation), defer (RAII wrapper, scope-exit execution, LIFO ordering, exception safety, move semantics), auto_release (resource manager, custom releasers, Reset/Get/operators, move-only semantics, invalid value handling, pointer/string/custom types)
 - corelib/casting (public API): isa/isa_and_present (type checking with pointers/references/unique_ptr/const-correctness, variadic support), cast (reference/pointer downcasts, const preservation), dyn_cast (successful/failed casts with const support, unique_ptr ownership transfer), cast_if_present/dyn_cast_if_present (null-safe casting), cast_or_null/dyn_cast_or_null (nullable variants), unique_dyn_cast/unique_dyn_cast_or_null (unique_ptr specialized casting), predicates (IsaPred, IsaAndPresentPred, StaticCastTo, CastTo, CastIfPresentTo, DynCastIfPresentTo, DynCastTo functors)
 - corelib/detail/casting (implementation): Type simplification (SimplifyType, IsSimpleType), nullable detection (IsNullable), value presence (ValueIsPresent, isPresent(), unwrapValue()), forwarding strategies, type-checking implementation, cast infrastructure
