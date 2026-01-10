@@ -193,4 +193,17 @@ using log = detail::LogImpl<Args...>;
 
 }  // namespace logging
 
+namespace log = logging;
+
+#ifdef __LOGENIUM_SOURCE__
+
+namespace logenium {
+
+using namespace ::logging;
+using namespace ::log;
+
+}  // namespace logenium
+
+#endif  // __LOGENIUM_SOURCE__
+
 #endif  // LOGENIUM_LOGGING_LOGGING_HXX
