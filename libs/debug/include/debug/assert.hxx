@@ -12,6 +12,12 @@
 #include <string>
 #include <utility>
 
+#if !__LOGENIUM_DEBUG_USE_FAST_STACKTRACE__
+
+#include <iterator>
+
+#endif  // !__LOGENIUM_DEBUG_USE_FAST_STACKTRACE__
+
 #include <debug/breakpoint.hxx>
 #include <debug/is_debugger_present.hxx>
 
@@ -121,8 +127,9 @@ struct AssertImpl {
 #else
 
             std::println("Stacktrace:");
+            auto frame_count = std::distance(stacktrace.crbegin(), stacktrace.crend());
             for (auto frame = stacktrace.crbegin(); frame != stacktrace.crend(); ++frame) {
-                std::println("  {}", std::to_string(*frame));
+                std::println("  {}: {}", frame_count--, std::to_string(*frame));
             }
 
 #endif  // __LOGENIUM_DEBUG_USE_FAST_STACKTRACE__
@@ -185,8 +192,9 @@ struct AssertImpl {
 #else
 
             fmt::println("Stacktrace:");
+            auto frame_count = std::distance(stacktrace.crbegin(), stacktrace.crend());
             for (auto frame = stacktrace.crbegin(); frame != stacktrace.crend(); ++frame) {
-                fmt::println("  {}", std::to_string(*frame));
+                fmt::println("  {}: {}", frame_count--, std::to_string(*frame));
             }
 
 #endif  // __LOGENIUM_DEBUG_USE_FAST_STACKTRACE__
