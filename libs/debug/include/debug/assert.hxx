@@ -12,6 +12,8 @@
 #include <string>
 #include <utility>
 
+#include <debug/tracing/macros.hxx>
+
 #if !__LOGENIUM_DEBUG_USE_FAST_STACKTRACE__
 
 #include <iterator>
@@ -116,7 +118,9 @@ struct AssertImpl {
     AssertImpl(bool predicate, std::format_string<Args...> format, Args &&...args,
                std::source_location location = std::source_location::current(),
                const std::stacktrace &stacktrace = std::stacktrace::current()) {
+        ZoneScoped;
         if (!predicate) {
+            ZoneScopedN("Assertion handler");
             std::println("Assertion failed: {}", std::format(format, std::forward<Args>(args)...));
             std::println("Location: {}:{} in {}", location.file_name(), location.line(), location.function_name());
 
@@ -169,7 +173,9 @@ struct AssertImpl {
     AssertImpl(bool predicate, fmt::format_string<Args...> format, Args &&...args,
                std::source_location location = std::source_location::current(),
                const std::stacktrace &stacktrace = std::stacktrace::current()) {
+        ZoneScoped;
         if (!predicate) {
+            ZoneScopedN("Assertion handler");
 
 #if !__LOGENIUM_DEBUG_USE_COLOR_LOGS__
 
