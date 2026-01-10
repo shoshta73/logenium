@@ -107,6 +107,10 @@
 					"type": "boolean",
 					"description": "Whether to use fmtlib for logging"
 				},
+				"enable_color_logs": {
+					"type": "boolean",
+					"description": "Whether to use color logs"
+				},
 				"enable_testing": {
 					"type": "boolean",
 					"description": "Whether to enable logging library tests"

@@ -79,6 +79,12 @@
 #include <fmt/base.h>
 #include <fmt/format.h>
 
+#if __LOGENIUM_LOGGING_USE_COLOR_LOGS__
+
+#include <fmt/color.h>
+
+#endif  // __LOGENIUM_LOGGING_USE_COLOR_LOGS__
+
 #else
 
 #include <format>
@@ -87,6 +93,12 @@
 #endif
 
 #include <logging/level.hxx>
+
+#if __LOGENIUM_LOGGING_USE_COLOR_LOGS__
+
+#include <logging/internal/utils/to_color.hxx>
+
+#endif  // __LOGENIUM_LOGGING_USE_COLOR_LOGS__
 
 namespace logging {
 
@@ -137,8 +149,18 @@ struct LogImpl {
      */
     LogImpl(fmt::format_string<Args...> format, Args &&...args,
             std::source_location location = std::source_location::current()) {
-        fmt::println("[{}] {} ({}:{} in {})", L, fmt::format(format, std::forward<Args>(args)...), location.file_name(),
-                     location.line(), location.function_name());
+#if __LOGENIUM_LOGGING_USE_COLOR_LOGS__
+
+        auto level_string = fmt::format(internal::utils::ToColor(L), "{}", L);
+
+#else
+
+        auto level_string = fmt::format("{}", L);
+
+#endif
+
+        fmt::println("[{}] {} ({}:{} in {})", level_string, fmt::format(format, std::forward<Args>(args)...),
+                     location.file_name(), location.line(), location.function_name());
     }
 
 #else

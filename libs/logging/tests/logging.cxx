@@ -186,3 +186,108 @@ TEST(Logging, numeric_types) {
     std::string output = capture.get();
     EXPECT_EQ(output, "1 2 3 4 5 6 7\n");
 }
+
+// Test that all logging levels work
+TEST(Logging, all_levels) {
+    {
+        StdoutCapture capture;
+        logging::trace3("Trace3 message");
+        std::string output = capture.get();
+        EXPECT_FALSE(output.empty());
+    }
+    {
+        StdoutCapture capture;
+        logging::trace2("Trace2 message");
+        std::string output = capture.get();
+        EXPECT_FALSE(output.empty());
+    }
+    {
+        StdoutCapture capture;
+        logging::trace1("Trace1 message");
+        std::string output = capture.get();
+        EXPECT_FALSE(output.empty());
+    }
+    {
+        StdoutCapture capture;
+        logging::trace("Trace message");
+        std::string output = capture.get();
+        EXPECT_FALSE(output.empty());
+    }
+    {
+        StdoutCapture capture;
+        logging::debug("Debug message");
+        std::string output = capture.get();
+        EXPECT_FALSE(output.empty());
+    }
+    {
+        StdoutCapture capture;
+        logging::info("Info message");
+        std::string output = capture.get();
+        EXPECT_FALSE(output.empty());
+    }
+    {
+        StdoutCapture capture;
+        logging::warn("Warn message");
+        std::string output = capture.get();
+        EXPECT_FALSE(output.empty());
+    }
+    {
+        StdoutCapture capture;
+        logging::error("Error message");
+        std::string output = capture.get();
+        EXPECT_FALSE(output.empty());
+    }
+    {
+        StdoutCapture capture;
+        logging::fatal("Fatal message");
+        std::string output = capture.get();
+        EXPECT_FALSE(output.empty());
+    }
+}
+
+#if __LOGENIUM_LOGGING_USE_COLOR_LOGS__
+
+// Test that colored logging produces output (smoke test)
+// Note: We can't easily verify the actual color codes, but we can ensure it doesn't crash
+TEST(Logging, colored_output_smoke_test) {
+    {
+        StdoutCapture capture;
+        logging::trace("Colored trace");
+        std::string output = capture.get();
+        EXPECT_FALSE(output.empty());
+        // With colors, output should contain ANSI escape sequences
+        // which make it longer than the plain text
+    }
+    {
+        StdoutCapture capture;
+        logging::debug("Colored debug");
+        std::string output = capture.get();
+        EXPECT_FALSE(output.empty());
+    }
+    {
+        StdoutCapture capture;
+        logging::info("Colored info");
+        std::string output = capture.get();
+        EXPECT_FALSE(output.empty());
+    }
+    {
+        StdoutCapture capture;
+        logging::warn("Colored warning");
+        std::string output = capture.get();
+        EXPECT_FALSE(output.empty());
+    }
+    {
+        StdoutCapture capture;
+        logging::error("Colored error");
+        std::string output = capture.get();
+        EXPECT_FALSE(output.empty());
+    }
+    {
+        StdoutCapture capture;
+        logging::fatal("Colored fatal");
+        std::string output = capture.get();
+        EXPECT_FALSE(output.empty());
+    }
+}
+
+#endif  // __LOGENIUM_LOGGING_USE_COLOR_LOGS__

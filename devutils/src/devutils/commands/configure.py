@@ -26,6 +26,7 @@ class CorelibLibraryConfig(LibraryConfig):
 
 class LoggingLibraryConfig(LibraryConfig):
     use_fmtlib: bool
+    enable_color_logs: bool
 
 
 class DebugLibraryConfig(LibraryConfig):
@@ -172,7 +173,7 @@ def migrate_r1_to_r2(config_r1: ConfigurationR1) -> ConfigurationR2:
             "enable_testing": config_r1["enable_debug_testing"],
         },
         "corelib": {"enable_testing": config_r1["enable_corelib_testing"], "enable_tracing": False},
-        "logging": {"use_fmtlib": False, "enable_testing": False},
+        "logging": {"use_fmtlib": False, "enable_color_logs": False, "enable_testing": False},
     }
     return config_r2
 
@@ -285,6 +286,7 @@ def run(
 
         # logging library options
         logging_use_fmtlib = config_r2["logging"]["use_fmtlib"]
+        logging_use_color_logs = config_r2["logging"]["enable_color_logs"]
 
     else:
         # === Build Mode ===
@@ -353,6 +355,14 @@ def run(
         )
         typer.echo(f"  -> fmtlib: {'enabled' if logging_use_fmtlib else 'disabled'}")
 
+        logging_use_color_logs = False
+        if logging_use_fmtlib:
+            typer.echo("  -> Color logs: enabled")
+            logging_use_color_logs = typer.confirm(
+                "[logging] Enable colored log output? (requires fmtlib, adds colored 'Assertion failed' messages)"
+            )
+            typer.echo(f"  -> Color logs: {'enabled' if logging_use_color_logs else 'disabled'}")
+
         # === Testing Configuration ===
         typer.echo("")
         typer.echo(typer.style("=== Testing Configuration ===", fg="cyan", bold=True))
@@ -401,7 +411,11 @@ def run(
                 "enable_testing": enable_debug_testing,
             },
             "corelib": {"enable_testing": enable_corelib_testing, "enable_tracing": corelib_enable_tracing},
-            "logging": {"use_fmtlib": logging_use_fmtlib, "enable_testing": enable_logging_testing},
+            "logging": {
+                "use_fmtlib": logging_use_fmtlib,
+                "enable_color_logs": logging_use_color_logs,
+                "enable_testing": enable_logging_testing,
+            },
         }
         save_configuration_r2(new_config)
         typer.echo(f"Configuration saved to {ConfigFiles.config.relative_to(Directories.root)}")
@@ -425,6 +439,7 @@ def run(
 
     # logging library options
     command_line.extend(["-DLOGENIUM_LOGGING_USE_FMTLIB=" + ("ON" if logging_use_fmtlib else "OFF")])
+    command_line.extend(["-DLOGENIUM_LOGGING_USE_COLOR_LOGS=" + ("ON" if logging_use_color_logs else "OFF")])
 
     # test options
     command_line.extend([f"-DLOGENIUM_BUILD_TESTS={'ON' if enable_testing else 'OFF'}"])

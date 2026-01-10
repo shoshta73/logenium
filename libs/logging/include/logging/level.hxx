@@ -164,7 +164,7 @@ struct std::formatter<logging::Level> {
             ++it;
         }
         if (it != ctx.end() && *it != '}') {
-            throw std::format_error("Invalid format arguments for logging::Level");
+            throw fmt::format_error("Invalid format arguments for logging::Level");
         }
         return it;
     }
