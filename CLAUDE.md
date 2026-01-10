@@ -29,7 +29,7 @@ Wrapper scripts auto-install uv/Python 3.14, manage env:
 - Windows: `devutils.bat` or `devutils.ps1`
 - Linux/macOS: `./devutils.sh`
 
-**Commands**: `configure`, `build [-v] [-j N]`, `clean`, `check-license-headers {check|fix} [--no-cache]`, `codegen wayland`, `format {check|fix}`, `lint {check|fix} [--no-cache]`, `python stubgen {generate|check}`, `python remove-pycache`, `setup vscode settings [-r]`
+**Commands**: `configure`, `build [-v] [-j N]`, `clean`, `check-license-headers {check|fix} [--no-cache]`, `codegen wayland`, `docs build [--ci]`, `format {check|fix}`, `lint {check|fix} [--no-cache]`, `python stubgen {generate|check}`, `python remove-pycache`, `setup vscode settings [-r]`, `setup vscode bookmarks [-r]`
 
 **Manual**: `uv run devutils <command>` (requires uv installed)
 
@@ -37,7 +37,7 @@ Wrapper scripts auto-install uv/Python 3.14, manage env:
 
 Python CLI for building/linting. Typer-based, fully typed (mypy strict, PEP 561), uses uv for dependency management.
 
-**Structure**: `commands/` (configure, build, clean, check_license_headers, codegen/wayland, format, lint, python/stubgen, python/remove_pycache, setup/vscode), `constants/` (paths, comments, extensions, license_header), `utils/` (filesystem, file_checking)
+**Structure**: `commands/` (configure, build, clean, check_license_headers, codegen/wayland, docs, format, lint, python/stubgen, python/remove_pycache, setup/vscode), `constants/` (paths, comments, extensions, license_header), `utils/` (filesystem, file_checking)
 
 **configure**: Interactive CMake config (testing, build mode, checks Wayland codegen files). Saves to `config.yaml` (revision r2, JSON schema validated). Use `--reconfigure` to remove saved config and reconfigure. Subsequent runs load from config (no prompts). Subcommand: `configure migrate` migrates r1 to r2 configs. Config structure (r2):
 ```yaml
@@ -52,6 +52,9 @@ debug:
   enable_testing: bool
   use_fmtlib: bool
   enable_color_logs: bool
+logging:
+  enable_testing: bool
+  use_fmtlib: bool
 corelib:
   enable_testing: bool
 ```
@@ -63,7 +66,9 @@ corelib:
 **python stubgen**: Generate/check `.pyi` stubs with mypy stubgen
 **python remove-pycache**: Remove all `__pycache__` directories recursively from devutils root. Handles read-only files automatically.
 **codegen wayland**: Generate Wayland protocol files from YAML config (`libs/xheader/data/codegen/wayland.yaml`). Linux: requires `wayland-scanner`, runs from YAML. Windows: creates stub files. JSON schema validated. Add protocols by editing YAML.
+**docs build**: Generate Doxygen documentation for all configured projects (currently corelib). Requires `doxygen` installed. Use `--ci` flag to remove temporary files (`.map`, `.md5`) from generated docs directory, useful for CI/CD environments where metadata files aren't needed.
 **setup vscode settings**: Create `.vscode/settings.json` with YAML schema mappings for config.yaml and codegen YAML files. Enables IntelliSense/validation in VS Code. Use `-r/--regenerate` to overwrite existing file.
+**setup vscode bookmarks**: Create `.vscode/bookmarks.json` with predefined bookmarks to key project locations (CMakeLists.txt project() declarations, Doxyfile PROJECT_NUMBER fields). For VS Code Bookmarks extension. Use `-r/--regenerate` to overwrite existing file.
 
 ### devutils Internals
 
@@ -83,7 +88,9 @@ corelib:
 
 1. **xheader** (C23, `libs/xheader/`): Cross-platform API abstraction. Windows API (A/W variants), Linux dlfcn (`dlopen`/`dlclose`), XCB (connection, window mgmt), Wayland protocols (re-exports on Linux, stubs on Windows). Generated files in `internal/` (not in git, regenerate with `codegen wayland`). Tests are C++ (GoogleTest), declares `LANGUAGES C CXX`.
 
-2. **debug** (C++23, `libs/debug/`): Debug utilities (Assert, Breakpoint, BreakpointIfDebugging, IsDebuggerPresent). No-ops in release builds (consteval). Uses std::source_location, std::stacktrace. **Always use `debug::Assert` instead of `<cassert>`** - provides better diagnostics with formatted messages, source location, and stack traces.
+2. **debug** (C++23, `libs/debug/`): Debug utilities (Assert, Breakpoint, BreakpointIfDebugging, IsDebuggerPresent) and profiling/tracing infrastructure. No-ops in release builds (consteval). Uses std::source_location, std::stacktrace. **Always use `debug::Assert` instead of `<cassert>`** - provides better diagnostics with formatted messages, source location, and stack traces.
+
+   **tracing**: Thread naming and profiling utilities via Tracy profiler integration (v0.13.0). Provides `SetThreadName(string_view name)` and `SetThreadName(string_view name, int group_hint)` for setting thread names visible in profiling tools (always available). Profiling zone macros `ZoneScoped` and `ZoneScopedN(name)` for scope-based performance measurement (active in debug builds only, no-ops in release when NDEBUG is defined). Macros wrap Tracy's zone instrumentation and automatically become zero-overhead in production. Always linked via TracyClient. Include: `<debug/tracing.hxx>` (all), `<debug/tracing/set_thread_name.hxx>` (thread naming), or `<debug/tracing/macros.hxx>` (zone macros).
 
    **CMake Options**:
    - `LOGENIUM_DEBUG_USE_FAST_STACKTRACE` (OFF): Use fast stacktrace (not reversed printing in assert). Sets `__LOGENIUM_DEBUG_USE_FAST_STACKTRACE__`.
@@ -92,13 +99,31 @@ corelib:
 
    Configuration controlled by devutils config r2: `debug.use_fmtlib`, `debug.enable_color_logs`.
 
-3. **corelib** (C++23, `libs/corelib/`): Core utilities library. Organized into functional modules under `include/corelib/` with convenience headers.
+   **Dependencies**: TracyClient (v0.13.0, always linked via FetchContent), fmt::fmt (v12.1.0, optional via `LOGENIUM_DEBUG_USE_FMTLIB`).
+
+3. **logging** (C++23, `libs/logging/`): Header-only logging utility with compile-time format string validation. Simple wrapper around format string validation and output to stdout. Supports two backends: C++20 standard library (std::format/std::println) or fmtlib (fmt::format/fmt::println). Template-based design using CTAD (Class Template Argument Deduction) for automatic type deduction. Source location tracking accepted but not currently utilized.
+
+   **Usage**: `logging::log("Hello, {}!", "world")`, `logging::log("Value: {}", 42)`, `logging::log("Multiple: {}, {}, {}", 1, 2.5, "three")`. Include: `<logging/logging.hxx>`.
+
+   **CMake Options**:
+   - `LOGENIUM_LOGGING_USE_FMTLIB` (ON): Use fmtlib instead of standard library for formatting. Links fmt::fmt (v12.1.0 via FetchContent). Sets `__LOGENIUM_LOGGING_USE_FMTLIB__`.
+   - `LOGENIUM_LOGGING_BUILD_TESTS` (ON): Enable test building.
+
+   **Dependencies**: fmt::fmt (v12.1.0, optional via `LOGENIUM_LOGGING_USE_FMTLIB`), googletest (v1.17.0, tests only).
+
+4. **corelib** (C++23, `libs/corelib/`): Core utilities library. Organized into functional modules under `include/corelib/` with convenience headers.
+
+   **tracing integration**: Optional profiling instrumentation via `CRLB_ZONE_SCOPED` macro (defined in `<corelib/internal/tracing.hxx>`). When `__LOGENIUM_CORELIB_ENABLE_TRACING__` is enabled, expands to `ZoneScoped` for Tracy profiling; otherwise becomes a no-op. Applied to non-trivial runtime functions in extensible-rtti (TypeID, DynamicTypeID, IsA, classof methods) and utility (Defer/AutoRelease destructors, move operations, Swap, Reset). Casting functions and type traits already instrumented. Not applied to constexpr functions (type_name) or simple getters.
+
+   **types**: Platform-independent type aliases for integer and floating-point types using concise naming convention. Fixed-width integer types: `u8`, `u16`, `u32`, `u64` (unsigned, using std::uint*_t), `i8`, `i16`, `i32`, `i64` (signed, using std::int*_t), `s8`, `s16`, `s32`, `s64` (signed aliases for i* types). Floating-point types: `f32` (float), `f64` (double). All types provide explicit bit-width in name for clarity and portability. Include: `<corelib/types.hxx>` (all types) or `<corelib/types/int.hxx>`, `<corelib/types/float.hxx>` (specific).
 
    **utility**: Type utilities including `type_name<T>()` for compile-time type name extraction using compiler intrinsics (`__PRETTY_FUNCTION__` for GCC/Clang, `__FUNCSIG__` for MSVC). Template overload returns type as `std::string_view`, value overload uses forwarding reference to preserve cv-qualifiers. MSVC specializations normalize `__int64` types to "long long". RAII utilities including `Defer<Functor>` for scope-exit execution (executes functor in destructor, supports move semantics) and `AutoRelease<T, InvalidValue>` for automatic resource management with custom releasers (non-copyable, move-only, with Reset/Get/operators, calls releaser on destruction if value != InvalidValue). Include: `<corelib/utility.hxx>` (all utilities) or `<corelib/utility/type_name.hxx>`, `<corelib/utility/defer.hxx>`, `<corelib/utility/auto_release.hxx>` (specific).
 
    **casting**: RTTI-free casting utilities inspired by LLVM's casting infrastructure. Uses `classof` static methods for type checking without C++ RTTI. Template metaprogramming with SFINAE, type traits, and recursive type simplification. Main APIs: `isa<T>()` (type checking, variadic support), `cast<T>()` (checked cast with assertion), `dyn_cast<T>()` (dynamic cast returning null on failure). Variants: `isa_and_present<T>()`, `cast_if_present<T>()`, `dyn_cast_if_present<T>()`, `cast_or_null<T>()`, `dyn_cast_or_null<T>()`, `unique_dyn_cast<T>()`, `unique_dyn_cast_or_null<T>()`. Predicate functors: `IsaPred<T>`, `IsaAndPresentPred<T>`, `CastTo<T>`, `DynCastTo<T>`, `CastIfPresentTo<T>`, `DynCastIfPresentTo<T>`, `StaticCastTo<T>`. Supports pointers, references, const-correctness, `std::unique_ptr`, and `std::optional`. Include: `<corelib/casting.hxx>` (all) or `<corelib/casting/isa.hxx>`, `<corelib/casting/cast.hxx>`, `<corelib/casting/dyn_cast.hxx>`, `<corelib/casting/predicates.hxx>`.
 
-4. **logenium** (C++23): GUI framework with RTTI-free type system. Abstract base classes, factory pattern (`Application::Create()`), singleton. Main: `main()` → `Create()` → `Run()`.
+   **extensible-rtti**: RTTI-free runtime type identification system using compile-time type identifiers. Provides `Base` abstract class with TypeID/DynamicTypeID/IsA interface and `Extends<ThisType, ParentType, ParentTypes...>` CRTP template for automatic implementation. Uses Type ID Pattern (unique static char ID per type, address as identifier) and Anchor Idiom (pure virtual anchor() for vtable emission). Supports single and multiple inheritance through variadic template parameters. Integrates with casting system via classof() method. Requirements: derived classes declare `static char ID;`, define in .cxx (`char Type::ID = 0;`), implement `void anchor() override {}`, friend Extends. Include: `<corelib/extensible-rtti.hxx>` (all) or `<corelib/extensible-rtti/base.hxx>`, `<corelib/extensible-rtti/extends.hxx>` (specific).
+
+5. **logenium** (C++23): GUI framework with RTTI-free type system. Abstract base classes, factory pattern (`Application::Create()`), singleton. Main: `main()` → `Create()` → `Run()`.
 
    **Build Structure**: Split into `logeniumlib` (library) and `logenium` (executable). `logeniumlib` contains all application/window implementation (PUBLIC interface), `logenium` is thin wrapper with `main()`. This separation enables testing - tests link against `logeniumlib`.
 
@@ -189,13 +214,24 @@ Usage notes:
 - Include guards: `#ifndef LOGENIUM_PATH_TO_FILE_HXX`
 - Platform: `#if defined(_WIN32)`, `#ifdef __linux__`
 - Assertions: Use `debug::Assert` instead of `<cassert>` for better diagnostics
-- **No documentation comments** unless explicitly requested. Self-documenting code only.
-- Include order (clang-format): logenium(9) > corelib(8) > debug(7) > xheader(6) > fmt(5) > gtest/gmock(4) > system(3) > stdlib(2) > other(1). 120 col, Google style, 4-space, right-aligned pointers (`int *ptr`).
+- **Documentation**: For C/C++ code, use Doxygen comments with `@tags` format:
+  - Use `/** ... */` for multi-line documentation comments
+  - Use `@brief` for brief descriptions
+  - Use `@param` for function parameters, `@tparam` for template parameters
+  - Use `@return` for return values
+  - Use `@note` for additional notes
+  - Use `@code ... @endcode` for code examples
+  - Use `@ingroup` to assign classes/functions to documentation groups
+  - Use `@defgroup` in umbrella headers to define documentation groups
+  - Include `@file` documentation in umbrella headers with brief description
+  - See existing corelib headers (utility.hxx, casting.hxx, extensible-rtti.hxx) for examples
+  - Self-documenting code is still preferred; only add documentation when it provides value
+- Include order (clang-format): logenium(9) > corelib(8) > debug(7) > xheader(6) > fmt/tracy(5) > gtest/gmock(4) > system(3) > stdlib(2) > other(1). Special: `common/TracySystem.hpp` also priority 5. 120 col, Google style, 4-space, right-aligned pointers (`int *ptr`).
 - CMake: Custom logging (`log_info`, `log_status`, `log_warning`, `log_error`). Includes: module name only at root, full path in subdirs. CMakeLists.txt structure: include options.cmake before dependencies.cmake (allows dependencies to use option values).
 
 ## Git Commits
 
-**Tags**: `[xheader]`, `[debug]`, `[corelib]`, `[devutils]`, `[build]`, `[logenium]`, `[logenium(subcomponent)]`. Untagged = repo-wide.
+**Tags**: `[xheader]`, `[debug]`, `[logging]`, `[corelib]`, `[devutils]`, `[build]`, `[logenium]`, `[logenium(subcomponent)]`. Untagged = repo-wide.
 **Format**: `[tag] lowercase imperative, no period`. Ex: `[xheader] add dlfcn.h stubs`, `[corelib] fix type_name const preservation`, `fix license headers`
 
 ## xheader API Functions
@@ -233,7 +269,7 @@ See `libs/xheader/CMakeLists.txt` for full list.
 **Organization**: Consolidated test structure with single CMakeLists.txt per library. Uses `file(GLOB_RECURSE ... CONFIGURE_DEPENDS *.cxx)` to automatically collect all test sources recursively. Test subdirectories no longer have individual CMakeLists.txt files.
 
 **Targets**:
-1. Per-library: `xheader_tests`, `debug_tests`, `corelib_tests`, `logenium_tests` (consolidated from all test subdirectories)
+1. Per-library: `xheader_tests`, `debug_tests`, `logging_tests`, `corelib_tests`, `logenium_tests` (consolidated from all test subdirectories)
 2. Project-wide: `all_logenium_tests`
 
 **Test Structure**:
@@ -258,6 +294,16 @@ See `libs/xheader/CMakeLists.txt` for full list.
   - **const_pointer_or_const_ref/**: `const_pointer_or_const_ref.cxx`
   - **is_integral_or_enum/**: `is_integral_or_enum.cxx`
 
+- **libs/corelib/tests/types/**: Type alias tests
+  - `type_name_int.cxx` (type_name with integer aliases: u8/u16/u32/u64, i8/i16/i32/i64, s8/s16/s32/s64, value overloads, const/pointer/reference types, constexpr evaluation, alias equivalence)
+  - `type_name_float.cxx` (type_name with floating-point aliases: f32/f64, value overloads, const/pointer/reference types, rvalue references, constexpr evaluation)
+
+- **libs/corelib/tests/extensible-rtti/**: Extensible RTTI tests
+  - `common.hxx`/`common.cxx`: Shared test hierarchy (TestNode, TestContainer, TestElement, TestList, TestTree)
+  - **base/**: `base.cxx` (Base class TypeID, DynamicTypeID, IsA methods)
+  - **extends/**: `single_inheritance.cxx` (single parent scenarios), `multiple_inheritance.cxx` (multi-parent scenarios)
+  - **casting/**: `isa.cxx` (isa integration), `cast.cxx` (cast integration), `dyn_cast.cxx` (dyn_cast integration), `predicates.cxx` (predicate functors)
+
 - **tests/**: Logenium framework tests (85 tests)
   - **application/**: `application.cxx` (42 Application tests using mock implementations)
   - **window/**: `window.cxx` (43 Window tests using mock implementations)
@@ -265,10 +311,13 @@ See `libs/xheader/CMakeLists.txt` for full list.
 **Coverage**:
 - xheader: Windows API, dlfcn stubs
 - debug: Assert, Breakpoint, IsDebuggerPresent
+- logging: Basic logging (string, int, float, bool), multiple arguments, format validation, custom formatting (hex, oct, width, alignment, precision), std::string/const char*, rvalue references, pointers, characters, numeric types, stdout output capture
+- corelib/types: type_name with type aliases (unsigned types u8/u16/u32/u64, signed types i8/i16/i32/i64/s8/s16/s32/s64, floating-point types f32/f64), value overloads, const qualification, pointers, references, rvalue references, constexpr evaluation, alias equivalence (s* == i*)
 - corelib/utility: type_name (template/value overloads, cv-qualifiers, constexpr evaluation), defer (RAII wrapper, scope-exit execution, LIFO ordering, exception safety, move semantics), auto_release (resource manager, custom releasers, Reset/Get/operators, move-only semantics, invalid value handling, pointer/string/custom types)
 - corelib/casting (public API): isa/isa_and_present (type checking with pointers/references/unique_ptr/const-correctness, variadic support), cast (reference/pointer downcasts, const preservation), dyn_cast (successful/failed casts with const support, unique_ptr ownership transfer), cast_if_present/dyn_cast_if_present (null-safe casting), cast_or_null/dyn_cast_or_null (nullable variants), unique_dyn_cast/unique_dyn_cast_or_null (unique_ptr specialized casting), predicates (IsaPred, IsaAndPresentPred, StaticCastTo, CastTo, CastIfPresentTo, DynCastIfPresentTo, DynCastTo functors)
 - corelib/detail/casting (implementation): Type simplification (SimplifyType, IsSimpleType), nullable detection (IsNullable), value presence (ValueIsPresent, isPresent(), unwrapValue()), forwarding strategies, type-checking implementation, cast infrastructure
 - corelib/type_traits: add_const_past_pointer (const propagation past pointers), add_lvalue_reference_if_not_pointer (conditional reference addition), const_pointer_or_const_ref (const pointer/reference selection), is_integral_or_enum (integral/enum detection)
+- corelib/extensible-rtti: Base class (TypeID uniqueness/consistency, DynamicTypeID, IsA method), Extends template (single/multiple inheritance, TypeID/DynamicTypeID override, template/pointer IsA methods, classof pattern), casting integration (isa/cast/dyn_cast with CRTP types, const preservation, unique_ptr support, predicate functors)
 - logenium: Application and Window RTTI-free casting system
   - **Enum values**: ApplicationKind/WindowKind enum value verification
   - **GetKind()**: Kind retrieval for all platform variants (Windows, Linux, X11, Wayland)
@@ -281,7 +330,7 @@ See `libs/xheader/CMakeLists.txt` for full list.
 
 Test files: `.cxx`.
 
-**Options**: `LOGENIUM_BUILD_TESTS` (master, ON), `LOGENIUM_XHEADER_BUILD_TESTS` (ON), `LOGENIUM_DEBUG_BUILD_TESTS` (ON), `LOGENIUM_CORELIB_BUILD_TESTS` (ON).
+**Options**: `LOGENIUM_BUILD_TESTS` (master, ON), `LOGENIUM_XHEADER_BUILD_TESTS` (ON), `LOGENIUM_DEBUG_BUILD_TESTS` (ON), `LOGENIUM_LOGGING_BUILD_TESTS` (ON), `LOGENIUM_CORELIB_BUILD_TESTS` (ON).
 
 **Logenium Test Implementation Notes**:
 - **No `#define private public`**: MSVC STL forbids macroizing keywords. Tests use public API only via mock implementations.
