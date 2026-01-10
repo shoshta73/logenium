@@ -5,6 +5,7 @@
 #define LOGENIUM_CORELIB_TYPES_INT_HXX
 
 #include <cstdint>
+#include <limits>
 
 namespace corelib {
 
@@ -115,6 +116,222 @@ using s32 = i32;
  * as an alternative to the 'i' (integer) prefix.
  */
 using s64 = i64;
+
+/**
+ * @ingroup types
+ * @brief Minimum value for u8 type
+ *
+ * Compile-time constant representing the minimum value for an 8-bit unsigned integer.
+ * Value: 0
+ */
+constexpr u8 u8_min = std::numeric_limits<u8>::min();
+
+/**
+ * @ingroup types
+ * @brief Maximum value for u8 type
+ *
+ * Compile-time constant representing the maximum value for an 8-bit unsigned integer.
+ * Value: 255
+ */
+constexpr u8 u8_max = std::numeric_limits<u8>::max();
+
+/**
+ * @ingroup types
+ * @brief Minimum value for u16 type
+ *
+ * Compile-time constant representing the minimum value for a 16-bit unsigned integer.
+ * Value: 0
+ */
+constexpr u16 u16_min = std::numeric_limits<u16>::min();
+
+/**
+ * @ingroup types
+ * @brief Maximum value for u16 type
+ *
+ * Compile-time constant representing the maximum value for a 16-bit unsigned integer.
+ * Value: 65,535
+ */
+constexpr u16 u16_max = std::numeric_limits<u16>::max();
+
+/**
+ * @ingroup types
+ * @brief Minimum value for u32 type
+ *
+ * Compile-time constant representing the minimum value for a 32-bit unsigned integer.
+ * Value: 0
+ */
+constexpr u32 u32_min = std::numeric_limits<u32>::min();
+
+/**
+ * @ingroup types
+ * @brief Maximum value for u32 type
+ *
+ * Compile-time constant representing the maximum value for a 32-bit unsigned integer.
+ * Value: 4,294,967,295
+ */
+constexpr u32 u32_max = std::numeric_limits<u32>::max();
+
+/**
+ * @ingroup types
+ * @brief Minimum value for u64 type
+ *
+ * Compile-time constant representing the minimum value for a 64-bit unsigned integer.
+ * Value: 0
+ */
+constexpr u64 u64_min = std::numeric_limits<u64>::min();
+
+/**
+ * @ingroup types
+ * @brief Maximum value for u64 type
+ *
+ * Compile-time constant representing the maximum value for a 64-bit unsigned integer.
+ * Value: 18,446,744,073,709,551,615
+ */
+constexpr u64 u64_max = std::numeric_limits<u64>::max();
+
+/**
+ * @ingroup types
+ * @brief Minimum value for i8 type
+ *
+ * Compile-time constant representing the minimum value for an 8-bit signed integer.
+ * Value: -128
+ */
+constexpr i8 i8_min = std::numeric_limits<i8>::min();
+
+/**
+ * @ingroup types
+ * @brief Maximum value for i8 type
+ *
+ * Compile-time constant representing the maximum value for an 8-bit signed integer.
+ * Value: 127
+ */
+constexpr i8 i8_max = std::numeric_limits<i8>::max();
+
+/**
+ * @ingroup types
+ * @brief Minimum value for i16 type
+ *
+ * Compile-time constant representing the minimum value for a 16-bit signed integer.
+ * Value: -32,768
+ */
+constexpr i16 i16_min = std::numeric_limits<i16>::min();
+
+/**
+ * @ingroup types
+ * @brief Maximum value for i16 type
+ *
+ * Compile-time constant representing the maximum value for a 16-bit signed integer.
+ * Value: 32,767
+ */
+constexpr i16 i16_max = std::numeric_limits<i16>::max();
+
+/**
+ * @ingroup types
+ * @brief Minimum value for i32 type
+ *
+ * Compile-time constant representing the minimum value for a 32-bit signed integer.
+ * Value: -2,147,483,648
+ */
+constexpr i32 i32_min = std::numeric_limits<i32>::min();
+
+/**
+ * @ingroup types
+ * @brief Maximum value for i32 type
+ *
+ * Compile-time constant representing the maximum value for a 32-bit signed integer.
+ * Value: 2,147,483,647
+ */
+constexpr i32 i32_max = std::numeric_limits<i32>::max();
+
+/**
+ * @ingroup types
+ * @brief Minimum value for i64 type
+ *
+ * Compile-time constant representing the minimum value for a 64-bit signed integer.
+ * Value: -9,223,372,036,854,775,808
+ */
+constexpr i64 i64_min = std::numeric_limits<i64>::min();
+
+/**
+ * @ingroup types
+ * @brief Maximum value for i64 type
+ *
+ * Compile-time constant representing the maximum value for a 64-bit signed integer.
+ * Value: 9,223,372,036,854,775,807
+ */
+constexpr i64 i64_max = std::numeric_limits<i64>::max();
+
+/**
+ * @ingroup types
+ * @brief Minimum value for s8 type
+ *
+ * Compile-time constant representing the minimum value for an 8-bit signed integer.
+ * Alias for i8_min. Value: -128
+ */
+constexpr s8 s8_min = i8_min;
+
+/**
+ * @ingroup types
+ * @brief Maximum value for s8 type
+ *
+ * Compile-time constant representing the maximum value for an 8-bit signed integer.
+ * Alias for i8_max. Value: 127
+ */
+constexpr s8 s8_max = i8_max;
+
+/**
+ * @ingroup types
+ * @brief Minimum value for s16 type
+ *
+ * Compile-time constant representing the minimum value for a 16-bit signed integer.
+ * Alias for i16_min. Value: -32,768
+ */
+constexpr s16 s16_min = i16_min;
+
+/**
+ * @ingroup types
+ * @brief Maximum value for s16 type
+ *
+ * Compile-time constant representing the maximum value for a 16-bit signed integer.
+ * Alias for i16_max. Value: 32,767
+ */
+constexpr s16 s16_max = i16_max;
+
+/**
+ * @ingroup types
+ * @brief Minimum value for s32 type
+ *
+ * Compile-time constant representing the minimum value for a 32-bit signed integer.
+ * Alias for i32_min. Value: -2,147,483,648
+ */
+constexpr s32 s32_min = i32_min;
+
+/**
+ * @ingroup types
+ * @brief Maximum value for s32 type
+ *
+ * Compile-time constant representing the maximum value for a 32-bit signed integer.
+ * Alias for i32_max. Value: 2,147,483,647
+ */
+constexpr s32 s32_max = i32_max;
+
+/**
+ * @ingroup types
+ * @brief Minimum value for s64 type
+ *
+ * Compile-time constant representing the minimum value for a 64-bit signed integer.
+ * Alias for i64_min. Value: -9,223,372,036,854,775,808
+ */
+constexpr s64 s64_min = i64_min;
+
+/**
+ * @ingroup types
+ * @brief Maximum value for s64 type
+ *
+ * Compile-time constant representing the maximum value for a 64-bit signed integer.
+ * Alias for i64_max. Value: 9,223,372,036,854,775,807
+ */
+constexpr s64 s64_max = i64_max;
 
 }  // namespace corelib
 
