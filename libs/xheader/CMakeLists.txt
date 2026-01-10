@@ -4,7 +4,6 @@
 # CXX is used for compiling tests
 project(
         xheader
-        VERSION 0.0.1
         DESCRIPTION "Cross-platform platform specific headers"
         LANGUAGES CXX C
 )
