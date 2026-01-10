@@ -1,12 +1,12 @@
 // SPDX-FileCopyrightText: 2026 Logenium Authors and Contributors
 // SPDX-License-Identifier: BSD-3-Clause
 
-#include <corelib/types/float.hxx>
-
 #include <cmath>
 #include <limits>
 
 #include <gtest/gtest.h>
+
+#include <corelib/types/float.hxx>
 
 // Test f32 constants
 TEST(FloatConstants, f32_constants) {

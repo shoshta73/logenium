@@ -1,12 +1,12 @@
 // SPDX-FileCopyrightText: 2026 Logenium Authors and Contributors
 // SPDX-License-Identifier: BSD-3-Clause
 
-#include <corelib/types/int.hxx>
-
 #include <cstdint>
 #include <limits>
 
 #include <gtest/gtest.h>
+
+#include <corelib/types/int.hxx>
 
 // Test unsigned 8-bit integer constants
 TEST(IntConstants, u8_constants) {

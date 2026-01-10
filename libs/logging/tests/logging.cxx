@@ -1,12 +1,12 @@
 // SPDX-FileCopyrightText: 2026 Logenium Authors and Contributors
 // SPDX-License-Identifier: BSD-3-Clause
 
-#include <logging/logging.hxx>
-
 #include <source_location>
 #include <string>
 
 #include <gtest/gtest.h>
+
+#include <logging/logging.hxx>
 
 // Helper to capture stdout output
 class StdoutCapture {

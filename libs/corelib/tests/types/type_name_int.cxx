@@ -1,13 +1,13 @@
 // SPDX-FileCopyrightText: 2026 Logenium Authors and Contributors
 // SPDX-License-Identifier: BSD-3-Clause
 
-#include <corelib/types/int.hxx>
-#include <corelib/utility/type_name.hxx>
-
 #include <cstdint>
 #include <string_view>
 
 #include <gtest/gtest.h>
+
+#include <corelib/types/int.hxx>
+#include <corelib/utility/type_name.hxx>
 
 // Test that unsigned integer type aliases resolve to correct type names
 TEST(TypeNameInt, unsigned_types) {
@@ -98,8 +98,7 @@ TEST(TypeNameInt, pointer_types) {
 TEST(TypeNameInt, reference_types) {
     EXPECT_EQ(corelib::type_name<corelib::u8 &>(), corelib::type_name<std::uint8_t &>());
     EXPECT_EQ(corelib::type_name<corelib::i32 &>(), corelib::type_name<std::int32_t &>());
-    EXPECT_EQ(corelib::type_name<const corelib::s64 &>(),
-              corelib::type_name<const std::int64_t &>());
+    EXPECT_EQ(corelib::type_name<const corelib::s64 &>(), corelib::type_name<const std::int64_t &>());
 }
 
 // Test constexpr evaluation with type aliases

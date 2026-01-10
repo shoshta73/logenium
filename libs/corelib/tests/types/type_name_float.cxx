@@ -1,12 +1,12 @@
 // SPDX-FileCopyrightText: 2026 Logenium Authors and Contributors
 // SPDX-License-Identifier: BSD-3-Clause
 
-#include <corelib/types/float.hxx>
-#include <corelib/utility/type_name.hxx>
-
 #include <string_view>
 
 #include <gtest/gtest.h>
+
+#include <corelib/types/float.hxx>
+#include <corelib/utility/type_name.hxx>
 
 // Test that floating-point type aliases resolve to correct type names
 TEST(TypeNameFloat, basic_types) {
@@ -15,14 +15,10 @@ TEST(TypeNameFloat, basic_types) {
 }
 
 // Test that f32 is exactly float
-TEST(TypeNameFloat, f32_is_float) {
-    EXPECT_EQ(corelib::type_name<corelib::f32>(), "float");
-}
+TEST(TypeNameFloat, f32_is_float) { EXPECT_EQ(corelib::type_name<corelib::f32>(), "float"); }
 
 // Test that f64 is exactly double
-TEST(TypeNameFloat, f64_is_double) {
-    EXPECT_EQ(corelib::type_name<corelib::f64>(), "double");
-}
+TEST(TypeNameFloat, f64_is_double) { EXPECT_EQ(corelib::type_name<corelib::f64>(), "double"); }
 
 // Test floating-point types with value overload
 TEST(TypeNameFloat, value_overload) {
@@ -124,8 +120,6 @@ TEST(TypeNameFloat, contains_expected_substrings) {
     auto f32_name = corelib::type_name<corelib::f32>();
     auto f64_name = corelib::type_name<corelib::f64>();
 
-    EXPECT_TRUE(f32_name.find("float") != std::string_view::npos)
-        << "Expected 'float' in: " << f32_name;
-    EXPECT_TRUE(f64_name.find("double") != std::string_view::npos)
-        << "Expected 'double' in: " << f64_name;
+    EXPECT_TRUE(f32_name.find("float") != std::string_view::npos) << "Expected 'float' in: " << f32_name;
+    EXPECT_TRUE(f64_name.find("double") != std::string_view::npos) << "Expected 'double' in: " << f64_name;
 }

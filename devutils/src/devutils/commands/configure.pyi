@@ -28,6 +28,7 @@ class CorelibLibraryConfig(LibraryConfig):
 
 class LoggingLibraryConfig(LibraryConfig):
     use_fmtlib: bool
+    enable_color_logs: bool
 
 class DebugLibraryConfig(LibraryConfig):
     use_fast_stacktrace: bool

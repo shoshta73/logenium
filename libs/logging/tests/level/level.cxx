@@ -1,8 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Logenium Authors and Contributors
 // SPDX-License-Identifier: BSD-3-Clause
 
-#include <logging/level.hxx>
-
 #include <format>
 #include <string>
 #include <type_traits>
@@ -11,6 +9,8 @@
 #include <gtest/gtest.h>
 
 #include <corelib/types/int.hxx>
+
+#include <logging/level.hxx>
 
 // Test that Level is an enum class
 TEST(Level, is_enum) {

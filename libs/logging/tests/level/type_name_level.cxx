@@ -1,14 +1,14 @@
 // SPDX-FileCopyrightText: 2026 Logenium Authors and Contributors
 // SPDX-License-Identifier: BSD-3-Clause
 
-#include <logging/level.hxx>
-
 #include <string>
 #include <string_view>
 
 #include <gtest/gtest.h>
 
 #include <corelib/utility/type_name.hxx>
+
+#include <logging/level.hxx>
 
 // Test type_name with Level enum
 TEST(TypeNameLevel, basic_enum) {
