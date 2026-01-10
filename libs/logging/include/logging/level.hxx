@@ -18,6 +18,7 @@
 #endif
 
 #include <debug/assert.hxx>
+#include <debug/tracing/macros.hxx>
 
 #include <corelib/types/int.hxx>
 
@@ -173,6 +174,7 @@ struct fmt::formatter<logging::Level> {
     }
 
     auto format(const logging::Level &level, fmt::format_context &ctx) const {
+        ZoneScoped;
         switch (level) {
             using enum logging::Level;
             case Ignore: {
@@ -304,6 +306,7 @@ struct std::formatter<logging::Level> {
     }
 
     auto format(const logging::Level &level, std::format_context &ctx) const {
+        ZoneScoped;
         switch (level) {
             using enum logging::Level;
             case Ignore: {

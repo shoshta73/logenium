@@ -11,6 +11,7 @@
 #include "fmt/color.h"
 
 #include <debug/assert.hxx>
+#include <debug/tracing/macros.hxx>
 
 #include <logging/internal/utils/to_color.hxx>
 #include <logging/level.hxx>
@@ -18,6 +19,8 @@
 namespace logging::internal::utils {
 
 fmt::text_style ToColor(Level level) {
+    ZoneScoped;
+
     switch (level) {
         using enum logging::Level;
         case Ignore: {

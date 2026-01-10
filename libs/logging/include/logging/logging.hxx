@@ -74,6 +74,8 @@
 
 #include <source_location>
 
+#include <debug/tracing/macros.hxx>
+
 #if __LOGENIUM_LOGGING_USE_FMTLIB__
 
 #include <fmt/base.h>
@@ -149,6 +151,8 @@ struct LogImpl {
      */
     LogImpl(fmt::format_string<Args...> format, Args &&...args,
             std::source_location location = std::source_location::current()) {
+        ZoneScoped;
+
 #if __LOGENIUM_LOGGING_USE_COLOR_LOGS__
 
         auto level_string = fmt::format(internal::utils::ToColor(L), "{}", L);
@@ -181,6 +185,7 @@ struct LogImpl {
      */
     LogImpl(std::format_string<Args...> format, Args &&...args,
             std::source_location location = std::source_location::current()) {
+        ZoneScoped;
         std::println("[{}] {} ({}:{} in {})", L, std::format(format, std::forward<Args>(args)...), location.file_name(),
                      location.line(), location.function_name());
     }
