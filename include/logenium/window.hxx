@@ -43,7 +43,7 @@ class Window {
         void *handle;
     };
 
-    virtual ~Window() = default;
+    virtual ~Window();
 
     NativeHandle &GetNativeHandle();
 

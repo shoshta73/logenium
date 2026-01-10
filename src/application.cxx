@@ -8,6 +8,18 @@
 #include <debug/assert.hxx>
 #include <debug/tracing/macros.hxx>
 
+//! Windows SDK defines min and max macros, which conflict with std::min and std::max
+#ifdef min
+#undef min
+#endif
+
+//! Windows SDK defines min and max macros, which conflict with std::min and std::max
+#ifdef max
+#undef max
+#endif
+
+#include <logging/logging.hxx>
+
 #include "logenium/platform/linux/application.hxx"    // IWYU pragma: keep
 #include "logenium/platform/windows/application.hxx"  // IWYU pragma: keep
 
@@ -21,11 +33,15 @@ Application::Application(ApplicationKind kind) : kind(kind) {
     ZoneScoped;
     Assert(instance == nullptr, "Application is already initialized");
     instance = this;
+
+    log::trace("Application initialized");
 }
 
 Application::~Application() {
     ZoneScoped;
     instance = nullptr;
+
+    log::trace("Application destroyed");
 }
 
 Application::NativeHandle &Application::GetNativeHandle() { return native_handle; }

@@ -7,8 +7,20 @@
 
 #include <xheader/windows.h>
 
-#include "debug/tracing/macros.hxx"
 #include <debug/assert.hxx>
+#include <debug/tracing/macros.hxx>
+
+//! Windows SDK defines min and max macros, which conflict with std::min and std::max
+#ifdef min
+#undef min
+#endif
+
+//! Windows SDK defines min and max macros, which conflict with std::min and std::max
+#ifdef max
+#undef max
+#endif
+
+#include <logging/logging.hxx>
 
 #include "logenium/application.hxx"
 #include "logenium/platform/windows/window.hxx"
@@ -20,12 +32,15 @@ WindowsApplication::WindowsApplication() : Application(ApplicationKind::AK_Windo
     auto handle = GetModuleHandle(nullptr);
     Assert(handle, "Failed to get module handle");
     native_handle = handle;
+    log::trace("Native Handle obtained");
 
     RegisterWindowClass();
 
     window = std::make_shared<WindowsWindow>();
 
     state.is_running = true;
+
+    log::debug("WindowsApplication initialized");
 }
 
 WindowsApplication::~WindowsApplication() {
@@ -37,6 +52,8 @@ WindowsApplication::~WindowsApplication() {
     window.reset();
     UnregisterWindowClass();
     native_handle = nullptr;
+
+    log::debug("WindowsApplication destroyed");
 }
 
 void WindowsApplication::Run() {
@@ -65,11 +82,13 @@ void WindowsApplication::RegisterWindowClass() {
     ZoneScoped;
     auto window_class = WindowsWindow::GetWindowClass();
     Assert(RegisterClassEx(&window_class), "Failed to register window class");
+    log::trace("Window Class registered");
 }
 
 void WindowsApplication::UnregisterWindowClass() {
     ZoneScoped;
     Assert(UnregisterClass(WindowsWindow::GetWindowClassName(), native_handle), "Failed to unregister window class");
+    log::trace("Window Class unregistered");
 }
 
 }  // namespace logenium

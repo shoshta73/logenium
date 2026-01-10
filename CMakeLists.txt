@@ -86,6 +86,7 @@ target_link_libraries(
         logenium::xheader
         logenium::debug
         logenium::corelib
+        logenium::logging
 )
 
 target_compile_definitions(
