@@ -3,7 +3,6 @@
 
 project(
         logging
-        VERSION 0.2.0
         DESCRIPTION "logenium logging library"
         LANGUAGES CXX
 )
@@ -37,6 +36,13 @@ target_compile_features(
         logging
         INTERFACE
         cxx_std_23
+)
+
+target_link_libraries(
+        logging
+        INTERFACE
+        logenium::corelib
+        logenium::debug
 )
 
 if(LOGENIUM_LOGGING_USE_FMTLIB)
