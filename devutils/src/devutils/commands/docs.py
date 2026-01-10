@@ -111,7 +111,7 @@ def build(ci: bool = typer.Option(False, "--ci", help="Ci mode, removes unnecess
     if not check_doxygen_is_available():
         sys.exit(1)
 
-    for project_name, config_path in DOXYGEN_CONFIGS.items():
+    for _project_name, config_path in DOXYGEN_CONFIGS.items():
         if not config_path.exists():
             typer.echo(typer.style(f"Error: Doxygen config file {config_path} does not exist.", fg="red", bold=True))
             sys.exit(1)

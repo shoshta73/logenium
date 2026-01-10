@@ -48,8 +48,16 @@ class Directories:
     corelib_tests: Path = _LIBS_DIR / "corelib" / "tests"
     corelib_docs: Path = _LIBS_DIR / "corelib" / "docs"
 
+    logging_root: Path = _LIBS_DIR / "logging"
+    logging_source: Path = _LIBS_DIR / "logging" / "src"
+    logging_include: Path = _LIBS_DIR / "logging" / "include"
+    logging_cmake: Path = _LIBS_DIR / "logging" / "cmake"
+    logging_tests: Path = _LIBS_DIR / "logging" / "tests"
+    logging_docs: Path = _LIBS_DIR / "logging" / "docs"
+
 
 DOCS_DIRS: list[Path] = [
     Directories.corelib_docs,
     Directories.debug_docs,
+    Directories.logging_docs,
 ]

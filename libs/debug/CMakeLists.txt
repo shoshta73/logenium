@@ -55,7 +55,7 @@ target_compile_features(
 target_link_libraries(
         debug
         PUBLIC
-        xheader
+        logenium::xheader
         $<$<PLATFORM_ID:Linux>:stdc++exp>
         TracyClient
 )

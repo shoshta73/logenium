@@ -14,10 +14,12 @@ class Files:
     devutils_license_headers_cache_file: Path = _Directories.devutils_cache / "license_headers_cache.yaml"
     devutils_pyproject_toml: Path = _Directories.devutils_root / "pyproject.toml"
     debug_doxygen_config: Path = _Directories.debug_root / "Doxyfile"
+    logging_doxygen_config: Path = _Directories.logging_root / "Doxyfile"
     ninja_build_file: Path = _Directories.build / "build.ninja"
 
 
 DOXYGEN_CONFIGS: dict[str, Path] = {
     "corelib": Files.corelib_doxygen_config,
     "debug": Files.debug_doxygen_config,
+    "logging": Files.logging_doxygen_config,
 }

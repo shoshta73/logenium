@@ -184,6 +184,9 @@ def get_language_configs() -> list[LintLanguageConfig]:
                 Directories.corelib_source,
                 Directories.corelib_include,
                 Directories.corelib_tests,
+                Directories.logging_source,
+                Directories.logging_include,
+                Directories.logging_tests,
             ],
             specific_files=[],
             lint_steps=[

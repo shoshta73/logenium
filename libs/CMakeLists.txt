@@ -4,3 +4,4 @@
 add_subdirectory(xheader)
 add_subdirectory(debug)
 add_subdirectory(corelib)
+add_subdirectory(logging)

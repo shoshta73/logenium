@@ -83,9 +83,9 @@ target_include_directories(
 target_link_libraries(
         logeniumlib
         PUBLIC
-        xheader
+        logenium::xheader
         logenium::debug
-        corelib
+        logenium::corelib
 )
 
 target_compile_definitions(
@@ -134,6 +134,10 @@ if(LOGENIUM_BUILD_TESTS)
                 get_target_property(CORELIB_TESTS_SRCS corelib_tests SOURCES)
         endif()
 
+        if(TARGET logging_tests)
+                get_target_property(LOGGING_TESTS_SRCS logging_tests SOURCES)
+        endif()
+
         add_subdirectory(tests)
 
         if(TARGET logenium_tests)
@@ -145,6 +149,7 @@ if(LOGENIUM_BUILD_TESTS)
                 ${XHEADER_TESTS_SRCS}
                 ${DEBUG_TESTS_SRCS}
                 ${CORELIB_TESTS_SRCS}
+                ${LOGGING_TESTS_SRCS}
                 ${LOGENIUM_TESTS_SRCS}
         )
 

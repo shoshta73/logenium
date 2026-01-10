@@ -26,6 +26,9 @@ class LibraryConfig(TypedDict):
 class CorelibLibraryConfig(LibraryConfig):
     enable_tracing: bool
 
+class LoggingLibraryConfig(LibraryConfig):
+    use_fmtlib: bool
+
 class DebugLibraryConfig(LibraryConfig):
     use_fast_stacktrace: bool
     use_fmtlib: bool
@@ -47,6 +50,7 @@ class ConfigurationR2(TypedDict):
     xheader: LibraryConfig
     debug: DebugLibraryConfig
     corelib: CorelibLibraryConfig
+    logging: LoggingLibraryConfig
 
 def load_schema_r1() -> object: ...
 def load_schema_r2() -> object: ...

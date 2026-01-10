@@ -25,7 +25,7 @@ from devutils.utils.file_checking import (
     format_file_path,
     print_status,
 )
-from devutils.utils.filesystem import find_files_by_name
+from devutils.utils.filesystem import find_files_by_extensions, find_files_by_name
 from devutils.utils.git import get_file_copyright_year
 
 check_license_headers: typer.Typer = typer.Typer()
@@ -178,12 +178,23 @@ def get_language_configs() -> list[LicenseLanguageConfig]:
         Directories.xheader_root / "CMakeLists.txt",
         Directories.debug_root / "CMakeLists.txt",
         Directories.corelib_root / "CMakeLists.txt",
+        Directories.logging_root / "CMakeLists.txt",
     ]
 
     cmake_specific_files.extend(find_files_by_name(Directories.logenium_tests, "CMakeLists.txt"))
+    cmake_specific_files.extend(find_files_by_extensions(Directories.logenium_cmake, [".cmake"]))
+
     cmake_specific_files.extend(find_files_by_name(Directories.xheader_tests, "CMakeLists.txt"))
+    cmake_specific_files.extend(find_files_by_extensions(Directories.xheader_cmake, [".cmake"]))
+
     cmake_specific_files.extend(find_files_by_name(Directories.debug_tests, "CMakeLists.txt"))
+    cmake_specific_files.extend(find_files_by_extensions(Directories.debug_cmake, [".cmake"]))
+
     cmake_specific_files.extend(find_files_by_name(Directories.corelib_tests, "CMakeLists.txt"))
+    cmake_specific_files.extend(find_files_by_extensions(Directories.corelib_cmake, [".cmake"]))
+
+    cmake_specific_files.extend(find_files_by_name(Directories.logging_tests, "CMakeLists.txt"))
+    cmake_specific_files.extend(find_files_by_extensions(Directories.logging_cmake, [".cmake"]))
 
     return [
         LicenseLanguageConfig(
@@ -202,6 +213,9 @@ def get_language_configs() -> list[LicenseLanguageConfig]:
                 Directories.corelib_source,
                 Directories.corelib_include,
                 Directories.corelib_tests,
+                Directories.logging_source,
+                Directories.logging_include,
+                Directories.logging_tests,
             ],
             specific_files=[],
             header_generator=lh.generate_cpp_header,

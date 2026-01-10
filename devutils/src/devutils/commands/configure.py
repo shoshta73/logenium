@@ -24,6 +24,10 @@ class CorelibLibraryConfig(LibraryConfig):
     enable_tracing: bool
 
 
+class LoggingLibraryConfig(LibraryConfig):
+    use_fmtlib: bool
+
+
 class DebugLibraryConfig(LibraryConfig):
     use_fast_stacktrace: bool
     use_fmtlib: bool
@@ -47,6 +51,7 @@ class ConfigurationR2(TypedDict):
     xheader: LibraryConfig
     debug: DebugLibraryConfig
     corelib: CorelibLibraryConfig
+    logging: LoggingLibraryConfig
 
 
 def load_schema_r1() -> object:
@@ -167,6 +172,7 @@ def migrate_r1_to_r2(config_r1: ConfigurationR1) -> ConfigurationR2:
             "enable_testing": config_r1["enable_debug_testing"],
         },
         "corelib": {"enable_testing": config_r1["enable_corelib_testing"], "enable_tracing": False},
+        "logging": {"use_fmtlib": False, "enable_testing": False},
     }
     return config_r2
 
@@ -266,6 +272,7 @@ def run(
         enable_xheader_testing = config_r2["xheader"]["enable_testing"]
         enable_debug_testing = config_r2["debug"]["enable_testing"]
         enable_corelib_testing = config_r2["corelib"]["enable_testing"]
+        enable_logging_testing = config_r2["logging"]["enable_testing"]
         mode = config_r2["build_mode"]
 
         # debug library options
@@ -273,9 +280,11 @@ def run(
         debug_use_fmtlib = config_r2["debug"]["use_fmtlib"]
         debug_use_color_logs = config_r2["debug"]["enable_color_logs"]
 
-        # corelib libr options
-
+        # corelib library options
         corelib_enable_tracing = config_r2["corelib"]["enable_tracing"]
+
+        # logging library options
+        logging_use_fmtlib = config_r2["logging"]["use_fmtlib"]
 
     else:
         # === Build Mode ===
@@ -332,6 +341,18 @@ def run(
         )
         typer.echo(f"  -> Tracing: {'enabled' if corelib_enable_tracing else 'disabled'}")
 
+        # === Logging Configuration ===
+
+        typer.echo("")
+        typer.echo(typer.style("=== Logging Configuration ===", fg="cyan", bold=True))
+        typer.echo("The logging library provides logging utilities.")
+        typer.echo("")
+
+        logging_use_fmtlib = typer.confirm(
+            "[logging] Use fmtlib for logging? (enables fmt::format/fmt::println instead of std::format)"
+        )
+        typer.echo(f"  -> fmtlib: {'enabled' if logging_use_fmtlib else 'disabled'}")
+
         # === Testing Configuration ===
         typer.echo("")
         typer.echo(typer.style("=== Testing Configuration ===", fg="cyan", bold=True))
@@ -343,6 +364,7 @@ def run(
         enable_xheader_testing = False
         enable_debug_testing = False
         enable_corelib_testing = False
+        enable_logging_testing = False
 
         if enable_testing:
             typer.echo("  -> Testing: enabled")
@@ -360,6 +382,9 @@ def run(
             enable_corelib_testing = typer.confirm("[testing] Build corelib tests? (Casting/RTTI/utility tests)")
             typer.echo(f"  -> Corelib tests: {'enabled' if enable_corelib_testing else 'disabled'}")
 
+            enable_logging_testing = typer.confirm("[testing] Build logging library tests? (Logging tests)")
+            typer.echo(f"  -> Logging tests: {'enabled' if enable_logging_testing else 'disabled'}")
+
         else:
             typer.echo("  -> Testing: disabled (all test suites skipped)")
 
@@ -376,6 +401,7 @@ def run(
                 "enable_testing": enable_debug_testing,
             },
             "corelib": {"enable_testing": enable_corelib_testing, "enable_tracing": corelib_enable_tracing},
+            "logging": {"use_fmtlib": logging_use_fmtlib, "enable_testing": enable_logging_testing},
         }
         save_configuration_r2(new_config)
         typer.echo(f"Configuration saved to {ConfigFiles.config.relative_to(Directories.root)}")
@@ -396,6 +422,9 @@ def run(
 
     # corelib library options
     command_line.extend(["-DLOGENIUM_CORELIB_ENABLE_TRACING=" + ("ON" if corelib_enable_tracing else "OFF")])
+
+    # logging library options
+    command_line.extend(["-DLOGENIUM_LOGGING_USE_FMTLIB=" + ("ON" if logging_use_fmtlib else "OFF")])
 
     # test options
     command_line.extend([f"-DLOGENIUM_BUILD_TESTS={'ON' if enable_testing else 'OFF'}"])
