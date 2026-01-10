@@ -153,7 +153,7 @@ using namespace ::log;
  * @endcode
  */
 template <>
-struct std::formatter<logging::Level> {
+struct fmt::formatter<logging::Level> {
     constexpr auto parse(fmt::format_parse_context &ctx) {
         auto it = ctx.begin();
         if (it == ctx.end()) {

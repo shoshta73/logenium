@@ -25,7 +25,7 @@ class StdoutCapture {
 // Test basic string logging
 TEST(Logging, basic_string) {
     StdoutCapture capture;
-    logging::log("Hello, world!");
+    logging::info("Hello, world!");
     std::string output = capture.get();
     EXPECT_EQ(output, "Hello, world!\n");
 }
@@ -33,7 +33,7 @@ TEST(Logging, basic_string) {
 // Test logging with single argument
 TEST(Logging, single_argument_string) {
     StdoutCapture capture;
-    logging::log("Hello, {}!", "world");
+    logging::info("Hello, {}!", "world");
     std::string output = capture.get();
     EXPECT_EQ(output, "Hello, world!\n");
 }
@@ -41,7 +41,7 @@ TEST(Logging, single_argument_string) {
 // Test logging with integer
 TEST(Logging, single_argument_int) {
     StdoutCapture capture;
-    logging::log("The answer is {}", 42);
+    logging::info("The answer is {}", 42);
     std::string output = capture.get();
     EXPECT_EQ(output, "The answer is 42\n");
 }
@@ -49,7 +49,7 @@ TEST(Logging, single_argument_int) {
 // Test logging with floating point
 TEST(Logging, single_argument_float) {
     StdoutCapture capture;
-    logging::log("Pi is approximately {}", 3.14);
+    logging::info("Pi is approximately {}", 3.14);
     std::string output = capture.get();
     EXPECT_EQ(output, "Pi is approximately 3.14\n");
 }
@@ -57,7 +57,7 @@ TEST(Logging, single_argument_float) {
 // Test logging with boolean
 TEST(Logging, single_argument_bool) {
     StdoutCapture capture;
-    logging::log("Is true: {}", true);
+    logging::info("Is true: {}", true);
     std::string output = capture.get();
     EXPECT_EQ(output, "Is true: true\n");
 }
@@ -65,7 +65,7 @@ TEST(Logging, single_argument_bool) {
 // Test logging with multiple arguments
 TEST(Logging, multiple_arguments) {
     StdoutCapture capture;
-    logging::log("Values: {}, {}, {}", 1, 2.5, "three");
+    logging::info("Values: {}, {}, {}", 1, 2.5, "three");
     std::string output = capture.get();
     EXPECT_EQ(output, "Values: 1, 2.5, three\n");
 }
@@ -73,7 +73,7 @@ TEST(Logging, multiple_arguments) {
 // Test logging with multiple mixed types
 TEST(Logging, multiple_mixed_types) {
     StdoutCapture capture;
-    logging::log("Mixed: {} {} {} {}", 42, "test", 3.14, true);
+    logging::info("Mixed: {} {} {} {}", 42, "test", 3.14, true);
     std::string output = capture.get();
     EXPECT_EQ(output, "Mixed: 42 test 3.14 true\n");
 }
@@ -82,7 +82,7 @@ TEST(Logging, multiple_mixed_types) {
 TEST(Logging, std_string) {
     StdoutCapture capture;
     std::string msg = "dynamic string";
-    logging::log("Message: {}", msg);
+    logging::info("Message: {}", msg);
     std::string output = capture.get();
     EXPECT_EQ(output, "Message: dynamic string\n");
 }
@@ -91,7 +91,7 @@ TEST(Logging, std_string) {
 TEST(Logging, const_char_ptr) {
     StdoutCapture capture;
     const char *msg = "C-style string";
-    logging::log("Message: {}", msg);
+    logging::info("Message: {}", msg);
     std::string output = capture.get();
     EXPECT_EQ(output, "Message: C-style string\n");
 }
@@ -99,7 +99,7 @@ TEST(Logging, const_char_ptr) {
 // Test logging with custom formatting
 TEST(Logging, custom_formatting) {
     StdoutCapture capture;
-    logging::log("Hex: {:#x}, Oct: {:#o}", 255, 64);
+    logging::info("Hex: {:#x}, Oct: {:#o}", 255, 64);
     std::string output = capture.get();
     EXPECT_EQ(output, "Hex: 0xff, Oct: 0100\n");
 }
@@ -107,7 +107,7 @@ TEST(Logging, custom_formatting) {
 // Test logging with width and alignment
 TEST(Logging, width_and_alignment) {
     StdoutCapture capture;
-    logging::log("Right: {:>10}, Left: {:<10}, Center: {:^10}", "R", "L", "C");
+    logging::info("Right: {:>10}, Left: {:<10}, Center: {:^10}", "R", "L", "C");
     std::string output = capture.get();
     EXPECT_EQ(output, "Right:          R, Left: L         , Center:     C     \n");
 }
@@ -115,7 +115,7 @@ TEST(Logging, width_and_alignment) {
 // Test logging with precision
 TEST(Logging, precision) {
     StdoutCapture capture;
-    logging::log("Pi: {:.2f}", 3.14159);
+    logging::info("Pi: {:.2f}", 3.14159);
     std::string output = capture.get();
     EXPECT_EQ(output, "Pi: 3.14\n");
 }
@@ -124,7 +124,7 @@ TEST(Logging, precision) {
 TEST(Logging, source_location_parameter) {
     StdoutCapture capture;
     auto loc = std::source_location::current();
-    logging::log("With location: {}", "test");  // loc is default parameter
+    logging::info("With location: {}", "test");  // loc is default parameter
     std::string output = capture.get();
     EXPECT_EQ(output, "With location: test\n");
 }
@@ -132,7 +132,7 @@ TEST(Logging, source_location_parameter) {
 // Test logging with rvalue references (perfect forwarding)
 TEST(Logging, rvalue_references) {
     StdoutCapture capture;
-    logging::log("Rvalue: {}", std::string("temporary"));
+    logging::info("Rvalue: {}", std::string("temporary"));
     std::string output = capture.get();
     EXPECT_EQ(output, "Rvalue: temporary\n");
 }
@@ -142,7 +142,7 @@ TEST(Logging, pointer) {
     StdoutCapture capture;
     int value = 42;
     int *ptr = &value;
-    logging::log("Pointer: {}", static_cast<void *>(ptr));
+    logging::info("Pointer: {}", static_cast<void *>(ptr));
     std::string output = capture.get();
     // Just verify it contains "Pointer: 0x" (exact address is platform-dependent)
     EXPECT_TRUE(output.find("Pointer: 0x") != std::string::npos);
@@ -151,7 +151,7 @@ TEST(Logging, pointer) {
 // Test logging with character
 TEST(Logging, character) {
     StdoutCapture capture;
-    logging::log("Char: {}", 'A');
+    logging::info("Char: {}", 'A');
     std::string output = capture.get();
     EXPECT_EQ(output, "Char: A\n");
 }
@@ -159,7 +159,7 @@ TEST(Logging, character) {
 // Test logging with zero arguments (just format string)
 TEST(Logging, no_arguments) {
     StdoutCapture capture;
-    logging::log("No placeholders here!");
+    logging::info("No placeholders here!");
     std::string output = capture.get();
     EXPECT_EQ(output, "No placeholders here!\n");
 }
@@ -167,7 +167,7 @@ TEST(Logging, no_arguments) {
 // Test logging with empty string
 TEST(Logging, empty_string) {
     StdoutCapture capture;
-    logging::log("");
+    logging::info("");
     std::string output = capture.get();
     EXPECT_EQ(output, "\n");
 }
@@ -182,7 +182,7 @@ TEST(Logging, numeric_types) {
     unsigned u = 5;
     float f = 6.0f;
     double d = 7.0;
-    logging::log("{} {} {} {} {} {} {}", s, i, l, ll, u, f, d);
+    logging::info("{} {} {} {} {} {} {}", s, i, l, ll, u, f, d);
     std::string output = capture.get();
     EXPECT_EQ(output, "1 2 3 4 5 6 7\n");
 }

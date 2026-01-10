@@ -222,30 +222,6 @@ LogImpl(bool, std::format_string<Args...>, Args &&...) -> LogImpl<L, Args...>;
 
 /**
  * @ingroup logging
- * @brief Type alias for Info-level logging with compile-time validation
- *
- * This alias template provides a convenient interface for Info-level logging.
- * Outputs with format: `[Info] message (file:line in function)`
- *
- * @tparam Args Variadic template parameter pack for format arguments
- *
- * Example usage:
- * @code
- * logging::log("Hello, {}!", "world");
- * logging::log("Value: {}", 42);
- * logging::log("Multiple: {}, {}", 1, 2);
- * // Output: [Info] Hello, world! (main.cxx:42 in main)
- * @endcode
- *
- * @note The template parameters are automatically deduced via CTAD
- * @note Format strings are validated at compile time
- * @note Source location is automatically captured and displayed
- */
-template <typename... Args>
-using log = detail::LogImpl<Level::Info, Args...>;
-
-/**
- * @ingroup logging
  * @brief Type alias for Trace3-level logging (most verbose trace)
  * @tparam Args Variadic template parameter pack for format arguments
  */
