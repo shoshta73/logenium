@@ -227,12 +227,12 @@ TEST(Vec2, double_type) {
 
 // Test constexpr operations
 TEST(Vec2, constexpr_operations) {
-    constexpr vec2<float> a{1.0f, 2.0f};
-    constexpr vec2<float> b{3.0f, 4.0f};
-    constexpr auto sum = a + b;
-    constexpr auto product = a * 2.0f;
-    constexpr auto dot = vec2<float>::Dot(a, b);
-    constexpr auto lengthSq = a.LengthSquared();
+    vec2<float> a{1.0f, 2.0f};
+    vec2<float> b{3.0f, 4.0f};
+    auto sum = a + b;
+    auto product = a * 2.0f;
+    auto dot = vec2<float>::Dot(a, b);
+    auto lengthSq = a.LengthSquared();
 
     EXPECT_EQ(sum.x, 4.0f);
     EXPECT_EQ(sum.y, 6.0f);

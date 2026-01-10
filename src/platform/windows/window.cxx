@@ -5,9 +5,6 @@
 
 #include <xheader/windows.h>
 
-#include <debug/assert.hxx>
-#include <debug/tracing/macros.hxx>
-
 //! Windows SDK defines min and max macros, which conflict with std::min and std::max
 #ifdef min
 #undef min
@@ -17,6 +14,10 @@
 #ifdef max
 #undef max
 #endif
+
+#include <debug/assert.hxx>
+#include <debug/tracing/macros.hxx>
+
 #include <logging/logging.hxx>
 
 #include "logenium/application.hxx"
@@ -43,6 +44,18 @@ WindowsWindow::WindowsWindow() : Window(WindowKind::WK_Windows) {
 
     ShowWindow(native_handle, SW_SHOW);
     UpdateWindow(native_handle);
+
+    RECT rect;
+    GetWindowRect(native_handle, &rect);
+    state.dimensions.x = rect.right - rect.left;
+    state.dimensions.y = rect.bottom - rect.top;
+    log::trace("Window dimensions obtained");
+
+    GetClientRect(native_handle, &rect);
+    state.framebuffer_dimensions.x = rect.right - rect.left;
+    state.framebuffer_dimensions.y = rect.bottom - rect.top;
+    log::trace("Window framebuffer dimensions obtained");
+
     log::debug("WindowsWindow created");
 }
 

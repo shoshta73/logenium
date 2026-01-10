@@ -8,6 +8,8 @@
 
 #include <debug/assert.hxx>
 
+#include <corelib/internal/tracing.hxx>
+
 namespace corelib::math {
 
 /**
@@ -48,57 +50,85 @@ struct vec1 {
     /**
      * @brief Default constructor, initializes component to zero.
      */
-    constexpr vec1() : x(T{0}) {}
+    constexpr vec1() : x(T{0}) { CRLB_ZONE_SCOPED; }
 
     /**
      * @brief Construct from a single value.
      * @param val The value for the component
      */
-    constexpr vec1(T val) : x(val) {}
+    constexpr vec1(T val) : x(val) { CRLB_ZONE_SCOPED; }
 
     /**
      * @brief Create a zero vector (0).
      * @return vec1 with component set to zero
      */
-    static constexpr vec1 Zero() { return {T{0}}; }
+    static constexpr vec1 Zero() {
+        CRLB_ZONE_SCOPED;
+        return {T{0}};
+    }
 
     /**
      * @brief Create a unit vector (1).
      * @return vec1 with component set to one
      */
-    static constexpr vec1 One() { return {T{1}}; }
+    static constexpr vec1 One() {
+        CRLB_ZONE_SCOPED;
+        return {T{1}};
+    }
 
-    constexpr vec1 operator+(const vec1 &other) const { return {x + other.x}; }
+    constexpr vec1 operator+(const vec1 &other) const {
+        CRLB_ZONE_SCOPED;
+        return {x + other.x};
+    }
 
-    constexpr vec1 operator-(const vec1 &other) const { return {x - other.x}; }
+    constexpr vec1 operator-(const vec1 &other) const {
+        CRLB_ZONE_SCOPED;
+        return {x - other.x};
+    }
 
-    constexpr vec1 operator*(const vec1 &other) const { return {x * other.x}; }
+    constexpr vec1 operator*(const vec1 &other) const {
+        CRLB_ZONE_SCOPED;
+        return {x * other.x};
+    }
 
     constexpr vec1 operator/(const vec1 &other) const {
+        CRLB_ZONE_SCOPED;
         debug::Assert(other.x != T{0}, "Division by zero");
         return {x / other.x};
     }
 
     constexpr vec1 &operator+=(const vec1 &other) {
+        CRLB_ZONE_SCOPED;
         x += other.x;
         return *this;
     }
 
     constexpr vec1 &operator-=(const vec1 &other) {
+        CRLB_ZONE_SCOPED;
         x -= other.x;
         return *this;
     }
 
-    constexpr vec1 operator*(T scalar) const { return {x * scalar}; }
+    constexpr vec1 operator*(T scalar) const {
+        CRLB_ZONE_SCOPED;
+        return {x * scalar};
+    }
 
     constexpr vec1 operator/(T scalar) const {
+        CRLB_ZONE_SCOPED;
         debug::Assert(scalar != T{0}, "Division by zero");
         return {x / scalar};
     }
 
-    constexpr bool operator==(const vec1 &other) const { return x == other.x; }
+    constexpr bool operator==(const vec1 &other) const {
+        CRLB_ZONE_SCOPED;
+        return x == other.x;
+    }
 
-    constexpr bool operator!=(const vec1 &other) const { return x != other.x; }
+    constexpr bool operator!=(const vec1 &other) const {
+        CRLB_ZONE_SCOPED;
+        return x != other.x;
+    }
 
     /**
      * @brief Calculate the squared length of the vector.
@@ -114,6 +144,7 @@ struct vec1 {
      * @note Non-constexpr due to std::abs
      */
     T Length() const {
+        CRLB_ZONE_SCOPED;
         // abs is safer for floating point than sqrt(x*x) for 1D
         return std::abs(x);
     }
@@ -125,6 +156,7 @@ struct vec1 {
      * @note Zero vectors remain zero
      */
     vec1 &Normalize() {
+        CRLB_ZONE_SCOPED;
         if (x != 0) {
             x = (x > 0) ? T{1} : T{-1};  // Signum essentially
         } else {
@@ -142,6 +174,7 @@ struct vec1 {
      * @note This method is constexpr
      */
     constexpr vec1 Normalized() const {
+        CRLB_ZONE_SCOPED;
         if (x != 0) {
             return vec1{(x > 0) ? T{1} : T{-1}};
         } else {
@@ -155,7 +188,10 @@ struct vec1 {
      * @param b The second vector
      * @return The dot product (a.x * b.x)
      */
-    static constexpr T Dot(const vec1 &a, const vec1 &b) { return a.x * b.x; }
+    static constexpr T Dot(const vec1 &a, const vec1 &b) {
+        CRLB_ZONE_SCOPED;
+        return a.x * b.x;
+    }
 };
 
 }  // namespace corelib::math

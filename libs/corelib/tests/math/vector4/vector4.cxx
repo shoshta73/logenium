@@ -11,7 +11,7 @@ using namespace corelib::math;
 
 // Test default constructor
 TEST(Vec4, default_constructor) {
-    Vec4<float> v;
+    vec4<float> v;
     EXPECT_EQ(v.x, 0.0f);
     EXPECT_EQ(v.y, 0.0f);
     EXPECT_EQ(v.z, 0.0f);
@@ -20,7 +20,7 @@ TEST(Vec4, default_constructor) {
 
 // Test uniform value constructor
 TEST(Vec4, uniform_value_constructor) {
-    Vec4<float> v{5.0f};
+    vec4<float> v{5.0f};
     EXPECT_EQ(v.x, 5.0f);
     EXPECT_EQ(v.y, 5.0f);
     EXPECT_EQ(v.z, 5.0f);
@@ -29,7 +29,7 @@ TEST(Vec4, uniform_value_constructor) {
 
 // Test component constructor
 TEST(Vec4, component_constructor) {
-    Vec4<float> v{3.0f, 4.0f, 5.0f, 6.0f};
+    vec4<float> v{3.0f, 4.0f, 5.0f, 6.0f};
     EXPECT_EQ(v.x, 3.0f);
     EXPECT_EQ(v.y, 4.0f);
     EXPECT_EQ(v.z, 5.0f);
@@ -38,7 +38,7 @@ TEST(Vec4, component_constructor) {
 
 // Test naming schemes
 TEST(Vec4, naming_schemes_xyzw) {
-    Vec4<float> v{3.0f, 4.0f, 5.0f, 6.0f};
+    vec4<float> v{3.0f, 4.0f, 5.0f, 6.0f};
     EXPECT_EQ(v.x, 3.0f);
     EXPECT_EQ(v.y, 4.0f);
     EXPECT_EQ(v.z, 5.0f);
@@ -46,7 +46,7 @@ TEST(Vec4, naming_schemes_xyzw) {
 }
 
 TEST(Vec4, naming_schemes_rgba) {
-    Vec4<float> v{0.5f, 0.75f, 1.0f, 0.25f};
+    vec4<float> v{0.5f, 0.75f, 1.0f, 0.25f};
     EXPECT_EQ(v.r, 0.5f);
     EXPECT_EQ(v.g, 0.75f);
     EXPECT_EQ(v.b, 1.0f);
@@ -66,7 +66,7 @@ TEST(Vec4, naming_schemes_rgba) {
 }
 
 TEST(Vec4, naming_schemes_stpq) {
-    Vec4<float> v{0.1f, 0.3f, 0.5f, 0.7f};
+    vec4<float> v{0.1f, 0.3f, 0.5f, 0.7f};
     EXPECT_EQ(v.s, 0.1f);
     EXPECT_EQ(v.t, 0.3f);
     EXPECT_EQ(v.p, 0.5f);
@@ -87,7 +87,7 @@ TEST(Vec4, naming_schemes_stpq) {
 
 // Test Zero factory
 TEST(Vec4, zero_factory) {
-    auto v = Vec4<float>::Zero();
+    auto v = vec4<float>::Zero();
     EXPECT_EQ(v.x, 0.0f);
     EXPECT_EQ(v.y, 0.0f);
     EXPECT_EQ(v.z, 0.0f);
@@ -96,7 +96,7 @@ TEST(Vec4, zero_factory) {
 
 // Test One factory
 TEST(Vec4, one_factory) {
-    auto v = Vec4<float>::One();
+    auto v = vec4<float>::One();
     EXPECT_EQ(v.x, 1.0f);
     EXPECT_EQ(v.y, 1.0f);
     EXPECT_EQ(v.z, 1.0f);
@@ -105,8 +105,8 @@ TEST(Vec4, one_factory) {
 
 // Test addition operator
 TEST(Vec4, addition_operator) {
-    Vec4<float> a{1.0f, 2.0f, 3.0f, 4.0f};
-    Vec4<float> b{5.0f, 6.0f, 7.0f, 8.0f};
+    vec4<float> a{1.0f, 2.0f, 3.0f, 4.0f};
+    vec4<float> b{5.0f, 6.0f, 7.0f, 8.0f};
     auto result = a + b;
     EXPECT_EQ(result.x, 6.0f);
     EXPECT_EQ(result.y, 8.0f);
@@ -116,8 +116,8 @@ TEST(Vec4, addition_operator) {
 
 // Test subtraction operator
 TEST(Vec4, subtraction_operator) {
-    Vec4<float> a{10.0f, 9.0f, 8.0f, 7.0f};
-    Vec4<float> b{2.0f, 3.0f, 4.0f, 5.0f};
+    vec4<float> a{10.0f, 9.0f, 8.0f, 7.0f};
+    vec4<float> b{2.0f, 3.0f, 4.0f, 5.0f};
     auto result = a - b;
     EXPECT_EQ(result.x, 8.0f);
     EXPECT_EQ(result.y, 6.0f);
@@ -127,8 +127,8 @@ TEST(Vec4, subtraction_operator) {
 
 // Test multiplication operator
 TEST(Vec4, multiplication_operator) {
-    Vec4<float> a{2.0f, 3.0f, 4.0f, 5.0f};
-    Vec4<float> b{6.0f, 7.0f, 8.0f, 9.0f};
+    vec4<float> a{2.0f, 3.0f, 4.0f, 5.0f};
+    vec4<float> b{6.0f, 7.0f, 8.0f, 9.0f};
     auto result = a * b;
     EXPECT_EQ(result.x, 12.0f);
     EXPECT_EQ(result.y, 21.0f);
@@ -138,8 +138,8 @@ TEST(Vec4, multiplication_operator) {
 
 // Test division operator
 TEST(Vec4, division_operator) {
-    Vec4<float> a{12.0f, 15.0f, 18.0f, 24.0f};
-    Vec4<float> b{3.0f, 5.0f, 6.0f, 8.0f};
+    vec4<float> a{12.0f, 15.0f, 18.0f, 24.0f};
+    vec4<float> b{3.0f, 5.0f, 6.0f, 8.0f};
     auto result = a / b;
     EXPECT_EQ(result.x, 4.0f);
     EXPECT_EQ(result.y, 3.0f);
@@ -149,8 +149,8 @@ TEST(Vec4, division_operator) {
 
 // Test compound addition
 TEST(Vec4, compound_addition) {
-    Vec4<float> v{5.0f, 7.0f, 9.0f, 11.0f};
-    v += Vec4<float>{3.0f, 2.0f, 1.0f, 4.0f};
+    vec4<float> v{5.0f, 7.0f, 9.0f, 11.0f};
+    v += vec4<float>{3.0f, 2.0f, 1.0f, 4.0f};
     EXPECT_EQ(v.x, 8.0f);
     EXPECT_EQ(v.y, 9.0f);
     EXPECT_EQ(v.z, 10.0f);
@@ -159,8 +159,8 @@ TEST(Vec4, compound_addition) {
 
 // Test compound subtraction
 TEST(Vec4, compound_subtraction) {
-    Vec4<float> v{10.0f, 8.0f, 6.0f, 12.0f};
-    v -= Vec4<float>{3.0f, 2.0f, 1.0f, 4.0f};
+    vec4<float> v{10.0f, 8.0f, 6.0f, 12.0f};
+    v -= vec4<float>{3.0f, 2.0f, 1.0f, 4.0f};
     EXPECT_EQ(v.x, 7.0f);
     EXPECT_EQ(v.y, 6.0f);
     EXPECT_EQ(v.z, 5.0f);
@@ -169,7 +169,7 @@ TEST(Vec4, compound_subtraction) {
 
 // Test scalar multiplication
 TEST(Vec4, scalar_multiplication) {
-    Vec4<float> v{3.0f, 4.0f, 5.0f, 6.0f};
+    vec4<float> v{3.0f, 4.0f, 5.0f, 6.0f};
     auto result = v * 2.0f;
     EXPECT_EQ(result.x, 6.0f);
     EXPECT_EQ(result.y, 8.0f);
@@ -179,7 +179,7 @@ TEST(Vec4, scalar_multiplication) {
 
 // Test scalar division
 TEST(Vec4, scalar_division) {
-    Vec4<float> v{12.0f, 8.0f, 16.0f, 20.0f};
+    vec4<float> v{12.0f, 8.0f, 16.0f, 20.0f};
     auto result = v / 2.0f;
     EXPECT_EQ(result.x, 6.0f);
     EXPECT_EQ(result.y, 4.0f);
@@ -189,9 +189,9 @@ TEST(Vec4, scalar_division) {
 
 // Test equality operator
 TEST(Vec4, equality_operator) {
-    Vec4<float> a{5.0f, 7.0f, 9.0f, 11.0f};
-    Vec4<float> b{5.0f, 7.0f, 9.0f, 11.0f};
-    Vec4<float> c{3.0f, 7.0f, 9.0f, 11.0f};
+    vec4<float> a{5.0f, 7.0f, 9.0f, 11.0f};
+    vec4<float> b{5.0f, 7.0f, 9.0f, 11.0f};
+    vec4<float> c{3.0f, 7.0f, 9.0f, 11.0f};
 
     EXPECT_TRUE(a == b);
     EXPECT_FALSE(a == c);
@@ -199,9 +199,9 @@ TEST(Vec4, equality_operator) {
 
 // Test inequality operator
 TEST(Vec4, inequality_operator) {
-    Vec4<float> a{5.0f, 7.0f, 9.0f, 11.0f};
-    Vec4<float> b{3.0f, 4.0f, 5.0f, 6.0f};
-    Vec4<float> c{5.0f, 7.0f, 9.0f, 11.0f};
+    vec4<float> a{5.0f, 7.0f, 9.0f, 11.0f};
+    vec4<float> b{3.0f, 4.0f, 5.0f, 6.0f};
+    vec4<float> c{5.0f, 7.0f, 9.0f, 11.0f};
 
     EXPECT_TRUE(a != b);
     EXPECT_FALSE(a != c);
@@ -209,19 +209,19 @@ TEST(Vec4, inequality_operator) {
 
 // Test LengthSquared
 TEST(Vec4, length_squared) {
-    Vec4<float> v{1.0f, 2.0f, 3.0f, 4.0f};
+    vec4<float> v{1.0f, 2.0f, 3.0f, 4.0f};
     EXPECT_EQ(v.LengthSquared(), 30.0f);  // 1 + 4 + 9 + 16 = 30
 }
 
 // Test Length
 TEST(Vec4, length) {
-    Vec4<float> v{1.0f, 2.0f, 3.0f, 4.0f};
+    vec4<float> v{1.0f, 2.0f, 3.0f, 4.0f};
     EXPECT_FLOAT_EQ(v.Length(), std::sqrt(30.0f));
 }
 
 // Test Normalize
 TEST(Vec4, normalize) {
-    Vec4<float> v{1.0f, 2.0f, 3.0f, 4.0f};
+    vec4<float> v{1.0f, 2.0f, 3.0f, 4.0f};
     float original_length = v.Length();
     v.Normalize();
     EXPECT_FLOAT_EQ(v.x, 1.0f / original_length);
@@ -233,7 +233,7 @@ TEST(Vec4, normalize) {
 
 // Test Normalized
 TEST(Vec4, normalized) {
-    Vec4<float> v{1.0f, 2.0f, 3.0f, 4.0f};
+    vec4<float> v{1.0f, 2.0f, 3.0f, 4.0f};
     float original_length = v.Length();
     auto result = v.Normalized();
     EXPECT_FLOAT_EQ(result.x, 1.0f / original_length);
@@ -250,20 +250,20 @@ TEST(Vec4, normalized) {
 
 // Test Dot product
 TEST(Vec4, dot_product) {
-    Vec4<float> a{1.0f, 2.0f, 3.0f, 4.0f};
-    Vec4<float> b{5.0f, 6.0f, 7.0f, 8.0f};
-    EXPECT_EQ(Vec4<float>::Dot(a, b), 70.0f);  // 5 + 12 + 21 + 32 = 70
+    vec4<float> a{1.0f, 2.0f, 3.0f, 4.0f};
+    vec4<float> b{5.0f, 6.0f, 7.0f, 8.0f};
+    EXPECT_EQ(vec4<float>::Dot(a, b), 70.0f);  // 5 + 12 + 21 + 32 = 70
 }
 
 // Test with integer type
 TEST(Vec4, integer_type) {
-    Vec4<int> v{5, 7, 9, 11};
+    vec4<int> v{5, 7, 9, 11};
     EXPECT_EQ(v.x, 5);
     EXPECT_EQ(v.y, 7);
     EXPECT_EQ(v.z, 9);
     EXPECT_EQ(v.w, 11);
 
-    auto result = v + Vec4<int>{3, 2, 1, 4};
+    auto result = v + vec4<int>{3, 2, 1, 4};
     EXPECT_EQ(result.x, 8);
     EXPECT_EQ(result.y, 9);
     EXPECT_EQ(result.z, 10);
@@ -272,7 +272,7 @@ TEST(Vec4, integer_type) {
 
 // Test with double type
 TEST(Vec4, double_type) {
-    Vec4<double> v{3.5, 7.5, 9.5, 11.5};
+    vec4<double> v{3.5, 7.5, 9.5, 11.5};
     EXPECT_DOUBLE_EQ(v.x, 3.5);
     EXPECT_DOUBLE_EQ(v.y, 7.5);
     EXPECT_DOUBLE_EQ(v.z, 9.5);
@@ -287,12 +287,12 @@ TEST(Vec4, double_type) {
 
 // Test constexpr operations
 TEST(Vec4, constexpr_operations) {
-    constexpr Vec4<float> a{1.0f, 2.0f, 3.0f, 4.0f};
-    constexpr Vec4<float> b{5.0f, 6.0f, 7.0f, 8.0f};
-    constexpr auto sum = a + b;
-    constexpr auto product = a * 2.0f;
-    constexpr auto dot = Vec4<float>::Dot(a, b);
-    constexpr auto lengthSq = a.LengthSquared();
+    vec4<float> a{1.0f, 2.0f, 3.0f, 4.0f};
+    vec4<float> b{5.0f, 6.0f, 7.0f, 8.0f};
+    auto sum = a + b;
+    auto product = a * 2.0f;
+    auto dot = vec4<float>::Dot(a, b);
+    auto lengthSq = a.LengthSquared();
 
     EXPECT_EQ(sum.x, 6.0f);
     EXPECT_EQ(sum.y, 8.0f);
@@ -308,14 +308,14 @@ TEST(Vec4, constexpr_operations) {
 
 // Test perpendicular vectors have zero dot product
 TEST(Vec4, perpendicular_vectors_dot_product) {
-    Vec4<float> a{1.0f, 0.0f, 0.0f, 0.0f};
-    Vec4<float> b{0.0f, 1.0f, 0.0f, 0.0f};
-    EXPECT_EQ(Vec4<float>::Dot(a, b), 0.0f);
+    vec4<float> a{1.0f, 0.0f, 0.0f, 0.0f};
+    vec4<float> b{0.0f, 1.0f, 0.0f, 0.0f};
+    EXPECT_EQ(vec4<float>::Dot(a, b), 0.0f);
 }
 
 // Test RGBA color usage
 TEST(Vec4, rgba_color_usage) {
-    Vec4<float> color{1.0f, 0.5f, 0.25f, 1.0f};
+    vec4<float> color{1.0f, 0.5f, 0.25f, 1.0f};
     EXPECT_EQ(color.r, 1.0f);
     EXPECT_EQ(color.g, 0.5f);
     EXPECT_EQ(color.b, 0.25f);

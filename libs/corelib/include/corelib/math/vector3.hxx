@@ -8,6 +8,8 @@
 
 #include <debug/assert.hxx>
 
+#include <corelib/internal/tracing.hxx>
+
 namespace corelib::math {
 
 /**
@@ -34,7 +36,7 @@ namespace corelib::math {
  * @endcode
  */
 template <typename T>
-struct Vec3 {
+struct vec3 {
     /**
      * @brief Union providing multiple naming schemes for the components.
      *
@@ -63,13 +65,13 @@ struct Vec3 {
     /**
      * @brief Default constructor, initializes all components to zero.
      */
-    constexpr Vec3() : x(T{0}), y(T{0}), z(T{0}) {}
+    constexpr vec3() : x(T{0}), y(T{0}), z(T{0}) { CRLB_ZONE_SCOPED; }
 
     /**
      * @brief Construct from a uniform value.
      * @param val The value for all components
      */
-    constexpr Vec3(T val) : x(val), y(val), z(val) {}
+    constexpr vec3(T val) : x(val), y(val), z(val) { CRLB_ZONE_SCOPED; }
 
     /**
      * @brief Construct from individual components.
@@ -77,70 +79,102 @@ struct Vec3 {
      * @param y The y component
      * @param z The z component
      */
-    constexpr Vec3(T x, T y, T z) : x(x), y(y), z(z) {}
+    constexpr vec3(T x, T y, T z) : x(x), y(y), z(z) { CRLB_ZONE_SCOPED; }
 
     /**
      * @brief Create a zero vector (0, 0, 0).
      * @return Vec3 with all components set to zero
      */
-    static constexpr Vec3 Zero() { return {T{0}, T{0}, T{0}}; }
+    static constexpr vec3 Zero() {
+        CRLB_ZONE_SCOPED;
+        return {T{0}, T{0}, T{0}};
+    }
 
     /**
      * @brief Create a unit vector (1, 1, 1).
      * @return Vec3 with all components set to one
      */
-    static constexpr Vec3 One() { return {T{1}, T{1}, T{1}}; }
+    static constexpr vec3 One() { return {T{1}, T{1}, T{1}}; }
 
-    constexpr Vec3 operator+(const Vec3 &other) const { return {x + other.x, y + other.y, z + other.z}; }
-    constexpr Vec3 operator-(const Vec3 &other) const { return {x - other.x, y - other.y, z - other.z}; }
-    constexpr Vec3 operator*(const Vec3 &other) const { return {x * other.x, y * other.y, z * other.z}; }
-    constexpr Vec3 operator/(const Vec3 &other) const {
+    constexpr vec3 operator+(const vec3 &other) const {
+        CRLB_ZONE_SCOPED;
+        return {x + other.x, y + other.y, z + other.z};
+    }
+    constexpr vec3 operator-(const vec3 &other) const {
+        CRLB_ZONE_SCOPED;
+        return {x - other.x, y - other.y, z - other.z};
+    }
+    constexpr vec3 operator*(const vec3 &other) const {
+        CRLB_ZONE_SCOPED;
+        return {x * other.x, y * other.y, z * other.z};
+    }
+    constexpr vec3 operator/(const vec3 &other) const {
+        CRLB_ZONE_SCOPED;
         debug::Assert(other.x != T{0} && other.y != T{0} && other.z != T{0}, "Division by zero");
         return {x / other.x, y / other.y, z / other.z};
     }
 
-    constexpr Vec3 &operator+=(const Vec3 &other) {
+    constexpr vec3 &operator+=(const vec3 &other) {
+        CRLB_ZONE_SCOPED;
         x += other.x;
         y += other.y;
         z += other.z;
         return *this;
     }
-    constexpr Vec3 &operator-=(const Vec3 &other) {
+    constexpr vec3 &operator-=(const vec3 &other) {
+        CRLB_ZONE_SCOPED;
         x -= other.x;
         y -= other.y;
         z -= other.z;
         return *this;
     }
 
-    constexpr Vec3 operator*(T scalar) const { return {x * scalar, y * scalar, z * scalar}; }
-    constexpr Vec3 operator/(T scalar) const {
+    constexpr vec3 operator*(T scalar) const {
+        CRLB_ZONE_SCOPED;
+        return {x * scalar, y * scalar, z * scalar};
+    }
+    constexpr vec3 operator/(T scalar) const {
+        CRLB_ZONE_SCOPED;
         debug::Assert(scalar != T{0}, "Division by zero");
         return {x / scalar, y / scalar, z / scalar};
     }
 
-    constexpr bool operator==(const Vec3 &other) const { return x == other.x && y == other.y && z == other.z; }
-    constexpr bool operator!=(const Vec3 &other) const { return x != other.x || y != other.y || z != other.z; }
+    constexpr bool operator==(const vec3 &other) const {
+        CRLB_ZONE_SCOPED;
+        return x == other.x && y == other.y && z == other.z;
+    }
+    constexpr bool operator!=(const vec3 &other) const {
+        CRLB_ZONE_SCOPED;
+        return x != other.x || y != other.y || z != other.z;
+    }
 
     /**
      * @brief Calculate the squared length of the vector.
      * @return The squared length (x * x + y * y + z * z)
      * @note Faster than Length() as it avoids the square root operation
      */
-    constexpr T LengthSquared() const { return x * x + y * y + z * z; }
+    constexpr T LengthSquared() const {
+        CRLB_ZONE_SCOPED;
+        return x * x + y * y + z * z;
+    }
 
     /**
      * @brief Calculate the length (magnitude) of the vector.
      * @return The Euclidean length sqrt(x * x + y * y + z * z)
      * @note Non-constexpr due to std::sqrt
      */
-    T Length() const { return std::sqrt(LengthSquared()); }
+    T Length() const {
+        CRLB_ZONE_SCOPED;
+        return std::sqrt(LengthSquared());
+    }
 
     /**
      * @brief Normalize the vector in-place to unit length.
      * @return Reference to this vector after normalization
      * @note Asserts if the vector has zero length (use debug::Assert)
      */
-    Vec3 &Normalize() {
+    vec3 &Normalize() {
+        CRLB_ZONE_SCOPED;
         T len = Length();
         debug::Assert(len != T{0}, "Cannot normalize a vector with zero length");
         x /= len;
@@ -155,7 +189,8 @@ struct Vec3 {
      * @note Asserts if the vector has zero length (use debug::Assert)
      * @note This method is constexpr
      */
-    constexpr Vec3 Normalized() const {
+    constexpr vec3 Normalized() const {
+        CRLB_ZONE_SCOPED;
         T len = Length();
         debug::Assert(len != T{0}, "Cannot normalize a vector with zero length");
         return {x / len, y / len, z / len};
@@ -167,7 +202,10 @@ struct Vec3 {
      * @param b The second vector
      * @return The dot product (a.x * b.x + a.y * b.y + a.z * b.z)
      */
-    static constexpr T Dot(const Vec3 &a, const Vec3 &b) { return a.x * b.x + a.y * b.y + a.z * b.z; }
+    static constexpr T Dot(const vec3 &a, const vec3 &b) {
+        CRLB_ZONE_SCOPED;
+        return a.x * b.x + a.y * b.y + a.z * b.z;
+    }
 
     /**
      * @brief Calculate the cross product of two vectors.
@@ -181,7 +219,8 @@ struct Vec3 {
      * @note Order matters: Cross(a, b) = -Cross(b, a)
      * @note The result follows the right-hand rule
      */
-    static constexpr Vec3 Cross(const Vec3 &a, const Vec3 &b) {
+    static constexpr vec3 Cross(const vec3 &a, const vec3 &b) {
+        CRLB_ZONE_SCOPED;
         return {a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x};
     }
 };

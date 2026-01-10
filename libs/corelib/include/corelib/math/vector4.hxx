@@ -8,6 +8,8 @@
 
 #include <debug/assert.hxx>
 
+#include <corelib/internal/tracing.hxx>
+
 namespace corelib::math {
 
 /**
@@ -37,7 +39,7 @@ namespace corelib::math {
  * @endcode
  */
 template <typename T>
-struct Vec4 {
+struct vec4 {
     /**
      * @brief Union providing multiple naming schemes for the components.
      *
@@ -69,13 +71,13 @@ struct Vec4 {
     /**
      * @brief Default constructor, initializes all components to zero.
      */
-    constexpr Vec4() : x(T{0}), y(T{0}), z(T{0}), w(T{0}) {}
+    constexpr vec4() : x(T{0}), y(T{0}), z(T{0}), w(T{0}) { CRLB_ZONE_SCOPED; }
 
     /**
      * @brief Construct from a uniform value.
      * @param val The value for all components
      */
-    constexpr Vec4(T val) : x(val), y(val), z(val), w(val) {}
+    constexpr vec4(T val) : x(val), y(val), z(val), w(val) { CRLB_ZONE_SCOPED; }
 
     /**
      * @brief Construct from individual components.
@@ -84,36 +86,51 @@ struct Vec4 {
      * @param z The z component
      * @param w The w component
      */
-    constexpr Vec4(T x, T y, T z, T w) : x(x), y(y), z(z), w(w) {}
+    constexpr vec4(T x, T y, T z, T w) : x(x), y(y), z(z), w(w) { CRLB_ZONE_SCOPED; }
 
     /**
      * @brief Create a zero vector (0, 0, 0, 0).
      * @return Vec4 with all components set to zero
      */
-    static constexpr Vec4 Zero() { return {T{0}, T{0}, T{0}, T{0}}; }
+    static constexpr vec4 Zero() {
+        CRLB_ZONE_SCOPED;
+        return {T{0}, T{0}, T{0}, T{0}};
+    }
 
     /**
      * @brief Create a unit vector (1, 1, 1, 1).
      * @return Vec4 with all components set to one
      */
-    static constexpr Vec4 One() { return {T{1}, T{1}, T{1}, T{1}}; }
+    static constexpr vec4 One() { return {T{1}, T{1}, T{1}, T{1}}; }
 
-    constexpr Vec4 operator+(const Vec4 &other) const { return {x + other.x, y + other.y, z + other.z, w + other.w}; }
-    constexpr Vec4 operator-(const Vec4 &other) const { return {x - other.x, y - other.y, z - other.z, w - other.w}; }
-    constexpr Vec4 operator*(const Vec4 &other) const { return {x * other.x, y * other.y, z * other.z, w * other.w}; }
-    constexpr Vec4 operator/(const Vec4 &other) const {
+    constexpr vec4 operator+(const vec4 &other) const {
+        CRLB_ZONE_SCOPED;
+        return {x + other.x, y + other.y, z + other.z, w + other.w};
+    }
+    constexpr vec4 operator-(const vec4 &other) const {
+        CRLB_ZONE_SCOPED;
+        return {x - other.x, y - other.y, z - other.z, w - other.w};
+    }
+    constexpr vec4 operator*(const vec4 &other) const {
+        CRLB_ZONE_SCOPED;
+        return {x * other.x, y * other.y, z * other.z, w * other.w};
+    }
+    constexpr vec4 operator/(const vec4 &other) const {
+        CRLB_ZONE_SCOPED;
         debug::Assert(other.x != T{0} && other.y != T{0} && other.z != T{0} && other.w != T{0}, "Division by zero");
         return {x / other.x, y / other.y, z / other.z, w / other.w};
     }
 
-    constexpr Vec4 &operator+=(const Vec4 &other) {
+    constexpr vec4 &operator+=(const vec4 &other) {
+        CRLB_ZONE_SCOPED;
         x += other.x;
         y += other.y;
         z += other.z;
         w += other.w;
         return *this;
     }
-    constexpr Vec4 &operator-=(const Vec4 &other) {
+    constexpr vec4 &operator-=(const vec4 &other) {
+        CRLB_ZONE_SCOPED;
         x -= other.x;
         y -= other.y;
         z -= other.z;
@@ -121,16 +138,22 @@ struct Vec4 {
         return *this;
     }
 
-    constexpr Vec4 operator*(T scalar) const { return {x * scalar, y * scalar, z * scalar, w * scalar}; }
-    constexpr Vec4 operator/(T scalar) const {
+    constexpr vec4 operator*(T scalar) const {
+        CRLB_ZONE_SCOPED;
+        return {x * scalar, y * scalar, z * scalar, w * scalar};
+    }
+    constexpr vec4 operator/(T scalar) const {
+        CRLB_ZONE_SCOPED;
         debug::Assert(scalar != T{0}, "Division by zero");
         return {x / scalar, y / scalar, z / scalar, w / scalar};
     }
 
-    constexpr bool operator==(const Vec4 &other) const {
+    constexpr bool operator==(const vec4 &other) const {
+        CRLB_ZONE_SCOPED;
         return x == other.x && y == other.y && z == other.z && w == other.w;
     }
-    constexpr bool operator!=(const Vec4 &other) const {
+    constexpr bool operator!=(const vec4 &other) const {
+        CRLB_ZONE_SCOPED;
         return x != other.x || y != other.y || z != other.z || w != other.w;
     }
 
@@ -139,21 +162,28 @@ struct Vec4 {
      * @return The squared length (x * x + y * y + z * z + w * w)
      * @note Faster than Length() as it avoids the square root operation
      */
-    constexpr T LengthSquared() const { return x * x + y * y + z * z + w * w; }
+    constexpr T LengthSquared() const {
+        CRLB_ZONE_SCOPED;
+        return x * x + y * y + z * z + w * w;
+    }
 
     /**
      * @brief Calculate the length (magnitude) of the vector.
      * @return The Euclidean length sqrt(x * x + y * y + z * z + w * w)
      * @note Non-constexpr due to std::sqrt
      */
-    T Length() const { return std::sqrt(LengthSquared()); }
+    T Length() const {
+        CRLB_ZONE_SCOPED;
+        return std::sqrt(LengthSquared());
+    }
 
     /**
      * @brief Normalize the vector in-place to unit length.
      * @return Reference to this vector after normalization
      * @note Asserts if the vector has zero length (use debug::Assert)
      */
-    Vec4 &Normalize() {
+    vec4 &Normalize() {
+        CRLB_ZONE_SCOPED;
         T len = Length();
         debug::Assert(len != T{0}, "Cannot normalize a vector with zero length");
         x /= len;
@@ -169,7 +199,8 @@ struct Vec4 {
      * @note Asserts if the vector has zero length (use debug::Assert)
      * @note This method is constexpr
      */
-    constexpr Vec4 Normalized() const {
+    constexpr vec4 Normalized() const {
+        CRLB_ZONE_SCOPED;
         T len = Length();
         debug::Assert(len != T{0}, "Cannot normalize a vector with zero length");
         return {x / len, y / len, z / len, w / len};
@@ -181,7 +212,10 @@ struct Vec4 {
      * @param b The second vector
      * @return The dot product (a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w)
      */
-    static constexpr T Dot(const Vec4 &a, const Vec4 &b) { return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w; }
+    static constexpr T Dot(const vec4 &a, const vec4 &b) {
+        CRLB_ZONE_SCOPED;
+        return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
+    }
 };
 
 }  // namespace corelib::math

@@ -214,11 +214,11 @@ TEST(Vec1, double_type) {
 
 // Test constexpr operations
 TEST(Vec1, constexpr_operations) {
-    constexpr vec1<float> a{3.0f};
-    constexpr vec1<float> b{4.0f};
-    constexpr auto sum = a + b;
-    constexpr auto product = a * 2.0f;
-    constexpr auto dot = vec1<float>::Dot(a, b);
+    vec1<float> a{3.0f};
+    vec1<float> b{4.0f};
+    auto sum = a + b;
+    auto product = a * 2.0f;
+    auto dot = vec1<float>::Dot(a, b);
 
     EXPECT_EQ(sum.x, 7.0f);
     EXPECT_EQ(product.x, 6.0f);

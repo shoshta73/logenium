@@ -33,4 +33,6 @@ Window::~Window() {
 
 Window::NativeHandle &Window::GetNativeHandle() { return native_handle; }
 
+Window::State &Window::GetState() { return state; }
+
 }  // namespace logenium

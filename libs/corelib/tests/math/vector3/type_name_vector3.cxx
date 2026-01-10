@@ -13,28 +13,28 @@ using namespace corelib::math;
 
 // Test Vec3 with float type
 TEST(TypeNameVector3, Vec3_float) {
-    auto name = type_name<Vec3<float>>();
+    auto name = type_name<vec3<float>>();
     EXPECT_FALSE(name.empty());
     EXPECT_NE(name.find("Vec3"), std::string_view::npos);
 }
 
 // Test Vec3 with double type
 TEST(TypeNameVector3, Vec3_double) {
-    auto name = type_name<Vec3<double>>();
+    auto name = type_name<vec3<double>>();
     EXPECT_FALSE(name.empty());
     EXPECT_NE(name.find("Vec3"), std::string_view::npos);
 }
 
 // Test Vec3 with int type
 TEST(TypeNameVector3, Vec3_int) {
-    auto name = type_name<Vec3<int>>();
+    auto name = type_name<vec3<int>>();
     EXPECT_FALSE(name.empty());
     EXPECT_NE(name.find("Vec3"), std::string_view::npos);
 }
 
 // Test Vec3 with value overload
 TEST(TypeNameVector3, value_overload) {
-    Vec3<float> v{5.0f, 7.0f, 9.0f};
+    vec3<float> v{5.0f, 7.0f, 9.0f};
     auto name = type_name(v);
     EXPECT_FALSE(name.empty());
     EXPECT_NE(name.find("Vec3"), std::string_view::npos);
@@ -42,7 +42,7 @@ TEST(TypeNameVector3, value_overload) {
 
 // Test const qualified Vec3
 TEST(TypeNameVector3, const_qualified) {
-    auto name = type_name<const Vec3<float>>();
+    auto name = type_name<const vec3<float>>();
     EXPECT_FALSE(name.empty());
     EXPECT_NE(name.find("Vec3"), std::string_view::npos);
     EXPECT_NE(name.find("const"), std::string_view::npos);
@@ -50,7 +50,7 @@ TEST(TypeNameVector3, const_qualified) {
 
 // Test Vec3 pointer type
 TEST(TypeNameVector3, pointer_type) {
-    auto name = type_name<Vec3<float> *>();
+    auto name = type_name<vec3<float> *>();
     EXPECT_FALSE(name.empty());
     EXPECT_NE(name.find("Vec3"), std::string_view::npos);
     EXPECT_NE(name.find("*"), std::string_view::npos);
@@ -58,7 +58,7 @@ TEST(TypeNameVector3, pointer_type) {
 
 // Test Vec3 reference type
 TEST(TypeNameVector3, reference_type) {
-    auto name = type_name<Vec3<float> &>();
+    auto name = type_name<vec3<float> &>();
     EXPECT_FALSE(name.empty());
     EXPECT_NE(name.find("Vec3"), std::string_view::npos);
     EXPECT_NE(name.find("&"), std::string_view::npos);
@@ -66,7 +66,7 @@ TEST(TypeNameVector3, reference_type) {
 
 // Test const Vec3 reference type
 TEST(TypeNameVector3, const_reference_type) {
-    auto name = type_name<const Vec3<float> &>();
+    auto name = type_name<const vec3<float> &>();
     EXPECT_FALSE(name.empty());
     EXPECT_NE(name.find("Vec3"), std::string_view::npos);
     EXPECT_NE(name.find("const"), std::string_view::npos);
@@ -75,13 +75,13 @@ TEST(TypeNameVector3, const_reference_type) {
 
 // Test constexpr evaluation
 TEST(TypeNameVector3, constexpr_evaluation) {
-    constexpr auto name = type_name<Vec3<float>>();
+    constexpr auto name = type_name<vec3<float>>();
     EXPECT_FALSE(name.empty());
 }
 
 // Test rvalue reference
 TEST(TypeNameVector3, rvalue_reference) {
-    auto name = type_name<Vec3<float> &&>();
+    auto name = type_name<vec3<float> &&>();
     EXPECT_FALSE(name.empty());
     EXPECT_NE(name.find("Vec3"), std::string_view::npos);
     EXPECT_NE(name.find("&&"), std::string_view::npos);
@@ -89,7 +89,7 @@ TEST(TypeNameVector3, rvalue_reference) {
 
 // Test that type names are consistent
 TEST(TypeNameVector3, type_consistency) {
-    auto name1 = type_name<Vec3<float>>();
-    auto name2 = type_name<Vec3<float>>();
+    auto name1 = type_name<vec3<float>>();
+    auto name2 = type_name<vec3<float>>();
     EXPECT_EQ(name1, name2);
 }
