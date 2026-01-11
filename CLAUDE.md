@@ -39,9 +39,9 @@ Python CLI for building/linting. Typer-based, fully typed (mypy strict, PEP 561)
 
 **Structure**: `commands/` (configure, build, clean, check_license_headers, codegen/wayland, docs, format, lint, python/stubgen, python/remove_pycache, setup/vscode), `constants/` (paths, comments, extensions, license_header), `utils/` (filesystem, file_checking)
 
-**configure**: Interactive CMake config (testing, build mode, checks Wayland codegen files). Saves to `config.yaml` (revision r2, JSON schema validated). Use `--reconfigure` to remove saved config and reconfigure. Subsequent runs load from config (no prompts). Subcommand: `configure migrate` migrates r1 to r2 configs. Config structure (r2):
+**configure**: Interactive CMake config (testing, build mode, checks Wayland codegen files). Saves to `config.yaml` (revision r3, JSON schema validated). Use `--reconfigure` to remove saved config and reconfigure. Subsequent runs load from config (no prompts). Subcommand: `configure migrate` migrates r1/r2 to r3 configs. Config structure (r3):
 ```yaml
-revision: 2
+revision: 3
 enable_testing: bool
 build_mode: Debug|Release|RelWithDebInfo|MinSizeRel
 logenium:
@@ -49,13 +49,12 @@ logenium:
 xheader:
   enable_testing: bool
 debug:
+  use_fast_stacktrace: bool
   enable_testing: bool
-  use_fmtlib: bool
-  enable_color_logs: bool
-logging:
-  enable_testing: bool
-  use_fmtlib: bool
 corelib:
+  enable_tracing: bool
+  enable_testing: bool
+logging:
   enable_testing: bool
 ```
 **build**: Ninja with progress, `-v/--verbose`, `-j/--jobs N`
@@ -74,7 +73,7 @@ corelib:
 
 **Constants** (`devutils.constants`): Class-level attributes pattern. `paths/` (Directories, Files, CodegenFiles, ConfigFiles, JsonSchemas, SettingsFiles - frozen dataclasses), `comments`, `extensions`, `license_header`. Access: `Directories.root`, `Extensions.c_source`. Fully typed (`ClassVar` for class attrs).
 
-**Schemas**: `JsonSchemas.codegen` (codegen config, r1 at `data/schemas/r1/codegen.schema.json`), `JsonSchemas.config_r1`/`config_r2` (configure command, r1/r2 at `data/schemas/r1|r2/config.schema.json`), `JsonSchemas.config` (alias to `config_r2`). All configs include `revision` field, validated with jsonschema.
+**Schemas**: `JsonSchemas.codegen` (codegen config, r1 at `data/schemas/r1/codegen.schema.json`), `JsonSchemas.config_r1`/`config_r2`/`config_r3` (configure command, r1/r2/r3 at `data/schemas/r1|r2|r3/config.schema.json`), `JsonSchemas.config` (alias to `config_r3`). All configs include `revision` field, validated with jsonschema.
 
 **Utilities**: `filesystem` (find_directories_by_name, find_files_by_name, find_files_by_extensions, get_files_recursively), `file_checking` (FileResult, FileStatus, LanguageConfig, Statistics, collect_files)
 
@@ -88,16 +87,14 @@ corelib:
 
 1. **xheader** (C23, `libs/xheader/`): Cross-platform API abstraction. Windows API (A/W variants), Linux dlfcn (`dlopen`/`dlclose`), XCB (connection, window mgmt), Wayland protocols (re-exports on Linux, stubs on Windows). Generated files in `internal/` (not in git, regenerate with `codegen wayland`). Tests are C++ (GoogleTest), declares `LANGUAGES C CXX`.
 
-2. **debug** (C++23, `libs/debug/`): Debug utilities (Assert, Breakpoint, BreakpointIfDebugging, IsDebuggerPresent) and profiling/tracing infrastructure. No-ops in release builds (consteval). Uses std::source_location, std::stacktrace. **Always use `debug::Assert` instead of `<cassert>`** - provides better diagnostics with formatted messages, source location, and stack traces.
+2. **debug** (C++23, `libs/debug/`): Debug utilities (Assert, Breakpoint, BreakpointIfDebugging, IsDebuggerPresent) and profiling/tracing infrastructure. No-ops in release builds (consteval). Uses std::source_location, std::stacktrace. **Always use `debug::Assert` instead of `<cassert>`** - provides better diagnostics with formatted messages, source location, and stack traces with frame numbers (reversed order by default, numbered from total frames down to 1).
 
    **tracing**: Thread naming and profiling utilities via Tracy profiler integration (v0.13.0). Provides `SetThreadName(string_view name)` and `SetThreadName(string_view name, int group_hint)` for setting thread names visible in profiling tools (always available). Profiling zone macros `ZoneScoped` and `ZoneScopedN(name)` for scope-based performance measurement (active in debug builds only, no-ops in release when NDEBUG is defined). Macros wrap Tracy's zone instrumentation and automatically become zero-overhead in production. Always linked via TracyClient. Include: `<debug/tracing.hxx>` (all), `<debug/tracing/set_thread_name.hxx>` (thread naming), or `<debug/tracing/macros.hxx>` (zone macros).
 
    **CMake Options**:
-   - `LOGENIUM_DEBUG_USE_FAST_STACKTRACE` (OFF): Use fast stacktrace (not reversed printing in assert). Sets `__LOGENIUM_DEBUG_USE_FAST_STACKTRACE__`.
+   - `LOGENIUM_DEBUG_USE_FAST_STACKTRACE` (OFF): Use fast stacktrace (not reversed, no frame numbers). Sets `__LOGENIUM_DEBUG_USE_FAST_STACKTRACE__`. Default behavior: prints stack frames in reverse order with frame numbers (N down to 1, where N is total frames, most recent frame is 1). Controlled by devutils config r3: `debug.use_fast_stacktrace`.
    - `LOGENIUM_DEBUG_USE_FMTLIB` (OFF): Use fmtlib for debug logging (fmt::format/fmt::println instead of std::format/std::println). Links fmt::fmt (v12.1.0 via FetchContent). Sets `__LOGENIUM_DEBUG_USE_FMTLIB__`.
    - `LOGENIUM_DEBUG_USE_COLOR_LOGS` (OFF): Enable colored output (requires fmtlib). Adds red background/white text to "Assertion failed" via fmt::styled. Sets `__LOGENIUM_DEBUG_USE_COLOR_LOGS__`. Validation: automatically disabled if fmtlib not enabled.
-
-   Configuration controlled by devutils config r2: `debug.use_fmtlib`, `debug.enable_color_logs`.
 
    **Dependencies**: TracyClient (v0.13.0, always linked via FetchContent), fmt::fmt (v12.1.0, optional via `LOGENIUM_DEBUG_USE_FMTLIB`).
 
@@ -105,12 +102,15 @@ corelib:
 
    **Level enum**: Logging severity levels enumeration with `corelib::u8` underlying type. Values (ordered by severity): `Ignore`, `Trace3`, `Trace2`, `Trace1`, `Trace`, `Debug`, `Info`, `Warn`, `Error`, `Fatal`. Custom std::formatter provided with two modes: normal (`{}` outputs name only) and debug (`{:d}` outputs name and underlying value). Namespace alias `log::Level` available. Include: `<logging/level.hxx>`.
 
-   **Level-specific logging**: Type aliases for each severity level: `logging::trace3`, `logging::trace2`, `logging::trace1`, `logging::trace`, `logging::debug`, `logging::info`, `logging::warn`, `logging::error`, `logging::fatal`. Default `logging::log` uses `Info` level. Each outputs with format: `[Level] message (file:line in function)`.
+   **Level-specific logging**: Type aliases for each severity level: `logging::trace3`, `logging::trace2`, `logging::trace1`, `logging::trace`, `logging::debug`, `logging::info`, `logging::warn`, `logging::error`, `logging::fatal`. Each outputs with format: `[Level] message (file:line in function)`.
 
-   **Usage**: `logging::log("Hello, {}!", "world")` (Info level), `logging::debug("Debug: {}", value)` (Debug level), `logging::error("Error: {}", msg)` (Error level), `std::format("{}", logging::Level::Info)` (outputs "Info"), `std::format("{:d}", logging::Level::Error)` (outputs "logging::Level( Error, 8 )"). Include: `<logging/logging.hxx>`, `<logging/level.hxx>`.
+   **Color logging**: When enabled, log levels are displayed with ANSI color codes for better visibility. Color scheme: Ignore (no color), Trace3/2/1/Trace (gray), Debug (cyan), Info (green), Warn (yellow), Error (red), Fatal (white on red background). Requires fmtlib backend. Implementation via `logging::internal::utils::ToColor()` in `<logging/internal/utils/to_color.hxx>`. Colors designed for visibility on both light and dark terminals.
+
+   **Usage**: `logging::info("Hello, {}!", "world")` (Info level), `logging::debug("Debug: {}", value)` (Debug level), `logging::error("Error: {}", msg)` (Error level), `std::format("{}", logging::Level::Info)` (outputs "Info"), `std::format("{:d}", logging::Level::Error)` (outputs "logging::Level( Error, 8 )"). Include: `<logging/logging.hxx>`, `<logging/level.hxx>`.
 
    **CMake Options**:
    - `LOGENIUM_LOGGING_USE_FMTLIB` (ON): Use fmtlib instead of standard library for formatting. Links fmt::fmt (v12.1.0 via FetchContent). Sets `__LOGENIUM_LOGGING_USE_FMTLIB__`.
+   - `LOGENIUM_LOGGING_USE_COLOR_LOGS` (ON): Enable colored output for log levels (requires fmtlib). Sets `__LOGENIUM_LOGGING_USE_COLOR_LOGS__`. Validation: automatically disabled if fmtlib not enabled.
    - `LOGENIUM_LOGGING_BUILD_TESTS` (ON): Enable test building.
 
    **Dependencies**: fmt::fmt (v12.1.0, optional via `LOGENIUM_LOGGING_USE_FMTLIB`), googletest (v1.17.0, tests only).
@@ -126,6 +126,8 @@ corelib:
    **casting**: RTTI-free casting utilities inspired by LLVM's casting infrastructure. Uses `classof` static methods for type checking without C++ RTTI. Template metaprogramming with SFINAE, type traits, and recursive type simplification. Main APIs: `isa<T>()` (type checking, variadic support), `cast<T>()` (checked cast with assertion), `dyn_cast<T>()` (dynamic cast returning null on failure). Variants: `isa_and_present<T>()`, `cast_if_present<T>()`, `dyn_cast_if_present<T>()`, `cast_or_null<T>()`, `dyn_cast_or_null<T>()`, `unique_dyn_cast<T>()`, `unique_dyn_cast_or_null<T>()`. Predicate functors: `IsaPred<T>`, `IsaAndPresentPred<T>`, `CastTo<T>`, `DynCastTo<T>`, `CastIfPresentTo<T>`, `DynCastIfPresentTo<T>`, `StaticCastTo<T>`. Supports pointers, references, const-correctness, `std::unique_ptr`, and `std::optional`. Include: `<corelib/casting.hxx>` (all) or `<corelib/casting/isa.hxx>`, `<corelib/casting/cast.hxx>`, `<corelib/casting/dyn_cast.hxx>`, `<corelib/casting/predicates.hxx>`.
 
    **extensible-rtti**: RTTI-free runtime type identification system using compile-time type identifiers. Provides `Base` abstract class with TypeID/DynamicTypeID/IsA interface and `Extends<ThisType, ParentType, ParentTypes...>` CRTP template for automatic implementation. Uses Type ID Pattern (unique static char ID per type, address as identifier) and Anchor Idiom (pure virtual anchor() for vtable emission). Supports single and multiple inheritance through variadic template parameters. Integrates with casting system via classof() method. Requirements: derived classes declare `static char ID;`, define in .cxx (`char Type::ID = 0;`), implement `void anchor() override {}`, friend Extends. Include: `<corelib/extensible-rtti.hxx>` (all) or `<corelib/extensible-rtti/base.hxx>`, `<corelib/extensible-rtti/extends.hxx>` (specific).
+
+   **math**: Mathematical utilities for vector operations. Template-based vector classes (vec1, vec2, Vec3, Vec4) with multiple naming schemes (x/y/z/w for spatial, r/g/b/a for color, s/t/p/q for texture coordinates). Supports any numeric type (float, double, int, etc.). Operations: arithmetic (component-wise and scalar), comparison, length/normalization, dot product, cross product (Vec3 only). Most operations are constexpr. Type aliases: `dvec1`/`dvec2`/`dvec3`/`dvec4` (double), `ivec1`/`ivec2`/`ivec3`/`ivec4` (int), `uvec1`/`uvec2`/`uvec3`/`uvec4` (unsigned int). Safety: debug::Assert for division by zero and zero-length normalization. Include: `<corelib/math.hxx>` (all) or `<corelib/math/vector1.hxx>`, `<corelib/math/vector2.hxx>`, `<corelib/math/vector3.hxx>`, `<corelib/math/vector4.hxx>` (specific).
 
 5. **logenium** (C++23): GUI framework with RTTI-free type system. Abstract base classes, factory pattern (`Application::Create()`), singleton. Main: `main()` → `Create()` → `Run()`.
 
@@ -176,7 +178,9 @@ Window → {Windows,Linux{X11,Wayland}}Window
 
 **Linux**: `Create()` checks `XDG_SESSION_TYPE` → X11Application or WaylandApplication. Base: `dlopen(nullptr, RTLD_NOW)` for self-load. X11: xcb_connect, create X11Window (xcb_create_window, xcb_map_window), Run (xcb_wait_for_event loop). Wayland: wl_display_connect, registry bind (compositor, xdg_wm_base, shm, decorations), create WaylandWindow, Run (wl_display_dispatch loop).
 
-**State**: `struct State { bool is_running; }`. Accessed via `GetState()`.
+**Application::State**: `struct State { bool is_running; }`. Accessed via `GetState()`.
+
+**Window::State**: `struct State { vec2<i32> dimensions{0, 0}; vec2<i32> framebuffer_dimensions{0, 0}; }`. Tracks window size and framebuffer size. Accessed via `GetState()`.
 
 **Linux Details**:
 - Session detection via `XDG_SESSION_TYPE`. Factory in `LinuxApplication::Create()`.
@@ -218,6 +222,7 @@ Usage notes:
 - Include guards: `#ifndef LOGENIUM_PATH_TO_FILE_HXX`
 - Platform: `#if defined(_WIN32)`, `#ifdef __linux__`
 - Assertions: Use `debug::Assert` instead of `<cassert>` for better diagnostics
+- Logging: Use `<logging/logging.hxx>` for all logging. Available levels: `logging::trace3`, `logging::trace2`, `logging::trace1`, `logging::trace`, `logging::debug`, `logging::info`, `logging::warn`, `logging::error`, `logging::fatal`. Example: `logging::info("Value: {}", value)`
 - **Documentation**: For C/C++ code, use Doxygen comments with `@tags` format:
   - Use `/** ... */` for multi-line documentation comments
   - Use `@brief` for brief descriptions
@@ -311,8 +316,15 @@ See `libs/xheader/CMakeLists.txt` for full list.
   - **casting/**: `isa.cxx` (isa integration), `cast.cxx` (cast integration), `dyn_cast.cxx` (dyn_cast integration), `predicates.cxx` (predicate functors)
 
 - **libs/logging/tests/**: Logging library tests
-  - `logging.cxx` (basic logging, multiple arguments, format validation, custom formatting, stdout capture)
+  - `logging.cxx` (basic logging, multiple arguments, format validation, custom formatting, stdout capture, all logging levels, colored output smoke tests)
   - **level/**: `level.cxx` (Level enum values, underlying type, ordering, std::formatter normal/debug modes, format specifiers, namespace alias), `type_name_level.cxx` (type_name with Level enum, const/pointer/reference types, value overload, constexpr evaluation)
+  - **internal/utils/**: `to_color.cxx` (color conversion for all logging levels, text_style properties, foreground/background colors, ANSI color code integration)
+
+- **libs/corelib/tests/math/**: Math library tests
+  - **vector1/**: `vector1.cxx` (vec1 operations: constructors, naming schemes x/r/s, arithmetic, scalar ops, comparison, length/normalize, dot product, constexpr ops, type aliases), `type_name_vector1.cxx` (type_name with vec1: float/double/int types, value overload, const/pointer/reference types, constexpr evaluation, type aliases dvec1/ivec1/uvec1)
+  - **vector2/**: `vector2.cxx` (vec2 operations: constructors, naming schemes x/y r/g s/t, arithmetic, scalar ops, comparison, length/normalize, dot product, perpendicular vectors, parallel vectors, constexpr ops), `type_name_vector2.cxx` (type_name with vec2: float/double/int types, value overload, const/pointer/reference types, constexpr evaluation)
+  - **vector3/**: `vector3.cxx` (Vec3 operations: constructors, naming schemes x/y/z r/g/b s/t/p, arithmetic, scalar ops, comparison, length/normalize, dot product, cross product with basis vectors/anti-commutativity/perpendicularity/parallel vectors, constexpr ops), `type_name_vector3.cxx` (type_name with Vec3: float/double/int types, value overload, const/pointer/reference types, constexpr evaluation)
+  - **vector4/**: `vector4.cxx` (Vec4 operations: constructors, naming schemes x/y/z/w r/g/b/a s/t/p/q, arithmetic, scalar ops, comparison, length/normalize, dot product, perpendicular vectors, RGBA color usage, constexpr ops), `type_name_vector4.cxx` (type_name with Vec4: float/double/int types, value overload, const/pointer/reference types, constexpr evaluation)
 
 - **tests/**: Logenium framework tests (85 tests)
   - **application/**: `application.cxx` (42 Application tests using mock implementations)
@@ -321,20 +333,21 @@ See `libs/xheader/CMakeLists.txt` for full list.
 **Coverage**:
 - xheader: Windows API, dlfcn stubs
 - debug: Assert, Breakpoint, IsDebuggerPresent
-- logging: Basic logging (string, int, float, bool), multiple arguments, format validation, custom formatting (hex, oct, width, alignment, precision), std::string/const char*, rvalue references, pointers, characters, numeric types, stdout output capture; Level enum (all enum values, underlying type u8, ordering, std::formatter normal/debug modes, invalid format specifiers, namespace alias, type_name integration with const/pointer/reference types)
+- logging: Basic logging (string, int, float, bool), multiple arguments, format validation, custom formatting (hex, oct, width, alignment, precision), std::string/const char*, rvalue references, pointers, characters, numeric types, stdout output capture, all logging levels (trace3/2/1, trace, debug, info, warn, error, fatal), colored output smoke tests; Level enum (all enum values, underlying type u8, ordering, std::formatter normal/debug modes, invalid format specifiers, namespace alias, type_name integration with const/pointer/reference types); Color conversion (ToColor function for all levels, text_style validation, foreground/background color verification, ANSI escape sequence integration)
 - corelib/types: type_name with type aliases (unsigned types u8/u16/u32/u64, signed types i8/i16/i32/i64/s8/s16/s32/s64, floating-point types f32/f64), value overloads, const qualification, pointers, references, rvalue references, constexpr evaluation, alias equivalence (s* == i*); min/max constants (integer: u8/u16/u32/u64/i8/i16/i32/i64/s8/s16/s32/s64_min/max with value/limits verification, floating-point: f32/f64_min/max with normalization/finite properties, constexpr evaluation, arithmetic operations)
 - corelib/utility: type_name (template/value overloads, cv-qualifiers, constexpr evaluation), defer (RAII wrapper, scope-exit execution, LIFO ordering, exception safety, move semantics), auto_release (resource manager, custom releasers, Reset/Get/operators, move-only semantics, invalid value handling, pointer/string/custom types)
 - corelib/casting (public API): isa/isa_and_present (type checking with pointers/references/unique_ptr/const-correctness, variadic support), cast (reference/pointer downcasts, const preservation), dyn_cast (successful/failed casts with const support, unique_ptr ownership transfer), cast_if_present/dyn_cast_if_present (null-safe casting), cast_or_null/dyn_cast_or_null (nullable variants), unique_dyn_cast/unique_dyn_cast_or_null (unique_ptr specialized casting), predicates (IsaPred, IsaAndPresentPred, StaticCastTo, CastTo, CastIfPresentTo, DynCastIfPresentTo, DynCastTo functors)
 - corelib/detail/casting (implementation): Type simplification (SimplifyType, IsSimpleType), nullable detection (IsNullable), value presence (ValueIsPresent, isPresent(), unwrapValue()), forwarding strategies, type-checking implementation, cast infrastructure
 - corelib/type_traits: add_const_past_pointer (const propagation past pointers), add_lvalue_reference_if_not_pointer (conditional reference addition), const_pointer_or_const_ref (const pointer/reference selection), is_integral_or_enum (integral/enum detection)
 - corelib/extensible-rtti: Base class (TypeID uniqueness/consistency, DynamicTypeID, IsA method), Extends template (single/multiple inheritance, TypeID/DynamicTypeID override, template/pointer IsA methods, classof pattern), casting integration (isa/cast/dyn_cast with CRTP types, const preservation, unique_ptr support, predicate functors)
+- corelib/math: Vector classes (vec1, vec2, Vec3, Vec4) with all constructors (default, uniform value, component-wise), naming schemes (x/y/z/w, r/g/b/a, s/t/p/q), arithmetic operators (addition, subtraction, multiplication, division, both component-wise and scalar), compound assignment (+=, -=), comparison (==, !=), length operations (LengthSquared, Length, Normalize, Normalized), dot product, cross product (Vec3 only: basis vectors, anti-commutativity, perpendicularity, parallel vectors), constexpr operations, integer/double/float types, type aliases (dvec1/2/3/4, ivec1/2/3/4, uvec1/2/3/4), type_name integration (template/value overloads, const/pointer/reference types, rvalue references, constexpr evaluation)
 - logenium: Application and Window RTTI-free casting system
   - **Enum values**: ApplicationKind/WindowKind enum value verification
   - **GetKind()**: Kind retrieval for all platform variants (Windows, Linux, X11, Wayland)
   - **classof()**: RTTI-free type checking with exact match (Windows/X11/Wayland) and range checks (Linux base)
   - **corelib integration**: Full casting API coverage (isa, cast, dyn_cast, cast_or_null, dyn_cast_or_null, isa_and_present, cast_if_present, dyn_cast_if_present) with variadic support and const preservation
   - **NativeHandle**: Default/void*/nullptr/platform-specific constructors, conversions, XCB window round-trip with std::bit_cast
-  - **State**: Default values and modification (Application only)
+  - **State**: Default values and modification (Application and Window)
   - **Predicates**: IsaPred, IsaAndPresentPred, CastTo, DynCastTo functors
   - **Mock implementations**: Lightweight mock classes for testing without platform dependencies, respects singleton pattern
 
