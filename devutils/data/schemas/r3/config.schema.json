@@ -2,7 +2,7 @@
 	"$schema": "http://json-schema.org/draft-07/schema#",
 	"$id": "logenium-devutils-schemas-config-r2",
 	"title": "Configure Command Configuration",
-	"description": "Configuration schema for project build settings (revision 2)",
+	"description": "Configuration schema for project build settings (revision 3)",
 	"type": "object",
 	"required": [
 		"revision",
@@ -18,7 +18,7 @@
 		"revision": {
 			"type": "integer",
 			"description": "Configuration file revision number",
-			"const": 2
+			"const": 3
 		},
 		"enable_testing": {
 			"type": "boolean",
@@ -56,24 +56,11 @@
 		"debug": {
 			"type": "object",
 			"description": "debug library settings",
-			"required": [
-				"use_fast_stacktrace",
-				"enable_testing",
-				"use_fmtlib",
-				"enable_color_logs"
-			],
+			"required": ["use_fast_stacktrace", "enable_testing"],
 			"properties": {
 				"use_fast_stacktrace": {
 					"type": "boolean",
 					"description": "Whether to use fast stacktrace (not reversed printing in assert)"
-				},
-				"use_fmtlib": {
-					"type": "boolean",
-					"description": "Whether to use fmtlib for debug logging"
-				},
-				"enable_color_logs": {
-					"type": "boolean",
-					"description": "Whether to use color logs"
 				},
 				"enable_testing": {
 					"type": "boolean",
@@ -101,16 +88,8 @@
 		"logging": {
 			"type": "object",
 			"description": "logging library settings",
-			"required": ["enable_testing", "enable_color_logs", "use_fmtlib"],
+			"required": ["enable_testing"],
 			"properties": {
-				"use_fmtlib": {
-					"type": "boolean",
-					"description": "Whether to use fmtlib for logging"
-				},
-				"enable_color_logs": {
-					"type": "boolean",
-					"description": "Whether to use color logs"
-				},
 				"enable_testing": {
 					"type": "boolean",
 					"description": "Whether to enable logging library tests"

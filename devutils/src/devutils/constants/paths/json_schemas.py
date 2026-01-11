@@ -12,4 +12,5 @@ class JsonSchemas:
     codegen: Path = _Directories.devutils_root / "data" / "schemas" / "r1" / "codegen.schema.json"
     config_r1: Path = _Directories.devutils_root / "data" / "schemas" / "r1" / "config.schema.json"
     config_r2: Path = _Directories.devutils_root / "data" / "schemas" / "r2" / "config.schema.json"
-    config: Path = config_r2
+    config_r3: Path = _Directories.devutils_root / "data" / "schemas" / "r3" / "config.schema.json"
+    config: Path = config_r3

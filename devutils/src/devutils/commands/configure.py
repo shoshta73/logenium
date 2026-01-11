@@ -35,6 +35,10 @@ class DebugLibraryConfig(LibraryConfig):
     enable_color_logs: bool
 
 
+class DebugLibraryConfigR3(LibraryConfig):
+    use_fast_stacktrace: bool
+
+
 class ConfigurationR1(TypedDict):
     revision: int
     enable_testing: bool
@@ -53,6 +57,17 @@ class ConfigurationR2(TypedDict):
     debug: DebugLibraryConfig
     corelib: CorelibLibraryConfig
     logging: LoggingLibraryConfig
+
+
+class ConfigurationR3(TypedDict):
+    revision: int
+    enable_testing: bool
+    build_mode: str
+    logenium: LibraryConfig
+    xheader: LibraryConfig
+    debug: DebugLibraryConfigR3
+    corelib: CorelibLibraryConfig
+    logging: LibraryConfig
 
 
 def load_schema_r1() -> object:
@@ -159,6 +174,66 @@ def save_configuration_r2(config: ConfigurationR2) -> None:
         yaml.safe_dump(dict(config), f, default_flow_style=False, sort_keys=False)
 
 
+def load_schema_r3() -> object:
+    with JsonSchemas.config_r3.open("r", encoding="utf-8") as f:
+        schema: object = json.load(f)
+    return schema
+
+
+def load_configuration_r3() -> ConfigurationR3 | None:
+    if not ConfigFiles.config.exists():
+        return None
+
+    with ConfigFiles.config.open("r", encoding="utf-8") as f:
+        data: object = yaml.safe_load(f)
+
+    if not isinstance(data, dict):
+        typer.echo(
+            typer.style("[WARNING]", fg="yellow") + " Config file is not a valid YAML dictionary",
+            err=True,
+        )
+        return None
+
+    if data.get("revision") != 3:
+        return None
+
+    schema = load_schema_r3()
+
+    try:
+        jsonschema.validate(instance=data, schema=schema)  # type: ignore[arg-type]
+    except jsonschema.ValidationError as e:
+        typer.echo(
+            typer.style("[ERROR]", fg="red") + f" Config validation failed: {e.message}",
+            err=True,
+        )
+        typer.echo(f"  Path: {'.'.join(str(p) for p in e.path)}", err=True)
+        return None
+    except jsonschema.SchemaError as e:
+        typer.echo(
+            typer.style("[ERROR]", fg="red") + f" Schema error: {e.message}",
+            err=True,
+        )
+        return None
+
+    return cast(ConfigurationR3, data)
+
+
+def save_configuration_r3(config: ConfigurationR3) -> None:
+    schema = load_schema_r3()
+
+    try:
+        jsonschema.validate(instance=config, schema=schema)  # type: ignore[arg-type]
+    except jsonschema.ValidationError as e:
+        typer.echo(
+            typer.style("[ERROR]", fg="red") + f" Config validation failed: {e.message}",
+            err=True,
+        )
+        raise typer.Exit(1) from e
+
+    with ConfigFiles.config.open("w", encoding="utf-8") as f:
+        yaml.safe_dump(dict(config), f, default_flow_style=False, sort_keys=False)
+
+
 def migrate_r1_to_r2(config_r1: ConfigurationR1) -> ConfigurationR2:
     config_r2: ConfigurationR2 = {
         "revision": 2,
@@ -178,18 +253,65 @@ def migrate_r1_to_r2(config_r1: ConfigurationR1) -> ConfigurationR2:
     return config_r2
 
 
+def migrate_r2_to_r3(config_r2: ConfigurationR2) -> ConfigurationR3:
+    config_r3: ConfigurationR3 = {
+        "revision": 3,
+        "enable_testing": config_r2["enable_testing"],
+        "build_mode": config_r2["build_mode"],
+        "logenium": config_r2["logenium"],
+        "xheader": config_r2["xheader"],
+        "debug": {
+            "use_fast_stacktrace": config_r2["debug"]["use_fast_stacktrace"],
+            "enable_testing": config_r2["debug"]["enable_testing"],
+        },
+        "corelib": config_r2["corelib"],
+        "logging": {"enable_testing": config_r2["logging"]["enable_testing"]},
+    }
+    return config_r3
+
+
 @configure.command("migrate")  # type: ignore[misc]
 def migrate_command() -> None:
-    typer.echo("Migrating configuration from r1 to r2...")
+    typer.echo("Migrating configuration...")
 
     if not ConfigFiles.config.exists():
         typer.echo(typer.style("[ERROR]", fg="red") + " No config.yaml found", err=True)
         raise typer.Exit(1)
 
+    # Try loading r2 first (more recent)
+    config_r2 = load_configuration_r2()
+    if config_r2 is not None:
+        typer.echo("Loaded r2 configuration:")
+        typer.echo(f"  enable_testing: {config_r2['enable_testing']}")
+        typer.echo(f"  logenium.enable_testing: {config_r2['logenium']['enable_testing']}")
+        typer.echo(f"  xheader.enable_testing: {config_r2['xheader']['enable_testing']}")
+        typer.echo(f"  debug.enable_testing: {config_r2['debug']['enable_testing']}")
+        typer.echo(f"  corelib.enable_testing: {config_r2['corelib']['enable_testing']}")
+        typer.echo(f"  build_mode: {config_r2['build_mode']}")
+
+        config_r3 = migrate_r2_to_r3(config_r2)
+
+        typer.echo("\nMigrated to r3 configuration:")
+        typer.echo(f"  enable_testing: {config_r3['enable_testing']}")
+        typer.echo(f"  logenium.enable_testing: {config_r3['logenium']['enable_testing']}")
+        typer.echo(f"  xheader.enable_testing: {config_r3['xheader']['enable_testing']}")
+        typer.echo(f"  debug.enable_testing: {config_r3['debug']['enable_testing']}")
+        typer.echo(f"  corelib.enable_testing: {config_r3['corelib']['enable_testing']}")
+        typer.echo(f"  build_mode: {config_r3['build_mode']}")
+
+        if not typer.confirm("\nDo you want to save this configuration?"):
+            typer.echo("Migration cancelled")
+            raise typer.Exit(0)
+
+        save_configuration_r3(config_r3)
+        typer.echo(f"Configuration migrated and saved to {ConfigFiles.config.relative_to(Directories.root)}")
+        return
+
+    # Try loading r1
     config_r1 = load_configuration_r1()
     if config_r1 is None:
         typer.echo(
-            typer.style("[ERROR]", fg="red") + " Config is not r1 or failed to load",
+            typer.style("[ERROR]", fg="red") + " Config is not r1 or r2, or failed to load",
             err=True,
         )
         raise typer.Exit(1)
@@ -202,20 +324,21 @@ def migrate_command() -> None:
     typer.echo(f"  build_mode: {config_r1['build_mode']}")
 
     config_r2 = migrate_r1_to_r2(config_r1)
+    config_r3 = migrate_r2_to_r3(config_r2)
 
-    typer.echo("\nMigrated to r2 configuration:")
-    typer.echo(f"  enable_testing: {config_r2['enable_testing']}")
-    typer.echo(f"  logenium.enable_testing: {config_r2['logenium']['enable_testing']}")
-    typer.echo(f"  xheader.enable_testing: {config_r2['xheader']['enable_testing']}")
-    typer.echo(f"  debug.enable_testing: {config_r2['debug']['enable_testing']}")
-    typer.echo(f"  corelib.enable_testing: {config_r2['corelib']['enable_testing']}")
-    typer.echo(f"  build_mode: {config_r2['build_mode']}")
+    typer.echo("\nMigrated to r3 configuration:")
+    typer.echo(f"  enable_testing: {config_r3['enable_testing']}")
+    typer.echo(f"  logenium.enable_testing: {config_r3['logenium']['enable_testing']}")
+    typer.echo(f"  xheader.enable_testing: {config_r3['xheader']['enable_testing']}")
+    typer.echo(f"  debug.enable_testing: {config_r3['debug']['enable_testing']}")
+    typer.echo(f"  corelib.enable_testing: {config_r3['corelib']['enable_testing']}")
+    typer.echo(f"  build_mode: {config_r3['build_mode']}")
 
     if not typer.confirm("\nDo you want to save this configuration?"):
         typer.echo("Migration cancelled")
         raise typer.Exit(0)
 
-    save_configuration_r2(config_r2)
+    save_configuration_r3(config_r3)
     typer.echo(f"Configuration migrated and saved to {ConfigFiles.config.relative_to(Directories.root)}")
 
 
@@ -254,39 +377,44 @@ def run(
         ConfigFiles.config.unlink()
         typer.echo("Removed saved configuration")
 
-    config_r2 = load_configuration_r2()
+    config_r3 = load_configuration_r3()
 
-    if config_r2 is None and ConfigFiles.config.exists():
-        config_r1 = load_configuration_r1()
-        if config_r1 is not None:
+    if config_r3 is None and ConfigFiles.config.exists():
+        # Try loading r2 first
+        config_r2 = load_configuration_r2()
+        if config_r2 is not None:
             typer.echo(
-                typer.style("[WARNING]", fg="yellow") + " Found r1 configuration. Please migrate to r2 using:",
+                typer.style("[WARNING]", fg="yellow") + " Found r2 configuration. Please migrate to r3 using:",
                 err=True,
             )
             typer.echo("  uv run devutils configure migrate", err=True)
             raise typer.Exit(1)
 
-    if config_r2 is not None:
+        # Try loading r1
+        config_r1 = load_configuration_r1()
+        if config_r1 is not None:
+            typer.echo(
+                typer.style("[WARNING]", fg="yellow") + " Found r1 configuration. Please migrate to r3 using:",
+                err=True,
+            )
+            typer.echo("  uv run devutils configure migrate", err=True)
+            raise typer.Exit(1)
+
+    if config_r3 is not None:
         typer.echo("Using saved configuration from config.yaml")
-        enable_testing = config_r2["enable_testing"]
-        enable_logenium_testing = config_r2["logenium"]["enable_testing"]
-        enable_xheader_testing = config_r2["xheader"]["enable_testing"]
-        enable_debug_testing = config_r2["debug"]["enable_testing"]
-        enable_corelib_testing = config_r2["corelib"]["enable_testing"]
-        enable_logging_testing = config_r2["logging"]["enable_testing"]
-        mode = config_r2["build_mode"]
+        enable_testing = config_r3["enable_testing"]
+        enable_logenium_testing = config_r3["logenium"]["enable_testing"]
+        enable_xheader_testing = config_r3["xheader"]["enable_testing"]
+        enable_debug_testing = config_r3["debug"]["enable_testing"]
+        enable_corelib_testing = config_r3["corelib"]["enable_testing"]
+        enable_logging_testing = config_r3["logging"]["enable_testing"]
+        mode = config_r3["build_mode"]
 
         # debug library options
-        debug_use_fast_stacktrace = config_r2["debug"]["use_fast_stacktrace"]
-        debug_use_fmtlib = config_r2["debug"]["use_fmtlib"]
-        debug_use_color_logs = config_r2["debug"]["enable_color_logs"]
+        debug_use_fast_stacktrace = config_r3["debug"]["use_fast_stacktrace"]
 
         # corelib library options
-        corelib_enable_tracing = config_r2["corelib"]["enable_tracing"]
-
-        # logging library options
-        logging_use_fmtlib = config_r2["logging"]["use_fmtlib"]
-        logging_use_color_logs = config_r2["logging"]["enable_color_logs"]
+        corelib_enable_tracing = config_r3["corelib"]["enable_tracing"]
 
     else:
         # === Build Mode ===
@@ -319,19 +447,6 @@ def run(
         )
         typer.echo(f"  -> Fast stacktrace: {'enabled' if debug_use_fast_stacktrace else 'disabled'}")
 
-        debug_use_fmtlib = typer.confirm(
-            "[debug] Use fmtlib for formatting? (enables fmt::format/fmt::println instead of std::format)"
-        )
-        debug_use_color_logs = False
-        if debug_use_fmtlib:
-            typer.echo("  -> fmtlib: enabled")
-            debug_use_color_logs = typer.confirm(
-                "[debug] Enable colored log output? (requires fmtlib, adds colored 'Assertion failed' messages)"
-            )
-            typer.echo(f"  -> Color logs: {'enabled' if debug_use_color_logs else 'disabled'}")
-        else:
-            typer.echo("  -> fmtlib: disabled (color logs also disabled)")
-
         # === Corelib Configuration ===
         typer.echo("")
         typer.echo(typer.style("=== Corelib Configuration ===", fg="cyan", bold=True))
@@ -342,26 +457,6 @@ def run(
             "[corelib] Enable Tracy profiling instrumentation? (adds CRLB_ZONE_SCOPED to corelib functions)"
         )
         typer.echo(f"  -> Tracing: {'enabled' if corelib_enable_tracing else 'disabled'}")
-
-        # === Logging Configuration ===
-
-        typer.echo("")
-        typer.echo(typer.style("=== Logging Configuration ===", fg="cyan", bold=True))
-        typer.echo("The logging library provides logging utilities.")
-        typer.echo("")
-
-        logging_use_fmtlib = typer.confirm(
-            "[logging] Use fmtlib for logging? (enables fmt::format/fmt::println instead of std::format)"
-        )
-        typer.echo(f"  -> fmtlib: {'enabled' if logging_use_fmtlib else 'disabled'}")
-
-        logging_use_color_logs = False
-        if logging_use_fmtlib:
-            typer.echo("  -> Color logs: enabled")
-            logging_use_color_logs = typer.confirm(
-                "[logging] Enable colored log output? (requires fmtlib, adds colored 'Assertion failed' messages)"
-            )
-            typer.echo(f"  -> Color logs: {'enabled' if logging_use_color_logs else 'disabled'}")
 
         # === Testing Configuration ===
         typer.echo("")
@@ -398,26 +493,20 @@ def run(
         else:
             typer.echo("  -> Testing: disabled (all test suites skipped)")
 
-        new_config: ConfigurationR2 = {
-            "revision": 2,
+        new_config: ConfigurationR3 = {
+            "revision": 3,
             "enable_testing": enable_testing,
             "build_mode": mode,
             "logenium": {"enable_testing": enable_logenium_testing},
             "xheader": {"enable_testing": enable_xheader_testing},
             "debug": {
                 "use_fast_stacktrace": debug_use_fast_stacktrace,
-                "use_fmtlib": debug_use_fmtlib,
-                "enable_color_logs": debug_use_color_logs,
                 "enable_testing": enable_debug_testing,
             },
             "corelib": {"enable_testing": enable_corelib_testing, "enable_tracing": corelib_enable_tracing},
-            "logging": {
-                "use_fmtlib": logging_use_fmtlib,
-                "enable_color_logs": logging_use_color_logs,
-                "enable_testing": enable_logging_testing,
-            },
+            "logging": {"enable_testing": enable_logging_testing},
         }
-        save_configuration_r2(new_config)
+        save_configuration_r3(new_config)
         typer.echo(f"Configuration saved to {ConfigFiles.config.relative_to(Directories.root)}")
 
     cmake_path = shutil.which("cmake")
@@ -431,15 +520,10 @@ def run(
     command_line.extend(["-DCMAKE_BUILD_TYPE=" + mode])
 
     # debug library options
-    command_line.extend(["-DLOGENIUM_DEBUG_USE_FMTLIB=" + ("ON" if debug_use_fmtlib else "OFF")])
-    command_line.extend(["-DLOGENIUM_DEBUG_USE_COLOR_LOGS=" + ("ON" if debug_use_color_logs else "OFF")])
+    command_line.extend(["-DLOGENIUM_DEBUG_USE_FAST_STACKTRACE=" + ("ON" if debug_use_fast_stacktrace else "OFF")])
 
     # corelib library options
     command_line.extend(["-DLOGENIUM_CORELIB_ENABLE_TRACING=" + ("ON" if corelib_enable_tracing else "OFF")])
-
-    # logging library options
-    command_line.extend(["-DLOGENIUM_LOGGING_USE_FMTLIB=" + ("ON" if logging_use_fmtlib else "OFF")])
-    command_line.extend(["-DLOGENIUM_LOGGING_USE_COLOR_LOGS=" + ("ON" if logging_use_color_logs else "OFF")])
 
     # test options
     command_line.extend([f"-DLOGENIUM_BUILD_TESTS={'ON' if enable_testing else 'OFF'}"])
