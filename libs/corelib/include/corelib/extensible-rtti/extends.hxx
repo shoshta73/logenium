@@ -66,8 +66,8 @@ namespace corelib::rtti {
  *
  * @see Base
  */
-template <typename ThisType, typename ParentType, typename... ParentTypes>
-class Extends : public ParentType, public ParentTypes... {
+template <typename ThisT, typename ParentT, typename... ParentTs>
+class Extends : public ParentT, public ParentTs... {
   public:
     /**
      * @brief Type alias for the primary parent type.
@@ -75,7 +75,7 @@ class Extends : public ParentType, public ParentTypes... {
      * @note This shadows the template parameter name but provides convenient
      * access to the primary parent type within the derived class.
      */
-    using ParentType = ParentType;
+    using ParentType = ParentT;
 
     /**
      * @brief Returns the static type identifier for ThisType.
@@ -87,7 +87,7 @@ class Extends : public ParentType, public ParentTypes... {
      */
     static const void *TypeID() {
         CRLB_ZONE_SCOPED;
-        return &ThisType::ID;
+        return &ThisT::ID;
     }
 
     /**
@@ -100,7 +100,7 @@ class Extends : public ParentType, public ParentTypes... {
      */
     [[nodiscard]] const void *DynamicTypeID() const override {
         CRLB_ZONE_SCOPED;
-        return &ThisType::ID;
+        return &ThisT::ID;
     }
 
     /**
@@ -150,7 +150,7 @@ class Extends : public ParentType, public ParentTypes... {
      */
     bool IsA(const void *const TID) const override {
         CRLB_ZONE_SCOPED;
-        return TID == TypeID() || ParentType::IsA(TID) || (ParentTypes::IsA(TID) || ...);
+        return TID == TypeID() || ParentType::IsA(TID) || (ParentTs::IsA(TID) || ...);
     }
 
     /**
@@ -180,7 +180,7 @@ class Extends : public ParentType, public ParentTypes... {
     template <typename Type>
     static bool classof(const Type *R) {
         CRLB_ZONE_SCOPED;
-        return R->template IsA<ThisType>();
+        return R->template IsA<ThisT>();
     }
 };
 

@@ -74,33 +74,14 @@
 
 #include <source_location>
 
-#include <debug/tracing/macros.hxx>
-
-#if __LOGENIUM_LOGGING_USE_FMTLIB__
-
 #include <fmt/base.h>
+#include <fmt/color.h>
 #include <fmt/format.h>
 
-#if __LOGENIUM_LOGGING_USE_COLOR_LOGS__
-
-#include <fmt/color.h>
-
-#endif  // __LOGENIUM_LOGGING_USE_COLOR_LOGS__
-
-#else
-
-#include <format>
-#include <print>
-
-#endif
-
-#include <logging/level.hxx>
-
-#if __LOGENIUM_LOGGING_USE_COLOR_LOGS__
+#include <debug/tracing/macros.hxx>
 
 #include <logging/internal/utils/to_color.hxx>
-
-#endif  // __LOGENIUM_LOGGING_USE_COLOR_LOGS__
+#include <logging/level.hxx>
 
 namespace logging {
 
@@ -133,8 +114,6 @@ namespace detail {
  */
 template <Level L, typename... Args>
 struct LogImpl {
-#if __LOGENIUM_LOGGING_USE_FMTLIB__
-
     /**
      * @brief Construct and execute a log operation using fmtlib
      *
@@ -153,47 +132,12 @@ struct LogImpl {
             std::source_location location = std::source_location::current()) {
         ZoneScoped;
 
-#if __LOGENIUM_LOGGING_USE_COLOR_LOGS__
-
         auto level_string = fmt::format(internal::utils::ToColor(L), "{}", L);
-
-#else
-
-        auto level_string = fmt::format("{}", L);
-
-#endif
 
         fmt::println("[{}] {} ({}:{} in {})", level_string, fmt::format(format, std::forward<Args>(args)...),
                      location.file_name(), location.line(), location.function_name());
     }
-
-#else
-
-    /**
-     * @brief Construct and execute a log operation using standard library
-     *
-     * Validates the format string at compile time and outputs the formatted
-     * message to stdout using std::println with the format:
-     * `[Level] message (file:line in function)`
-     *
-     * @param format Format string with compile-time validation (std::format_string)
-     * @param args Variadic arguments to be formatted (forwarded)
-     * @param location Source location for debugging (automatically captured)
-     *
-     * @note Arguments are perfectly forwarded to avoid unnecessary copies
-     * @note Source location is automatically captured and displayed in output
-     */
-    LogImpl(std::format_string<Args...> format, Args &&...args,
-            std::source_location location = std::source_location::current()) {
-        ZoneScoped;
-        std::println("[{}] {} ({}:{} in {})", L, std::format(format, std::forward<Args>(args)...), location.file_name(),
-                     location.line(), location.function_name());
-    }
-
-#endif
 };
-
-#if __LOGENIUM_LOGGING_USE_FMTLIB__
 
 /**
  * @ingroup logging_internal
@@ -205,23 +149,7 @@ struct LogImpl {
  * @tparam Args Deduced argument types from constructor
  */
 template <Level L = Level::Ignore, typename... Args>
-LogImpl(bool, fmt::format_string<Args...>, Args &&...) -> LogImpl<L, Args...>;
-
-#else
-
-/**
- * @ingroup logging_internal
- * @brief Deduction guide for LogImpl with standard library backend
- *
- * Enables CTAD (Class Template Argument Deduction) to automatically deduce
- * template parameters from constructor arguments when using standard library.
- *
- * @tparam Args Deduced argument types from constructor
- */
-template <Level L = Level::Ignore, typename... Args>
-LogImpl(bool, std::format_string<Args...>, Args &&...) -> LogImpl<L, Args...>;
-
-#endif
+LogImpl(fmt::format_string<Args...>, Args &&...) -> LogImpl<L, Args...>;
 
 }  // namespace detail
 

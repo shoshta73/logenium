@@ -34,13 +34,12 @@ FetchContent_Declare(
 )
 
 log_info("Fetching dependencies")
+
 log_info("Fetching googletest (v1.17.0, shallow, progress)")
 FetchContent_MakeAvailable(googletest)
 
-if(LOGENIUM_DEBUG_USE_FMTLIB)
-        log_info("Fetching fmtlib (v12.1.0, shallow, progress)")
-        FetchContent_MakeAvailable(fmtlib)
-endif()
+log_info("Fetching fmtlib (v12.1.0, shallow, progress)")
+FetchContent_MakeAvailable(fmtlib)
 
 if(CMAKE_BUILD_TYPE STREQUAL "Release" OR CMAKE_BUILD_TYPE STREQUAL "MinSizeRel")
         log_info("Disabling tracy profiling (release build)")

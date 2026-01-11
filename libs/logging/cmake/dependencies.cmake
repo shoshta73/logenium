@@ -25,12 +25,11 @@ FetchContent_Declare(
 )
 
 log_info("Fetching dependencies")
+
 log_info("Fetching googletest (v1.17.0, shallow, progress)")
 FetchContent_MakeAvailable(googletest)
 
-if(LOGENIUM_LOGGING_USE_FMTLIB)
-        log_info("Fetching fmtlib (v12.1.0, shallow, progress)")
-        FetchContent_MakeAvailable(fmtlib)
-endif()
+log_info("Fetching fmtlib (v12.1.0, shallow, progress)")
+FetchContent_MakeAvailable(fmtlib)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)

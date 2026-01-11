@@ -17,6 +17,7 @@ include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/dependencies.cmake")
 
 log_info("Provided options:")
 log_info("  LOGENIUM_CORELIB_ENABLE_TRACING: ${LOGENIUM_CORELIB_ENABLE_TRACING}")
+log_info("  LOGENIUM_CORELIB_BUILD_TESTS: ${LOGENIUM_CORELIB_BUILD_TESTS}")
 
 add_library(
         corelib

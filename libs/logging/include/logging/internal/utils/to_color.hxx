@@ -13,8 +13,6 @@
  * and LOGENIUM_LOGGING_USE_FMTLIB are enabled.
  */
 
-#if (__LOGENIUM_LOGGING_USE_COLOR_LOGS__ && __LOGENIUM_LOGGING_USE_FMTLIB__)
-
 #include <fmt/color.h>
 
 #include <logging/level.hxx>
@@ -50,7 +48,5 @@ namespace logging::internal::utils {
 fmt::text_style ToColor(Level level);
 
 }  // namespace logging::internal::utils
-
-#endif  // __LOGENIUM_LOGGING_USE_COLOR_LOGS__ && __LOGENIUM_LOGGING_USE_FMTLIB__
 
 #endif  // LOGENIUM_LOGGING_INTERNAL_UTILS_TO_COLOR_HXX

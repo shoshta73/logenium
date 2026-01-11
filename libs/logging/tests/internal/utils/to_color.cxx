@@ -25,28 +25,28 @@ TEST(ToColor, ignore_level_returns_empty_style) {
 TEST(ToColor, trace3_level_returns_gray) {
     auto style = ToColor(logging::Level::Trace3);
     EXPECT_TRUE(style.has_foreground());
-    EXPECT_EQ(style.get_foreground(), fmt::detail::color_type(fmt::color::gray));
+    EXPECT_EQ(style.get_foreground().value(), fmt::detail::color_type(fmt::color::gray).value());
     EXPECT_FALSE(style.has_background());
 }
 
 TEST(ToColor, trace2_level_returns_gray) {
     auto style = ToColor(logging::Level::Trace2);
     EXPECT_TRUE(style.has_foreground());
-    EXPECT_EQ(style.get_foreground(), fmt::detail::color_type(fmt::color::gray));
+    EXPECT_EQ(style.get_foreground().value(), fmt::detail::color_type(fmt::color::gray).value());
     EXPECT_FALSE(style.has_background());
 }
 
 TEST(ToColor, trace1_level_returns_gray) {
     auto style = ToColor(logging::Level::Trace1);
     EXPECT_TRUE(style.has_foreground());
-    EXPECT_EQ(style.get_foreground(), fmt::detail::color_type(fmt::color::gray));
+    EXPECT_EQ(style.get_foreground().value(), fmt::detail::color_type(fmt::color::gray).value());
     EXPECT_FALSE(style.has_background());
 }
 
 TEST(ToColor, trace_level_returns_gray) {
     auto style = ToColor(logging::Level::Trace);
     EXPECT_TRUE(style.has_foreground());
-    EXPECT_EQ(style.get_foreground(), fmt::detail::color_type(fmt::color::gray));
+    EXPECT_EQ(style.get_foreground().value(), fmt::detail::color_type(fmt::color::gray).value());
     EXPECT_FALSE(style.has_background());
 }
 
@@ -54,7 +54,7 @@ TEST(ToColor, trace_level_returns_gray) {
 TEST(ToColor, debug_level_returns_cyan) {
     auto style = ToColor(logging::Level::Debug);
     EXPECT_TRUE(style.has_foreground());
-    EXPECT_EQ(style.get_foreground(), fmt::detail::color_type(fmt::color::cyan));
+    EXPECT_EQ(style.get_foreground().value(), fmt::detail::color_type(fmt::color::cyan).value());
     EXPECT_FALSE(style.has_background());
 }
 
@@ -62,7 +62,7 @@ TEST(ToColor, debug_level_returns_cyan) {
 TEST(ToColor, info_level_returns_green) {
     auto style = ToColor(logging::Level::Info);
     EXPECT_TRUE(style.has_foreground());
-    EXPECT_EQ(style.get_foreground(), fmt::detail::color_type(fmt::color::green));
+    EXPECT_EQ(style.get_foreground().value(), fmt::detail::color_type(fmt::color::green).value());
     EXPECT_FALSE(style.has_background());
 }
 
@@ -70,7 +70,7 @@ TEST(ToColor, info_level_returns_green) {
 TEST(ToColor, warn_level_returns_yellow) {
     auto style = ToColor(logging::Level::Warn);
     EXPECT_TRUE(style.has_foreground());
-    EXPECT_EQ(style.get_foreground(), fmt::detail::color_type(fmt::color::yellow));
+    EXPECT_EQ(style.get_foreground().value(), fmt::detail::color_type(fmt::color::yellow).value());
     EXPECT_FALSE(style.has_background());
 }
 
@@ -78,7 +78,7 @@ TEST(ToColor, warn_level_returns_yellow) {
 TEST(ToColor, error_level_returns_red) {
     auto style = ToColor(logging::Level::Error);
     EXPECT_TRUE(style.has_foreground());
-    EXPECT_EQ(style.get_foreground(), fmt::detail::color_type(fmt::color::red));
+    EXPECT_EQ(style.get_foreground().value(), fmt::detail::color_type(fmt::color::red).value());
     EXPECT_FALSE(style.has_background());
 }
 
@@ -87,8 +87,8 @@ TEST(ToColor, fatal_level_returns_white_on_red) {
     auto style = ToColor(logging::Level::Fatal);
     EXPECT_TRUE(style.has_foreground());
     EXPECT_TRUE(style.has_background());
-    EXPECT_EQ(style.get_foreground(), fmt::detail::color_type(fmt::color::white));
-    EXPECT_EQ(style.get_background(), fmt::detail::color_type(fmt::color::red));
+    EXPECT_EQ(style.get_foreground().value(), fmt::detail::color_type(fmt::color::white).value());
+    EXPECT_EQ(style.get_background().value(), fmt::detail::color_type(fmt::color::red).value());
 }
 
 // Test that all levels are handled (no missing cases)
@@ -126,17 +126,17 @@ TEST(ToColor, different_levels_produce_different_styles) {
     auto fatal_style = ToColor(logging::Level::Fatal);
 
     // Trace variants should all be the same
-    EXPECT_EQ(ToColor(logging::Level::Trace3).get_foreground(), trace_style.get_foreground());
-    EXPECT_EQ(ToColor(logging::Level::Trace2).get_foreground(), trace_style.get_foreground());
-    EXPECT_EQ(ToColor(logging::Level::Trace1).get_foreground(), trace_style.get_foreground());
+    EXPECT_EQ(ToColor(logging::Level::Trace3).get_foreground().value(), trace_style.get_foreground().value());
+    EXPECT_EQ(ToColor(logging::Level::Trace2).get_foreground().value(), trace_style.get_foreground().value());
+    EXPECT_EQ(ToColor(logging::Level::Trace1).get_foreground().value(), trace_style.get_foreground().value());
 
     // All other levels should have different foregrounds (or no foreground for Ignore)
     EXPECT_FALSE(ignore_style.has_foreground());
-    EXPECT_NE(trace_style.get_foreground(), debug_style.get_foreground());
-    EXPECT_NE(debug_style.get_foreground(), info_style.get_foreground());
-    EXPECT_NE(info_style.get_foreground(), warn_style.get_foreground());
-    EXPECT_NE(warn_style.get_foreground(), error_style.get_foreground());
-    EXPECT_NE(error_style.get_foreground(), fatal_style.get_foreground());
+    EXPECT_NE(trace_style.get_foreground().value(), debug_style.get_foreground().value());
+    EXPECT_NE(debug_style.get_foreground().value(), info_style.get_foreground().value());
+    EXPECT_NE(info_style.get_foreground().value(), warn_style.get_foreground().value());
+    EXPECT_NE(warn_style.get_foreground().value(), error_style.get_foreground().value());
+    EXPECT_NE(error_style.get_foreground().value(), fatal_style.get_foreground().value());
 }
 
 #endif  // __LOGENIUM_LOGGING_USE_COLOR_LOGS__ && __LOGENIUM_LOGGING_USE_FMTLIB__

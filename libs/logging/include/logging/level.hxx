@@ -4,18 +4,11 @@
 #ifndef LOGENIUM_LOGGING_LEVEL_HXX
 #define LOGENIUM_LOGGING_LEVEL_HXX
 
+#include <format>
 #include <utility>
-
-#if __LOGENIUM_LOGGING_USE_FMTLIB__
 
 #include <fmt/base.h>
 #include <fmt/format.h>
-
-#else
-
-#include <format>
-
-#endif
 
 #include <debug/assert.hxx>
 #include <debug/tracing/macros.hxx>
@@ -136,8 +129,6 @@ using namespace ::log;
 }  // namespace logenium
 
 #endif  // __LOGENIUM_SOURCE__
-
-#if __LOGENIUM_LOGGING_USE_FMTLIB__
 
 /**
  * @brief Custom formatter for logging::Level enum (fmtlib backend)
@@ -268,8 +259,6 @@ struct fmt::formatter<logging::Level> {
     bool debug_flag = false;
 };
 
-#else
-
 /**
  * @brief Custom formatter for logging::Level enum (standard library backend)
  *
@@ -399,7 +388,5 @@ struct std::formatter<logging::Level> {
   private:
     bool debug_flag = false;
 };
-
-#endif
 
 #endif  // LOGENIUM_LOGGING_LEVEL_HXX

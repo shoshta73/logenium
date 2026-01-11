@@ -12,6 +12,12 @@
 #include <string>
 #include <utility>
 
+#include <fmt/base.h>
+#include <fmt/color.h>
+#include <fmt/format.h>
+
+#include <debug/breakpoint.hxx>
+#include <debug/is_debugger_present.hxx>
 #include <debug/tracing/macros.hxx>
 
 #if !__LOGENIUM_DEBUG_USE_FAST_STACKTRACE__
@@ -20,28 +26,7 @@
 
 #endif  // !__LOGENIUM_DEBUG_USE_FAST_STACKTRACE__
 
-#include <debug/breakpoint.hxx>
-#include <debug/is_debugger_present.hxx>
-
-#if (__LOGENIUM_DEBUG_USE_FMTLIB__ && __LOGENIUM_DEBUG_USE_COLOR_LOGS__)
-
-#include <fmt/color.h>
-
-#endif  // (__LOGENIUM_DEBUG_USE_FMTLIB__ && __LOGENIUM_DEBUG_USE_COLOR_LOGS__)
-
 #endif  // NDEBUG
-
-#if !__LOGENIUM_DEBUG_USE_FMTLIB__
-
-#include <format>
-#include <print>
-
-#else
-
-#include <fmt/base.h>
-#include <fmt/format.h>
-
-#endif
 
 namespace debug {
 
@@ -92,62 +77,6 @@ template <typename... Args>
 struct AssertImpl {
 #ifndef NDEBUG
 
-#if !__LOGENIUM_DEBUG_USE_FMTLIB__
-
-    /**
-     * @brief Constructor for debug builds using standard library formatting.
-     *
-     * Evaluates the predicate and, if false, prints diagnostic information and aborts.
-     *
-     * @param predicate The condition to check
-     * @param format Format string (std::format_string)
-     * @param args Arguments for the format string
-     * @param location Source location (automatically captured)
-     * @param stacktrace Stack trace (automatically captured)
-     *
-     * Diagnostic output includes:
-     * - Formatted assertion message
-     * - Source file, line, and function name
-     * - Full stack trace (reversed for readability, unless __LOGENIUM_DEBUG_USE_FAST_STACKTRACE__)
-     *
-     * If predicate is false:
-     * 1. Prints diagnostics to stderr
-     * 2. Calls IsDebuggerPresent()
-     * 3. Calls Breakpoint() if a debugger is attached (otherwise calls std::abort())
-     */
-    AssertImpl(bool predicate, std::format_string<Args...> format, Args &&...args,
-               std::source_location location = std::source_location::current(),
-               const std::stacktrace &stacktrace = std::stacktrace::current()) {
-        ZoneScoped;
-        if (!predicate) {
-            ZoneScopedN("Assertion handler");
-            std::println("Assertion failed: {}", std::format(format, std::forward<Args>(args)...));
-            std::println("Location: {}:{} in {}", location.file_name(), location.line(), location.function_name());
-
-#if __LOGENIUM_DEBUG_USE_FAST_STACKTRACE__
-
-            std::println("Stacktrace:\n{}", std::to_string(stacktrace));
-
-#else
-
-            std::println("Stacktrace:");
-            auto frame_count = std::distance(stacktrace.crbegin(), stacktrace.crend());
-            for (auto frame = stacktrace.crbegin(); frame != stacktrace.crend(); ++frame) {
-                std::println("  {}: {}", frame_count--, std::to_string(*frame));
-            }
-
-#endif  // __LOGENIUM_DEBUG_USE_FAST_STACKTRACE__
-
-            if (IsDebuggerPresent()) {
-                Breakpoint();
-            } else {
-                std::abort();
-            }
-        }
-    }
-
-#else
-
     /**
      * @brief Constructor for debug builds using fmtlib formatting.
      *
@@ -177,17 +106,9 @@ struct AssertImpl {
         if (!predicate) {
             ZoneScopedN("Assertion handler");
 
-#if !__LOGENIUM_DEBUG_USE_COLOR_LOGS__
-
-            fmt::println("Assertion failed: {}", fmt::format(format, std::forward<Args>(args)...));
-
-#else
-
             fmt::println("{}: {}",
                          fmt::styled("Assertion failed", fmt::bg(fmt::color::red) | fmt::fg(fmt::color::white)),
                          fmt::format(format, std::forward<Args>(args)...));
-
-#endif  // __LOGENIUM_DEBUG_USE_COLOR_LOGS__
 
             fmt::println("Location: {}:{} in {}", location.file_name(), location.line(), location.function_name());
 
@@ -213,24 +134,6 @@ struct AssertImpl {
         }
     }
 
-#endif  // __LOGENIUM_DEBUG_USE_FMTLIB__
-
-#else
-
-#if !__LOGENIUM_DEBUG_USE_FMTLIB__
-
-    /**
-     * @brief Constexpr no-op constructor for release builds (std::format version).
-     *
-     * In release builds, this constructor is constexpr and does nothing. The compiler
-     * completely eliminates assertion checks and all formatting overhead.
-     *
-     * @param predicate Ignored
-     * @param format Ignored
-     * @param args Ignored
-     */
-    constexpr AssertImpl(bool predicate, std::format_string<Args...> format, Args &&...args) {}
-
 #else
 
     /**
@@ -245,21 +148,8 @@ struct AssertImpl {
      */
     constexpr AssertImpl(bool predicate, fmt::format_string<Args...> format, Args &&...args) {}
 
-#endif  // __LOGENIUM_DEBUG_USE_FMTLIB__
-
 #endif  // NDEBUG
 };
-
-/**
- * @ingroup debug-internal
- * @brief Deduction guide for std::format_string (standard library version).
- */
-#if !__LOGENIUM_DEBUG_USE_FMTLIB__
-
-template <typename... Args>
-AssertImpl(bool, std::format_string<Args...>, Args &&...) -> AssertImpl<Args...>;
-
-#else
 
 /**
  * @ingroup debug-internal
@@ -267,8 +157,6 @@ AssertImpl(bool, std::format_string<Args...>, Args &&...) -> AssertImpl<Args...>
  */
 template <typename... Args>
 AssertImpl(bool, fmt::format_string<Args...>, Args &&...) -> AssertImpl<Args...>;
-
-#endif
 
 }  // namespace detail
 

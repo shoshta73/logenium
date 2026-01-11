@@ -6,9 +6,7 @@
  * @brief Implementation of color conversion utilities for logging levels
  */
 
-#if (__LOGENIUM_LOGGING_USE_COLOR_LOGS__ && __LOGENIUM_LOGGING_USE_FMTLIB__)
-
-#include "fmt/color.h"
+#include <fmt/color.h>
 
 #include <debug/assert.hxx>
 #include <debug/tracing/macros.hxx>
@@ -71,5 +69,3 @@ fmt::text_style ToColor(Level level) {
 }
 
 }  // namespace logging::internal::utils
-
-#endif  // __LOGENIUM_LOGGING_USE_COLOR_LOGS__ && __LOGENIUM_LOGGING_USE_FMTLIB__
